@@ -1,0 +1,10 @@
+clear_memory:
+  name: "Galeria Twarzy: Kasuj pamięć dyskową"
+  description: "Resetuje bazę znanych castingów odczytanych na stałe w rejestrze HA. Zaznacz pole poniżej na zielono by operacja wykonała się w celach testu notifikacji Telegram."
+  fields:
+    flushstoreddata:
+      name: "Dokonaj czyszczenia zapisu systemowego (.storage)"
+      description: "Zaznacz aby definitywnie usunąć stare rekordy z dysku (Wymagane z powodów bezpieczeństwa, by uniknąć fałszywych spamu przez Telegram)."
+      required: true
+      selector:
+        boolean:

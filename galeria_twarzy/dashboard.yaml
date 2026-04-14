@@ -1,0 +1,84 @@
+  - title: Galeria Twarzy
+    path: galeria_twarzy_dev
+    icon: mdi:movie-open
+    type: custom:grid-layout
+    layout_type: grid
+    card_mod:
+      style: |
+        #view {
+          align-content: start; /* Wyrównanie kolumn do góry */
+        }
+        hui-grid-card {
+          height: auto !important; /* Wymuszenie naturalnej wysokości */
+        }    
+    layout:
+      grid-template-columns: 1fr
+      grid-auto-rows: min-content
+      grid-template-rows: auto
+      justify-content: center
+      align-items: start
+      gap: 90px
+      mediaquery:
+        '(max-width: 360px)':
+          grid-template-columns: 1fr
+        '(min-width: 361px)':
+          grid-template-columns: repeat(1, 1fr)
+    
+    cards:
+      - type: grid
+        columns: 3
+        square: false
+        cards:
+          - type: entities
+            title: Status Integracji
+            entities:
+              - entity: binary_sensor.galeria_twarzy_new_casting_alert
+                name: Alert - Nowy Casting
+              - entity: sensor.galeria_twarzy_all_castings
+                name: Liczba pobranych castingów
+              - entity: sensor.galeria_twarzy_ostatnio_dodane_castingi
+                name: Ilość nowo dodanych castingów
+              - entity: sensor.galeria_twarzy_ostatnie_sprawdzenie
+                name: Ostatnie sprawdzenie
+              - entity: button.galeria_twarzy_wymus_sprawdzenie
+                name: Pobierz dane teraz
+              - entity: button.galeria_twarzy_kasuj_pamiec
+                name: (DEV) Kasuj bazę lokalną
+              - entity: button.galeria_twarzy_test_notyfikacji
+                name: Wyślij test na Telegram
+              - entity: text.galeria_twarzy_telegram_config_id
+                name: (Opcj.) Telegram Config ID
+              - entity: text.galeria_twarzy_telegram_chat_ids
+                name: (Opcj.) Telegram Odbiorcy (wiele po przecinku)
+              - entity: sensor.galeria_twarzy_status_notyfikacji
+                name: Log wysyłki
+          - type: markdown
+            title: Szczegóły nowo dodanych castingów
+            content: >-
+              {% set nowe = state_attr('sensor.galeria_twarzy_ostatnio_dodane_castingi', 'castings') %}
+              {% if nowe %}
+              {% for casting in nowe %}
+                ### <sub><a href="{{ casting.url }}" style="color: var(--primary-color);">🔗 {{ casting.title }}</a></sub><br>
+              
+              <sub>📍 Miejscowość: {{ casting.location }}</sub><br>
+              <sub>🕒 Data: {{ casting.date }}</sub><br>
+              <hr>
+                {% endfor %}
+              {% else %}
+              Brak nowych castingów w ostatnim cyklu sprawdzania.
+              {% endif %}
+          - type: markdown
+            title: Pełna lista pobranych castingów (Atrybuty)
+            content: >-
+              {% set castings = state_attr('sensor.galeria_twarzy_all_castings', 'castings') %}
+              {% if castings %}
+              {% for casting in castings %}
+                ### <sub><a href="{{ casting.url }}" style="color: var(--primary-color);">🔗 {{ casting.title }}</a></sub><br>
+              
+              <sub>📍 Miejscowość: {{ casting.location }}</sub><br>
+              <sub>🕒 Data: {{ casting.date }}</sub><br>
+              <hr>
+              {% endfor %}
+              {% else %}
+              Brak zapisanych castingów w atrybutach encji (odczekaj na pierwsze pobranie).
+              {% endif %}

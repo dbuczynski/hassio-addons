@@ -1,0 +1,11 @@
+{
+  "domain": "galeria_twarzy",
+  "name": "Galeria Twarzy Castings",
+  "config_flow": true,
+  "documentation": "https://galeriatwarzy.pl/castingi",
+  "dependencies": [],
+  "codeowners": [],
+  "requirements": ["beautifulsoup4==4.12.3", "aiohttp"],
+  "version": "1.0.0",
+  "iot_class": "cloud_polling"
+}
