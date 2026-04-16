@@ -1,0 +1,24 @@
+name: "Pstryk Chart Generator"
+description: "Generates beautiful power consumption dashboard charts incorporating price zones and historic trends."
+version: "1.0.0"
+slug: "pstryk_chart_generator"
+init: false
+arch:
+  - aarch64
+  - amd64
+  - armv7
+map:
+  - "config:rw"
+homeassistant_api: true
+options:
+  power_sensor: "sensor.tze200_ts0601_active_power"
+  cheapest_sensor: "sensor.api_pricing_pstryk_cheapest_buy_hour_today"
+  expensive_sensor: "sensor.api_pricing_pstryk_most_expensive_buy_hour_today"
+schema:
+  power_sensor: match([^,]+)
+  cheapest_sensor: match([^,]+)
+  expensive_sensor: match([^,]+)
+ports:
+  8099/tcp: 8099
+ports_description:
+  8099/tcp: "API Port for REST Command trigger"
