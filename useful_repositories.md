@@ -44,3 +44,9 @@ This document contains a curated list of useful Home Assistant Add-on repositori
 ### 6. [Stanford Genie (Reference)](https://genie.stanford.edu)
 **Description:** *(Deprecated / Historic)* The Genie virtual assistant project (formerly known as Almond) developed by Stanford University's Open Virtual Assistant Lab (OVAL).
 **Note on HA Compatibility:** This privacy-focused virtual assistant integration was officially removed and is **no longer supported** as a Home Assistant add-on as of 2023. The Stanford lab has shifted its focus. For local smart home voice control today, it is highly recommended to explore Home Assistant's native built-in **Assist** platform (Wake Word, Piper, and Whisper).
+
+---
+
+### 7. [Haberda's Add-ons](https://github.com/haberda/hassio_addons)
+**Description:** A personal collection of specialized Home Assistant add-ons.
+**Key Note:** The maintainer develops and tests these add-ons primarily on x86 machines running Home Assistant OS. If you are using an alternative architecture (like ARM), you are encouraged to report issues and assist with testing.
