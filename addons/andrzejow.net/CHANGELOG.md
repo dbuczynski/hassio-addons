@@ -2,6 +2,13 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.5.3] - 2026-08-04
+
+### Zmieniono
+- Podbicie wersji dodatku Home Assistant do `1.5.3` z pełnym wymuszeniem aktualizacji z repozytorium GitHub.
+
+---
+
 ## [1.5.2] - 2026-08-04
 
 ### Zmieniono / Dodano
