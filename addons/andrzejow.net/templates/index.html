@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Koło Fortuny Online</title>
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: rgba(30, 41, 59, 0.7);
+            --bg-card-hover: rgba(30, 41, 59, 0.9);
+            --accent-primary: #6366f1;
+            --accent-primary-hover: #4f46e5;
+            --accent-gold: #f59e0b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --glass-blur: blur(12px);
+            --radius-lg: 16px;
+            --radius-md: 10px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(245, 158, 11, 0.1) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding-bottom: 40px;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: var(--glass-blur);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            font-size: 28px;
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-title {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* Buttons */
+        .btn {
+            background: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 9px 16px;
+            border-radius: var(--radius-md);
+            font-weight: 500;
+            font-size: 13px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            user-select: none;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), #4f46e5);
+            border: none;
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #4f46e5, #4338ca);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+        }
+
+        .btn-gold {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            border: none;
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-gold:hover {
+            background: linear-gradient(135deg, #d97706, #b45309);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 28px auto;
+            padding: 0 24px;
+        }
+
+        /* Section Header */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        /* Cards Grid */
+        .videos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .video-card {
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.25s ease;
+        }
+
+        .video-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+            background: var(--bg-card-hover);
+        }
+
+        .video-thumb-wrap {
+            position: relative;
+            aspect-ratio: 16 / 9;
+            background: #1e293b;
+            overflow: hidden;
+        }
+
+        .video-thumb {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .video-card:hover .video-thumb {
+            transform: scale(1.04);
+        }
+
+        .comments-badge {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent-gold);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .video-info {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .video-title {
+            font-size: 15px;
+            font-weight: 600;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .video-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* Top Controls Box in Comment View */
+        .top-controls-box {
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+        }
+
+        .search-input {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 12px 16px 12px 42px;
+            color: var(--text-main);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-primary);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+
+        .checkboxes-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 14px;
+        }
+
+        .filter-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13.5px;
+            font-weight: 500;
+            color: var(--text-main);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .filter-checkbox input {
+            accent-color: var(--accent-primary);
+            width: 17px;
+            height: 17px;
+            cursor: pointer;
+        }
+
+        .comments-summary-badge {
+            margin-left: auto;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent-gold);
+        }
+
+        /* Two-Column Layout for Comments View */
+        .comments-layout {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+        }
+
+        /* Left Column: Authors Sidebar */
+        .authors-sidebar {
+            width: 310px;
+            flex-shrink: 0;
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 260px);
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .sidebar-header {
+            padding: 16px;
+            background: rgba(15, 23, 42, 0.85);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .sidebar-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .sidebar-actions-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .authors-list-wrap {
+            padding: 8px 0;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .author-item {
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            user-select: none;
+        }
+
+        .author-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .author-item input {
+            accent-color: var(--accent-primary);
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .author-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex-grow: 1;
+        }
+
+        .author-count-pill {
+            font-size: 11px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+
+        /* Right Column: Table */
+        .comments-table-panel {
+            flex: 1;
+            min-width: 0;
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13.5px;
+        }
+
+        th {
+            background: rgba(15, 23, 42, 0.85);
+            padding: 14px 18px;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+            text-transform: uppercase;
+            font-size: 11.5px;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 14px 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            vertical-align: top;
+            line-height: 1.5;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        tr.highlighted-row td {
+            background: rgba(245, 158, 11, 0.08);
+        }
+
+        .author-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .badge-target {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--accent-gold);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            padding: 2px 7px;
+            border-radius: 12px;
+            font-size: 10.5px;
+            font-weight: 700;
+        }
+
+        .comment-date {
+            color: var(--text-muted);
+            font-size: 12.5px;
+            white-space: nowrap;
+        }
+
+        /* Modal Settings */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: var(--glass-blur);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal {
+            background: #1e293b;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 520px;
+            padding: 28px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            transform: scale(0.95);
+            transition: transform 0.25s ease;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 10px 14px;
+            color: var(--text-main);
+            font-size: 14px;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: var(--accent-primary);
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Statuses & Loaders */
+        .spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            border-top-color: var(--accent-primary);
+            animation: spin 0.8s linear infinite;
+            margin: 40px auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .alert {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 14px 18px;
+            border-radius: var(--radius-md);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="brand">
+            <span class="brand-icon">🎡</span>
+            <div>
+                <div class="brand-title">YouTube Koło Fortuny Online</div>
+                <div class="brand-subtitle" id="channel-subtitle">Ładowanie kanału...</div>
+            </div>
+        </div>
+        <div class="nav-actions">
+            <button class="btn" onclick="openSettingsModal()">⚙️ Ustawienia</button>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container">
+
+        <!-- Error Alert -->
+        <div id="error-alert" class="alert hidden">
+            <span id="error-message">Wystąpił błąd.</span>
+            <button class="btn btn-sm" onclick="closeAlert()">Zamknij</button>
+        </div>
+
+        <!-- VIEW 1: VIDEOS LIST -->
+        <div id="view-videos">
+            <div class="section-header">
+                <h2 class="section-title">Lista najnowszych filmów</h2>
+                <button class="btn btn-primary" onclick="loadVideos()">🔄 Odśwież listy</button>
+            </div>
+
+            <div id="videos-loader" class="spinner"></div>
+
+            <div id="videos-grid" class="videos-grid hidden"></div>
+        </div>
+
+        <!-- VIEW 2: COMMENTS TABLE -->
+        <div id="view-comments" class="hidden">
+            <div class="section-header">
+                <div>
+                    <button class="btn" onclick="showVideosView()">← Powrót do listy filmów</button>
+                    <h2 class="section-title" id="active-video-title" style="margin-top:12px;">Komentarze pod filmem</h2>
+                </div>
+                <a id="btn-export-csv" class="btn btn-gold" href="#">📥 Pobierz plik CSV</a>
+            </div>
+
+            <!-- Top Controls Box -->
+            <div class="top-controls-box">
+                <!-- Search Input Row -->
+                <div class="search-row">
+                    <div class="search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="search-input" class="search-input" placeholder="Wpisz poszukiwane słowo lub frazę..." oninput="onFilterChange()">
+                    </div>
+                </div>
+
+                <!-- Checkboxes Row -->
+                <div class="checkboxes-row">
+                    <label class="filter-checkbox">
+                        <input type="checkbox" id="chk-exclude-author" onchange="onFilterChange()">
+                        Wyklucz autora kanału
+                    </label>
+
+                    <label class="filter-checkbox">
+                        <input type="checkbox" id="chk-unique-users" onchange="onFilterChange()">
+                        Unikalni użytkownicy (1 komentarz / osobę)
+                    </label>
+
+                    <label class="filter-checkbox">
+                        <input type="checkbox" id="chk-target-only" onchange="onFilterChange()">
+                        Pokaż tylko wyróżnionych użytkowników ⭐
+                    </label>
+
+                    <div class="comments-summary-badge" id="comments-count-summary">
+                        Wyświetlono: 0 z 0 komentarzy
+                    </div>
+                </div>
+            </div>
+
+            <div id="comments-loader" class="spinner"></div>
+
+            <!-- Two-Column Layout -->
+            <div class="comments-layout hidden" id="comments-layout-wrapper">
+                
+                <!-- Left Sidebar: Authors List -->
+                <div class="authors-sidebar">
+                    <div class="sidebar-header">
+                        <div class="sidebar-title-row">
+                            <span>Użytkownicy (<span id="authors-count">0</span>)</span>
+                        </div>
+                        <div class="sidebar-actions-row">
+                            <label class="filter-checkbox" style="font-size:12px;">
+                                <input type="checkbox" id="chk-select-all-authors" checked onchange="toggleSelectAllAuthors(this.checked)">
+                                Zaznacz / Odznacz wszystko
+                            </label>
+                            <button class="btn btn-sm" onclick="invertAuthorSelections()">Odwróć</button>
+                        </div>
+                    </div>
+
+                    <div class="authors-list-wrap" id="authors-list-container">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Right Panel: Comments Table -->
+                <div class="comments-table-panel">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:50px;">#</th>
+                                <th style="width:220px;">Autor</th>
+                                <th>Treść Komentarza</th>
+                                <th style="width:150px;">Data publikacji</th>
+                            </tr>
+                        </thead>
+                        <tbody id="comments-tbody"></tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODAL: SETTINGS -->
+    <div class="modal-overlay" id="settings-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">⚙️ Ustawienia Konfiguracji</div>
+                <button class="close-btn" onclick="closeSettingsModal()">✕</button>
+            </div>
+            <form onsubmit="saveSettings(event)">
+                <div class="form-group">
+                    <label class="form-label">Klucz YouTube Data API v3</label>
+                    <input type="password" id="input-api-key" class="form-input" placeholder="Wklej swój klucz API (np. AIzaSy...)">
+                    <div class="help-text">Klucz jest bezpiecznie zapisywany wyłącznie w pliku konfiguracyjnym serwera.</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Kanał YouTube (Handle lub ID)</label>
+                    <input type="text" id="input-channel-handle" class="form-input" placeholder="np. @itbpphilips1696 lub UC..." required>
+                    <div class="help-text">Ogranicza wybór filmów wyłącznie do wskazanego użytkownika.</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Wyróżnieni Użytkownicy (oddzieleni przecinkami)</label>
+                    <input type="text" id="input-target-users" class="form-input" placeholder="np. @itbpphilips1696, @WeekendowyDetektorysta">
+                    <div class="help-text">Użytkownicy, których komentarze będą wyróżnione gwiazdką w tabeli.</div>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
+                    <button type="button" class="btn" onclick="closeSettingsModal()">Anuluj</button>
+                    <button type="submit" class="btn btn-primary">Zapisz Konfigurację</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        const getApiUrl = (endpoint) => {
+            const isYoutubePath = window.location.pathname.includes('/youtube');
+            return (isYoutubePath ? '/youtube/api' : '/api') + endpoint;
+        };
+
+        let allComments = [];
+        let targetUsersList = [];
+        let currentChannelHandle = "";
+        let currentChannelTitle = "";
+        let activeVideoId = null;
+
+        // Map storing selection state of authors: { authorName: boolean }
+        let selectedAuthorsMap = {};
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadConfig();
+            loadVideos();
+        });
+
+        function showError(msg) {
+            const alert = document.getElementById("error-alert");
+            document.getElementById("error-message").innerText = msg;
+            alert.classList.remove("hidden");
+        }
+
+        function closeAlert() {
+            document.getElementById("error-alert").classList.add("hidden");
+        }
+
+        async function loadConfig() {
+            try {
+                const res = await fetch(getApiUrl("/config"));
+                const data = await res.json();
+                
+                currentChannelHandle = data.channel_handle || "";
+                document.getElementById("channel-subtitle").innerText = "Kanał: " + (currentChannelHandle || "Nieustawiony");
+                document.getElementById("input-channel-handle").value = currentChannelHandle;
+                document.getElementById("input-target-users").value = (data.target_users || []).join(", ");
+                
+                if (data.masked_api_key) {
+                    document.getElementById("input-api-key").placeholder = "Klucz aktywny: " + data.masked_api_key;
+                }
+            } catch (err) {
+                console.error("Błąd pobierania konfiguracji:", err);
+            }
+        }
+
+        async function loadVideos() {
+            closeAlert();
+            const grid = document.getElementById("videos-grid");
+            const loader = document.getElementById("videos-loader");
+
+            grid.classList.add("hidden");
+            loader.classList.remove("hidden");
+
+            try {
+                const res = await fetch(getApiUrl("/videos"));
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.error || "Nie udało się pobrać filmów.");
+                }
+
+                currentChannelTitle = data.channel_title || "";
+                document.getElementById("channel-subtitle").innerText = `Kanał: ${data.channel_title} (${data.channel_id})`;
+
+                grid.innerHTML = "";
+                if (data.videos.length === 0) {
+                    grid.innerHTML = "<p style='color:var(--text-muted);'>Brak filmów na kanale.</p>";
+                } else {
+                    data.videos.forEach(vid => {
+                        const dateStr = new Date(vid.publishedAt).toLocaleDateString("pl-PL", {
+                            year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
+                        });
+
+                        const card = document.createElement("div");
+                        card.className = "video-card";
+                        card.innerHTML = `
+                            <div class="video-thumb-wrap">
+                                <img src="${vid.thumbnail}" alt="${vid.title}" class="video-thumb">
+                                <div class="comments-badge">💬 ${vid.commentCount} komentarzy</div>
+                            </div>
+                            <div class="video-info">
+                                <div class="video-title" title="${vid.title}">${vid.title}</div>
+                                <div class="video-meta">
+                                    <span>📅 ${dateStr}</span>
+                                </div>
+                                <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="selectVideo('${vid.id}', '${encodeURIComponent(vid.title)}')">
+                                    Pobierz Komentarze
+                                </button>
+                            </div>
+                        `;
+                        grid.appendChild(card);
+                    });
+                }
+
+                grid.classList.remove("hidden");
+            } catch (err) {
+                showError(err.message);
+            } finally {
+                loader.classList.add("hidden");
+            }
+        }
+
+        async function selectVideo(videoId, encodedTitle) {
+            activeVideoId = videoId;
+            const title = decodeURIComponent(encodedTitle);
+
+            document.getElementById("view-videos").classList.add("hidden");
+            document.getElementById("view-comments").classList.remove("hidden");
+            document.getElementById("active-video-title").innerText = `Komentarze pod: "${title}"`;
+            document.getElementById("btn-export-csv").href = getApiUrl(`/export-csv?video_id=${videoId}`);
+
+            const loader = document.getElementById("comments-loader");
+            const layout = document.getElementById("comments-layout-wrapper");
+
+            loader.classList.remove("hidden");
+            layout.classList.add("hidden");
+            closeAlert();
+
+            try {
+                const res = await fetch(getApiUrl(`/comments?video_id=${videoId}`));
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.error || "Błąd podczas pobierania komentarzy.");
+                }
+
+                allComments = data.comments;
+                targetUsersList = (data.target_users || []).map(u => u.toLowerCase().trim());
+                if (data.channel_handle) currentChannelHandle = data.channel_handle;
+
+                // Reset selected authors map
+                selectedAuthorsMap = {};
+                allComments.forEach(c => {
+                    selectedAuthorsMap[c.author] = true;
+                });
+
+                document.getElementById("chk-select-all-authors").checked = true;
+                document.getElementById("search-input").value = "";
+                document.getElementById("chk-exclude-author").checked = false;
+                document.getElementById("chk-unique-users").checked = false;
+                document.getElementById("chk-target-only").checked = false;
+
+                onFilterChange();
+                layout.classList.remove("hidden");
+            } catch (err) {
+                showError(err.message);
+            } finally {
+                loader.classList.add("hidden");
+            }
+        }
+
+        // Helper to check if author is channel owner
+        function isChannelOwner(authorName) {
+            const cleanAuthor = authorName.toLowerCase().replace("@", "").trim();
+            const cleanHandle = (currentChannelHandle || "").toLowerCase().replace("@", "").trim();
+            const cleanTitle = (currentChannelTitle || "").toLowerCase().replace("@", "").trim();
+
+            if (cleanHandle && cleanAuthor === cleanHandle) return true;
+            if (cleanTitle && cleanAuthor === cleanTitle) return true;
+            return false;
+        }
+
+        function onFilterChange() {
+            const searchQuery = document.getElementById("search-input").value.toLowerCase().trim();
+            const excludeAuthor = document.getElementById("chk-exclude-author").checked;
+            const uniqueUsersOnly = document.getElementById("chk-unique-users").checked;
+            const targetOnly = document.getElementById("chk-target-only").checked;
+
+            // Step 1: Base filtering by channel owner exclusion & search query & target users
+            let matchingComments = allComments.filter(c => {
+                // Exclude channel owner check
+                if (excludeAuthor && isChannelOwner(c.author)) {
+                    return false;
+                }
+
+                // Target users only check
+                if (targetOnly) {
+                    const authorClean = c.author.toLowerCase().trim();
+                    const isTarget = targetUsersList.some(t => authorClean.includes(t.replace("@", "")));
+                    if (!isTarget) return false;
+                }
+
+                // Search query check (search in comment text or author display name)
+                if (searchQuery) {
+                    const matchText = c.comment.toLowerCase().includes(searchQuery);
+                    const matchAuthor = c.author.toLowerCase().includes(searchQuery);
+                    if (!matchText && !matchAuthor) return false;
+                }
+
+                return true;
+            });
+
+            // Step 2: Build dynamic unique authors list from matchingComments
+            const authorCounts = {};
+            matchingComments.forEach(c => {
+                authorCounts[c.author] = (authorCounts[c.author] || 0) + 1;
+            });
+
+            const matchingAuthorsList = Object.keys(authorCounts).sort((a, b) => a.localeCompare(b, "pl", { sensitivity: "base" }));
+
+            // Ensure any new matching author defaults to true in selectedAuthorsMap if not set
+            matchingAuthorsList.forEach(author => {
+                if (selectedAuthorsMap[author] === undefined) {
+                    selectedAuthorsMap[author] = true;
+                }
+            });
+
+            // Render Sidebar Authors List
+            renderAuthorsSidebar(matchingAuthorsList, authorCounts);
+
+            // Step 3: Filter comments by checked authors in sidebar
+            let tableComments = matchingComments.filter(c => selectedAuthorsMap[c.author] === true);
+
+            // Step 4: Unique users filter (only 1 comment per author)
+            if (uniqueUsersOnly) {
+                const seenAuthors = new Set();
+                const uniqueList = [];
+                tableComments.forEach(c => {
+                    if (!seenAuthors.has(c.author)) {
+                        seenAuthors.add(c.author);
+                        uniqueList.push(c);
+                    }
+                });
+                tableComments = uniqueList;
+            }
+
+            // Step 5: Render Comments Table
+            renderCommentsTable(tableComments);
+
+            // Update Summary Text
+            document.getElementById("comments-count-summary").innerText = `Wyświetlono: ${tableComments.length} z ${allComments.length} komentarzy`;
+        }
+
+        function renderAuthorsSidebar(authorsList, authorCounts) {
+            const container = document.getElementById("authors-list-container");
+            container.innerHTML = "";
+            document.getElementById("authors-count").innerText = authorsList.length;
+
+            if (authorsList.length === 0) {
+                container.innerHTML = `<div style="padding:16px; font-size:12px; color:var(--text-muted); text-align:center;">Brak autorów dla filtrów</div>`;
+                return;
+            }
+
+            let allChecked = true;
+
+            authorsList.forEach(author => {
+                const isChecked = selectedAuthorsMap[author] !== false;
+                if (!isChecked) allChecked = false;
+
+                const item = document.createElement("label");
+                item.className = "author-item";
+                item.innerHTML = `
+                    <input type="checkbox" ${isChecked ? "checked" : ""} onchange="onAuthorCheckboxToggle('${escapeJsString(author)}', this.checked)">
+                    <span class="author-name" title="${escapeHtml(author)}">${escapeHtml(author)}</span>
+                    <span class="author-count-pill">${authorCounts[author]}</span>
+                `;
+                container.appendChild(item);
+            });
+
+            document.getElementById("chk-select-all-authors").checked = allChecked;
+        }
+
+        function onAuthorCheckboxToggle(author, isChecked) {
+            selectedAuthorsMap[author] = isChecked;
+            onFilterChange();
+        }
+
+        function toggleSelectAllAuthors(checked) {
+            const searchQuery = document.getElementById("search-input").value.toLowerCase().trim();
+            const excludeAuthor = document.getElementById("chk-exclude-author").checked;
+            const targetOnly = document.getElementById("chk-target-only").checked;
+
+            allComments.forEach(c => {
+                if (excludeAuthor && isChannelOwner(c.author)) return;
+
+                if (targetOnly) {
+                    const authorClean = c.author.toLowerCase().trim();
+                    const isTarget = targetUsersList.some(t => authorClean.includes(t.replace("@", "")));
+                    if (!isTarget) return;
+                }
+
+                if (searchQuery) {
+                    const matchText = c.comment.toLowerCase().includes(searchQuery);
+                    const matchAuthor = c.author.toLowerCase().includes(searchQuery);
+                    if (!matchText && !matchAuthor) return;
+                }
+
+                selectedAuthorsMap[c.author] = checked;
+            });
+
+            onFilterChange();
+        }
+
+        function invertAuthorSelections() {
+            const searchQuery = document.getElementById("search-input").value.toLowerCase().trim();
+            const excludeAuthor = document.getElementById("chk-exclude-author").checked;
+            const targetOnly = document.getElementById("chk-target-only").checked;
+
+            allComments.forEach(c => {
+                if (excludeAuthor && isChannelOwner(c.author)) return;
+
+                if (targetOnly) {
+                    const authorClean = c.author.toLowerCase().trim();
+                    const isTarget = targetUsersList.some(t => authorClean.includes(t.replace("@", "")));
+                    if (!isTarget) return;
+                }
+
+                if (searchQuery) {
+                    const matchText = c.comment.toLowerCase().includes(searchQuery);
+                    const matchAuthor = c.author.toLowerCase().includes(searchQuery);
+                    if (!matchText && !matchAuthor) return;
+                }
+
+                selectedAuthorsMap[c.author] = !selectedAuthorsMap[c.author];
+            });
+
+            onFilterChange();
+        }
+
+        function renderCommentsTable(comments) {
+            const tbody = document.getElementById("comments-tbody");
+            tbody.innerHTML = "";
+
+            if (comments.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:32px; color:var(--text-muted);">Brak komentarzy spełniających wybrane kryteria.</td></tr>`;
+                return;
+            }
+
+            comments.forEach((c, idx) => {
+                const authorClean = c.author.toLowerCase().trim();
+                const isTarget = targetUsersList.some(t => authorClean.includes(t.replace("@", "")));
+
+                const dateStr = new Date(c.date).toLocaleDateString("pl-PL", {
+                    year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
+                });
+
+                const tr = document.createElement("tr");
+                if (isTarget) tr.className = "highlighted-row";
+
+                tr.innerHTML = `
+                    <td style="color:var(--text-muted); font-size:12px;">${idx + 1}</td>
+                    <td>
+                        <div class="author-badge">
+                            ${escapeHtml(c.author)}
+                            ${isTarget ? '<span class="badge-target">⭐ Wyróżniony</span>' : ''}
+                        </div>
+                    </td>
+                    <td style="white-space: pre-wrap;">${escapeHtml(c.comment)}</td>
+                    <td class="comment-date">${dateStr}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text.replace(/&/g, "&amp;")
+                       .replace(/</g, "&lt;")
+                       .replace(/>/g, "&gt;")
+                       .replace(/"/g, "&quot;")
+                       .replace(/'/g, "&#039;");
+        }
+
+        function escapeJsString(str) {
+            if (!str) return "";
+            return str.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+        }
+
+        function showVideosView() {
+            document.getElementById("view-comments").classList.add("hidden");
+            document.getElementById("view-videos").classList.remove("hidden");
+        }
+
+        function openSettingsModal() {
+            document.getElementById("settings-modal").classList.add("active");
+        }
+
+        function closeSettingsModal() {
+            document.getElementById("settings-modal").classList.remove("active");
+        }
+
+        async function saveSettings(e) {
+            e.preventDefault();
+            const apiKey = document.getElementById("input-api-key").value;
+            const channelHandle = document.getElementById("input-channel-handle").value;
+            const targetUsers = document.getElementById("input-target-users").value;
+
+            try {
+                const res = await fetch(getApiUrl("/config"), {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        api_key: apiKey,
+                        channel_handle: channelHandle,
+                        target_users: targetUsers
+                    })
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || "Błąd zapisu ustawień.");
+
+                closeSettingsModal();
+                loadConfig();
+                loadVideos();
+            } catch (err) {
+                alert("Błąd: " + err.message);
+            }
+        }
+    </script>
+</body>
+</html>
