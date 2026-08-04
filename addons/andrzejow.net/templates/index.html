@@ -616,7 +616,7 @@
             <span class="brand-icon">🎡</span>
             <div>
                 <div class="brand-title">YouTube Koło Fortuny Online</div>
-                <div class="brand-subtitle" id="channel-subtitle">Ładowanie kanału...</div>
+                <div class="brand-subtitle" id="channel-subtitle">Ładowanie ustawień przeglądarki...</div>
             </div>
         </div>
         <div class="nav-actions">
@@ -737,31 +737,31 @@
     <div class="modal-overlay" id="settings-modal">
         <div class="modal">
             <div class="modal-header">
-                <div class="modal-title">⚙️ Ustawienia Konfiguracji</div>
+                <div class="modal-title">⚙️ Twoje Indywidualne Ustawienia</div>
                 <button class="close-btn" onclick="closeSettingsModal()">✕</button>
             </div>
             <form onsubmit="saveSettings(event)">
                 <div class="form-group">
                     <label class="form-label">Klucz YouTube Data API v3</label>
-                    <input type="password" id="input-api-key" class="form-input" placeholder="Wklej swój klucz API (np. AIzaSy...)">
-                    <div class="help-text">Klucz jest bezpiecznie zapisywany wyłącznie w pliku konfiguracyjnym serwera.</div>
+                    <input type="password" id="input-api-key" class="form-input" placeholder="Wklej swój osobisty klucz API (np. AIzaSy...)">
+                    <div class="help-text">Klucz zapisuje się wyłącznie w Twojej przeglądarce (localStorage) i nie jest dzielony z innymi użytkownikami.</div>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Kanał YouTube (Handle lub ID)</label>
-                    <input type="text" id="input-channel-handle" class="form-input" placeholder="np. @itbpphilips1696 lub UC..." required>
-                    <div class="help-text">Ogranicza wybór filmów wyłącznie do wskazanego użytkownika.</div>
+                    <label class="form-label">Wybrany Kanał YouTube (Handle lub ID)</label>
+                    <input type="text" id="input-channel-handle" class="form-input" placeholder="np. @UncjuszPatyniusz lub UC..." required>
+                    <div class="help-text">Kanał, z którego chcesz wybierać filmy.</div>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Wyróżnieni Użytkownicy (oddzieleni przecinkami)</label>
-                    <input type="text" id="input-target-users" class="form-input" placeholder="np. @itbpphilips1696, @WeekendowyDetektorysta">
-                    <div class="help-text">Użytkownicy, których komentarze będą wyróżnione gwiazdką w tabeli.</div>
+                    <input type="text" id="input-target-users" class="form-input" placeholder="np. @nazwa1, @nazwa2">
+                    <div class="help-text">Użytkownicy, których komentarze będą wyróżnione gwiazdką w Twojej sesji.</div>
                 </div>
 
                 <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
                     <button type="button" class="btn" onclick="closeSettingsModal()">Anuluj</button>
-                    <button type="submit" class="btn btn-primary">Zapisz Konfigurację</button>
+                    <button type="submit" class="btn btn-primary">Zapisz Ustawienia w Przeglądarce</button>
                 </div>
             </form>
         </div>
@@ -769,9 +769,37 @@
 
     <!-- JavaScript Logic -->
     <script>
+        const STORAGE_KEY = "yt_kolo_fortuny_user_config";
+
+        function getUserConfig() {
+            try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) return JSON.parse(stored);
+            } catch (e) {}
+            return {
+                api_key: "",
+                channel_handle: "",
+                target_users: []
+            };
+        }
+
+        function saveUserConfigToStorage(config) {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+            } catch (e) {}
+        }
+
         const getApiUrl = (endpoint) => {
             const isYoutubePath = window.location.pathname.includes('/youtube');
             return (isYoutubePath ? '/youtube/api' : '/api') + endpoint;
+        };
+
+        const getRequestHeaders = () => {
+            const config = getUserConfig();
+            return {
+                "X-Api-Key": config.api_key || "",
+                "X-Channel-Handle": config.channel_handle || ""
+            };
         };
 
         let allComments = [];
@@ -798,26 +826,26 @@
             document.getElementById("error-alert").classList.add("hidden");
         }
 
-        async function loadConfig() {
-            try {
-                const res = await fetch(getApiUrl("/config"));
-                const data = await res.json();
-                
-                currentChannelHandle = data.channel_handle || "";
-                document.getElementById("channel-subtitle").innerText = "Kanał: " + (currentChannelHandle || "Nieustawiony");
-                document.getElementById("input-channel-handle").value = currentChannelHandle;
-                document.getElementById("input-target-users").value = (data.target_users || []).join(", ");
-                
-                if (data.masked_api_key) {
-                    document.getElementById("input-api-key").placeholder = "Klucz aktywny: " + data.masked_api_key;
-                }
-            } catch (err) {
-                console.error("Błąd pobierania konfiguracji:", err);
-            }
+        function loadConfig() {
+            const config = getUserConfig();
+            currentChannelHandle = config.channel_handle || "";
+            targetUsersList = (config.target_users || []).map(u => u.toLowerCase().trim());
+
+            document.getElementById("channel-subtitle").innerText = "Kanał: " + (currentChannelHandle || "Nieustawiony");
+            document.getElementById("input-channel-handle").value = currentChannelHandle;
+            document.getElementById("input-target-users").value = (config.target_users || []).join(", ");
+            document.getElementById("input-api-key").value = config.api_key || "";
         }
 
         async function loadVideos() {
             closeAlert();
+            loadConfig();
+            const config = getUserConfig();
+
+            if (!config.api_key || !config.channel_handle) {
+                openSettingsModal();
+            }
+
             const grid = document.getElementById("videos-grid");
             const loader = document.getElementById("videos-loader");
 
@@ -825,7 +853,7 @@
             loader.classList.remove("hidden");
 
             try {
-                const res = await fetch(getApiUrl("/videos"));
+                const res = await fetch(getApiUrl("/videos"), { headers: getRequestHeaders() });
                 const data = await res.json();
 
                 if (!res.ok) {
@@ -876,11 +904,14 @@
         async function selectVideo(videoId, encodedTitle) {
             activeVideoId = videoId;
             const title = decodeURIComponent(encodedTitle);
+            const userConfig = getUserConfig();
 
             document.getElementById("view-videos").classList.add("hidden");
             document.getElementById("view-comments").classList.remove("hidden");
             document.getElementById("active-video-title").innerText = `Komentarze pod: "${title}"`;
-            document.getElementById("btn-export-csv").href = getApiUrl(`/export-csv?video_id=${videoId}`);
+            
+            const csvUrl = getApiUrl(`/export-csv?video_id=${videoId}&api_key=${encodeURIComponent(userConfig.api_key || '')}&channel_handle=${encodeURIComponent(userConfig.channel_handle || '')}`);
+            document.getElementById("btn-export-csv").href = csvUrl;
 
             const loader = document.getElementById("comments-loader");
             const layout = document.getElementById("comments-layout-wrapper");
@@ -890,7 +921,7 @@
             closeAlert();
 
             try {
-                const res = await fetch(getApiUrl(`/comments?video_id=${videoId}`));
+                const res = await fetch(getApiUrl(`/comments?video_id=${videoId}`), { headers: getRequestHeaders() });
                 const data = await res.json();
 
                 if (!res.ok) {
@@ -898,9 +929,7 @@
                 }
 
                 allComments = data.comments;
-                targetUsersList = (data.target_users || []).map(u => u.toLowerCase().trim());
-                if (data.channel_handle) currentChannelHandle = data.channel_handle;
-
+                
                 // Reset selected authors map
                 selectedAuthorsMap = {};
                 allComments.forEach(c => {
@@ -1152,32 +1181,23 @@
             document.getElementById("settings-modal").classList.remove("active");
         }
 
-        async function saveSettings(e) {
+        function saveSettings(e) {
             e.preventDefault();
-            const apiKey = document.getElementById("input-api-key").value;
-            const channelHandle = document.getElementById("input-channel-handle").value;
-            const targetUsers = document.getElementById("input-target-users").value;
+            const apiKey = document.getElementById("input-api-key").value.trim();
+            const channelHandle = document.getElementById("input-channel-handle").value.trim();
+            const targetUsersRaw = document.getElementById("input-target-users").value;
+            const targetUsers = targetUsersRaw.split(",").map(u => u.trim()).filter(u => u);
 
-            try {
-                const res = await fetch(getApiUrl("/config"), {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        api_key: apiKey,
-                        channel_handle: channelHandle,
-                        target_users: targetUsers
-                    })
-                });
+            const newConfig = {
+                api_key: apiKey,
+                channel_handle: channelHandle,
+                target_users: targetUsers
+            };
 
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error || "Błąd zapisu ustawień.");
-
-                closeSettingsModal();
-                loadConfig();
-                loadVideos();
-            } catch (err) {
-                alert("Błąd: " + err.message);
-            }
+            saveUserConfigToStorage(newConfig);
+            closeSettingsModal();
+            loadConfig();
+            loadVideos();
         }
     </script>
 </body>

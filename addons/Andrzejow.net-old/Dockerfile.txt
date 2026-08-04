@@ -1,0 +1,5 @@
+FROM php:8.2-apache
+# Pliki strony będą w folderze /share/andrzejow.net
+RUN rm -rf /var/www/html && ln -s /share/andrzejow.net /var/www/html
+RUN echo "<Directory /var/www/html>\nOptions +Indexes\n</Directory>" > /etc/apache2/conf-available/indexes.conf && a2enconf indexes
+EXPOSE 80

@@ -2,6 +2,15 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.5.2] - 2026-08-04
+
+### Zmieniono / Dodano
+- **Pełna izolacja sesji użytkowników**: Ustawienia (`api_key`, `channel_handle`, `target_users`) są od teraz zapisywane **wyłącznie w przeglądarce klienta** (`localStorage`).
+- Każda przeglądarka i urządzenie posiada własne, niezależne ustawienia, które nie są widoczne dla innych użytkowników wchodzących na ten sam adres URL.
+- Serwer działa w trybie bezstanowym proxy – nie zapisuje kluczy API użytkowników na dysku serwera.
+
+---
+
 ## [1.5.1] - 2026-08-04
 
 ### Usunięto

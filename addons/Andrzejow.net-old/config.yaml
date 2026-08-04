@@ -1,0 +1,13 @@
+name: "Web server for andrzejow.net"
+version: "1.0.1"
+slug: "andrzejow_net"
+description: "Web server for andrzejow.net"
+arch:
+  - "aarch64"
+  - "amd64"
+startup: "services"
+boot: "auto"
+ports:
+  80/tcp: 8080
+map:
+  - share:rw

@@ -1,33 +1,20 @@
 import csv
 import io
-import json
 import os
 from flask import Flask, jsonify, render_template, request, Response
 import youtube_service
 
 app = Flask(__name__)
 
-CONFIG_PATH = os.environ.get("CONFIG_PATH", os.path.join(os.path.dirname(__file__), "config.json"))
 
-
-def load_config():
-    if os.path.exists(CONFIG_PATH):
-        try:
-            with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception as e:
-            print(f"Błąd odczytu {CONFIG_PATH}: {e}")
-    
-    return {
-        "api_key": "",
-        "channel_handle": "",
-        "target_users": []
-    }
-
-
-def save_config(config_data):
-    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
-        json.dump(config_data, f, ensure_ascii=False, indent=2)
+def get_request_credentials():
+    """
+    Pobiera klucz API oraz nazwę kanału z nagłówków żądania HTTP (lub parametrów URL),
+    zapewniając bezstanowość i niezależność sesji każdego użytkownika.
+    """
+    api_key = request.headers.get("X-Api-Key") or request.args.get("api_key", "").strip()
+    channel_handle = request.headers.get("X-Channel-Handle") or request.args.get("channel_handle", "").strip()
+    return api_key, channel_handle
 
 
 @app.route("/")
@@ -43,62 +30,16 @@ def youtube_app():
     return render_template("index.html")
 
 
-@app.route("/api/config", methods=["GET"])
-@app.route("/youtube/api/config", methods=["GET"])
-def get_config_endpoint():
-    config = load_config()
-    masked_key = ""
-    if config.get("api_key"):
-        key = config["api_key"]
-        masked_key = key[:4] + "*" * (len(key) - 8) + key[-4:] if len(key) > 8 else "****"
-
-    return jsonify({
-        "channel_handle": config.get("channel_handle", ""),
-        "target_users": config.get("target_users", []),
-        "is_api_key_set": bool(config.get("api_key")),
-        "masked_api_key": masked_key
-    })
-
-
-@app.route("/api/config", methods=["POST"])
-@app.route("/youtube/api/config", methods=["POST"])
-def update_config_endpoint():
-    data = request.json or {}
-    config = load_config()
-
-    new_api_key = data.get("api_key", "").strip()
-    if new_api_key and "*" not in new_api_key:
-        config["api_key"] = new_api_key
-
-    if "channel_handle" in data:
-        config["channel_handle"] = data["channel_handle"].strip()
-
-    if "target_users" in data:
-        raw_targets = data["target_users"]
-        if isinstance(raw_targets, str):
-            targets = [t.strip() for t in raw_targets.split(",") if t.strip()]
-        elif isinstance(raw_targets, list):
-            targets = [str(t).strip() for t in raw_targets if str(t).strip()]
-        else:
-            targets = []
-        config["target_users"] = targets
-
-    save_config(config)
-    return jsonify({"success": True, "message": "Konfiguracja została pomyślnie zapisana."})
-
-
 @app.route("/api/videos", methods=["GET"])
 @app.route("/youtube/api/videos", methods=["GET"])
 def list_videos_endpoint():
-    config = load_config()
-    api_key = config.get("api_key")
-    channel_handle = config.get("channel_handle")
+    api_key, channel_handle = get_request_credentials()
 
     if not api_key:
-        return jsonify({"error": "Brak skonfigurowanego klucza YouTube API. Przejdź do ustawień i wprowadź klucz."}), 400
+        return jsonify({"error": "Brak klucza YouTube API. Otwórz Ustawienia ⚙️ i wprowadź swój indywidualny klucz API."}), 400
 
     if not channel_handle:
-        return jsonify({"error": "Brak skonfigurowanej nazwy/ID kanału w ustawieniach."}), 400
+        return jsonify({"error": "Brak nazwy/ID kanału. Otwórz Ustawienia ⚙️ i wpisz nazwę kanału (np. @UncjuszPatyniusz)."}), 400
 
     try:
         data = youtube_service.get_channel_videos(api_key, channel_handle)
@@ -114,12 +55,10 @@ def get_comments_endpoint():
     if not video_id:
         return jsonify({"error": "Brak wymaganego parametru video_id."}), 400
 
-    config = load_config()
-    api_key = config.get("api_key")
-    channel_handle = config.get("channel_handle")
+    api_key, channel_handle = get_request_credentials()
 
     if not api_key:
-        return jsonify({"error": "Brak skonfigurowanego klucza YouTube API."}), 400
+        return jsonify({"error": "Brak klucza YouTube API. Otwórz Ustawienia ⚙️ i wprowadź swój klucz API."}), 400
 
     try:
         comments = youtube_service.get_video_comments(
@@ -129,7 +68,7 @@ def get_comments_endpoint():
         )
         return jsonify({
             "video_id": video_id,
-            "target_users": config.get("target_users", []),
+            "channel_handle": channel_handle,
             "total_comments": len(comments),
             "comments": comments
         })
@@ -146,9 +85,7 @@ def export_csv_endpoint():
     if not video_id:
         return jsonify({"error": "Brak parametru video_id."}), 400
 
-    config = load_config()
-    api_key = config.get("api_key")
-    channel_handle = config.get("channel_handle")
+    api_key, channel_handle = get_request_credentials()
 
     try:
         comments = youtube_service.get_video_comments(
