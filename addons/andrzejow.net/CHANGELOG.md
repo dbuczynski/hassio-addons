@@ -2,6 +2,21 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.5.4] - 2026-08-04
+
+### Dodano
+- **Przycisk "WYRÓŻNIJ" (Koło Fortuny)** w nagłówku panelu bocznego autorów.
+- **Interaktywne Koło Fortuny (Wykres Pie Canvas)**:
+  - Przełączanie widoku z tabeli na animowane Koło Fortuny.
+  - Proporcjonalne wyliczanie wycinków koła w zależności od wybranych filtrów (unikalni autorzy = 1 wycinek/osobę, z powtórzeniami = wielokrotne wycinki wg kolejności komentarzy).
+- **Sterowanie fizyką i czasem**:
+  - Suwak czasu kręcenia w zakresie od `5 sekund` do `120 sekund`.
+  - **Przycisk START z pomiarem mocy (20 poziomów)**: Przytrzymanie przycisku ładuje pasek mocy (poziomy 1-20), a puszczenie wprawia koło w ruch obrotowy.
+  - Płynny obrót z fizyką hamowania (ease-out cubic) i wskaźnikiem wygrywającego wycinka na samej górze.
+  - Ogłoszenie zwycięzcy z banerem i podświetleniem komentarza.
+
+---
+
 ## [1.5.3] - 2026-08-04
 
 ### Zmieniono

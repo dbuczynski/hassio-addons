@@ -136,6 +136,19 @@
             background: linear-gradient(135deg, #d97706, #b45309);
         }
 
+        .btn-wheel {
+            background: linear-gradient(135deg, #ec4899, #8b5cf6);
+            border: none;
+            color: #fff;
+            font-weight: 700;
+            box-shadow: 0 4px 14px rgba(236, 72, 153, 0.4);
+        }
+
+        .btn-wheel:hover {
+            background: linear-gradient(135deg, #db2777, #7c3aed);
+            box-shadow: 0 6px 20px rgba(236, 72, 153, 0.6);
+        }
+
         /* Container */
         .container {
             max-width: 1400px;
@@ -415,7 +428,7 @@
             border-radius: 10px;
         }
 
-        /* Right Column: Table */
+        /* Right Column Panels */
         .comments-table-panel {
             flex: 1;
             min-width: 0;
@@ -482,6 +495,160 @@
             color: var(--text-muted);
             font-size: 12.5px;
             white-space: nowrap;
+        }
+
+        /* Wheel of Fortune Panel */
+        .wheel-panel {
+            flex: 1;
+            min-width: 0;
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .wheel-controls-bar {
+            width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 16px 20px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+        }
+
+        .slider-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13.5px;
+            font-weight: 600;
+        }
+
+        .wheel-slider {
+            accent-color: var(--accent-primary);
+            width: 160px;
+            cursor: pointer;
+        }
+
+        /* Power Hold Button */
+        .btn-power-start {
+            position: relative;
+            background: #1e293b;
+            border: 2px solid var(--accent-gold);
+            color: #fff;
+            padding: 12px 32px;
+            border-radius: var(--radius-md);
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+            overflow: hidden;
+            user-select: none;
+            box-shadow: 0 4px 18px rgba(245, 158, 11, 0.35);
+            transition: transform 0.1s ease;
+        }
+
+        .btn-power-start:active {
+            transform: scale(0.97);
+        }
+
+        .btn-power-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #f59e0b, #ef4444, #ec4899);
+            z-index: 1;
+            transition: width 0.05s linear;
+        }
+
+        .btn-power-text {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        /* Wheel Canvas Area */
+        .wheel-stage {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 10px 0;
+        }
+
+        canvas#wheel-canvas {
+            max-width: 100%;
+            height: auto;
+            border-radius: 50%;
+            box-shadow: 0 0 40px rgba(99, 102, 241, 0.25);
+        }
+
+        /* Winner Celebration Card */
+        .winner-banner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(16px);
+            border: 2px solid var(--accent-gold);
+            padding: 24px 36px;
+            border-radius: var(--radius-lg);
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(245, 158, 11, 0.5);
+            z-index: 50;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .winner-banner.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .winner-title {
+            font-size: 14px;
+            color: var(--accent-gold);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .winner-name {
+            font-size: 26px;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 12px;
+            word-break: break-all;
+        }
+
+        .winner-comment {
+            font-size: 13px;
+            color: var(--text-muted);
+            max-height: 80px;
+            overflow-y: auto;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-style: italic;
         }
 
         /* Modal Settings */
@@ -645,14 +812,16 @@
             <div id="videos-grid" class="videos-grid hidden"></div>
         </div>
 
-        <!-- VIEW 2: COMMENTS TABLE -->
+        <!-- VIEW 2: COMMENTS & WHEEL VIEW -->
         <div id="view-comments" class="hidden">
             <div class="section-header">
                 <div>
                     <button class="btn" onclick="showVideosView()">← Powrót do listy filmów</button>
                     <h2 class="section-title" id="active-video-title" style="margin-top:12px;">Komentarze pod filmem</h2>
                 </div>
-                <a id="btn-export-csv" class="btn btn-gold" href="#">📥 Pobierz plik CSV</a>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <a id="btn-export-csv" class="btn btn-gold" href="#">📥 Pobierz plik CSV</a>
+                </div>
             </div>
 
             <!-- Top Controls Box -->
@@ -698,6 +867,7 @@
                     <div class="sidebar-header">
                         <div class="sidebar-title-row">
                             <span>Użytkownicy (<span id="authors-count">0</span>)</span>
+                            <button id="btn-toggle-view" class="btn btn-sm btn-wheel" onclick="toggleWheelView()">🎯 WYRÓŻNIJ</button>
                         </div>
                         <div class="sidebar-actions-row">
                             <label class="filter-checkbox" style="font-size:12px;">
@@ -713,8 +883,8 @@
                     </div>
                 </div>
 
-                <!-- Right Panel: Comments Table -->
-                <div class="comments-table-panel">
+                <!-- Right Panel Option A: Table -->
+                <div class="comments-table-panel" id="panel-comments-table">
                     <table>
                         <thead>
                             <tr>
@@ -726,6 +896,43 @@
                         </thead>
                         <tbody id="comments-tbody"></tbody>
                     </table>
+                </div>
+
+                <!-- Right Panel Option B: Wheel of Fortune -->
+                <div class="wheel-panel hidden" id="panel-wheel-fortune">
+                    <div class="wheel-controls-bar">
+                        <div class="slider-wrap">
+                            <span>⏱️ Czas kręcenia:</span>
+                            <input type="range" id="wheel-duration-slider" class="wheel-slider" min="5" max="120" value="15" oninput="updateSliderLabel(this.value)">
+                            <span id="slider-val-label" style="color:var(--accent-gold); font-weight:700;">15s</span>
+                        </div>
+
+                        <!-- Hold to Charge Power Start Button -->
+                        <button id="btn-power-start" class="btn-power-start" 
+                                onmousedown="startChargingPower()" 
+                                onmouseup="stopChargingAndSpin()" 
+                                onmouseleave="cancelChargingPower()"
+                                ontouchstart="startChargingPower()" 
+                                ontouchend="stopChargingAndSpin()">
+                            <div class="btn-power-fill" id="btn-power-fill"></div>
+                            <div class="btn-power-text" id="btn-power-text">
+                                <span>🎡 ZAPROŚ DO LOSOWANIA (PRZYTRZYMAJ START)</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <!-- Wheel Canvas Stage -->
+                    <div class="wheel-stage">
+                        <canvas id="wheel-canvas" width="540" height="540"></canvas>
+
+                        <!-- Winner Card Overlay -->
+                        <div class="winner-banner" id="winner-banner">
+                            <div class="winner-title">🎉 ZWYCIĘZCA KOŁA FORTUNY 🎉</div>
+                            <div class="winner-name" id="winner-name">@Autor</div>
+                            <div class="winner-comment" id="winner-comment">"Treść komentarza..."</div>
+                            <button class="btn btn-gold btn-sm" style="margin-top:14px;" onclick="closeWinnerBanner()">Zamknij</button>
+                        </div>
+                    </div>
                 </div>
 
             </div>
@@ -810,6 +1017,26 @@
 
         // Map storing selection state of authors: { authorName: boolean }
         let selectedAuthorsMap = {};
+
+        // Active View State: 'table' or 'wheel'
+        let currentRightView = 'table';
+
+        // Wheel Physics & Animation Variables
+        let wheelEntries = []; // Array of active slice objects: [{ author, comment }]
+        let currentWheelAngle = 0; // In radians
+        let isSpinning = false;
+        let animationFrameId = null;
+
+        // Power Button Charge State (20 Levels)
+        let isChargingPower = false;
+        let currentPowerLevel = 0; // 0 to 20
+        let chargeIntervalId = null;
+
+        // Slice Palette Colors
+        const WHEEL_COLORS = [
+            "#6366f1", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6", 
+            "#ec4899", "#14b8a6", "#f97316", "#06b6d4", "#a855f7"
+        ];
 
         document.addEventListener("DOMContentLoaded", () => {
             loadConfig();
@@ -942,6 +1169,12 @@
                 document.getElementById("chk-unique-users").checked = false;
                 document.getElementById("chk-target-only").checked = false;
 
+                // Default view: Table
+                currentRightView = 'table';
+                document.getElementById("panel-comments-table").classList.remove("hidden");
+                document.getElementById("panel-wheel-fortune").classList.add("hidden");
+                document.getElementById("btn-toggle-view").innerText = "🎯 WYRÓŻNIJ";
+
                 onFilterChange();
                 layout.classList.remove("hidden");
             } catch (err) {
@@ -970,19 +1203,16 @@
 
             // Step 1: Base filtering by channel owner exclusion & search query & target users
             let matchingComments = allComments.filter(c => {
-                // Exclude channel owner check
                 if (excludeAuthor && isChannelOwner(c.author)) {
                     return false;
                 }
 
-                // Target users only check
                 if (targetOnly) {
                     const authorClean = c.author.toLowerCase().trim();
                     const isTarget = targetUsersList.some(t => authorClean.includes(t.replace("@", "")));
                     if (!isTarget) return false;
                 }
 
-                // Search query check (search in comment text or author display name)
                 if (searchQuery) {
                     const matchText = c.comment.toLowerCase().includes(searchQuery);
                     const matchAuthor = c.author.toLowerCase().includes(searchQuery);
@@ -1000,14 +1230,12 @@
 
             const matchingAuthorsList = Object.keys(authorCounts).sort((a, b) => a.localeCompare(b, "pl", { sensitivity: "base" }));
 
-            // Ensure any new matching author defaults to true in selectedAuthorsMap if not set
             matchingAuthorsList.forEach(author => {
                 if (selectedAuthorsMap[author] === undefined) {
                     selectedAuthorsMap[author] = true;
                 }
             });
 
-            // Render Sidebar Authors List
             renderAuthorsSidebar(matchingAuthorsList, authorCounts);
 
             // Step 3: Filter comments by checked authors in sidebar
@@ -1026,10 +1254,13 @@
                 tableComments = uniqueList;
             }
 
-            // Step 5: Render Comments Table
+            // Step 5: Render active view (Table or Wheel)
             renderCommentsTable(tableComments);
 
-            // Update Summary Text
+            // Update Wheel Entries
+            wheelEntries = tableComments;
+            drawWheel();
+
             document.getElementById("comments-count-summary").innerText = `Wyświetlono: ${tableComments.length} z ${allComments.length} komentarzy`;
         }
 
@@ -1152,6 +1383,251 @@
                 `;
                 tbody.appendChild(tr);
             });
+        }
+
+        /* ----------------------------------------------------
+           WHEEL OF FORTUNE (KOŁO FORTUNY) LOGIC & CANVAS 
+           ---------------------------------------------------- */
+        function toggleWheelView() {
+            closeWinnerBanner();
+            if (currentRightView === 'table') {
+                currentRightView = 'wheel';
+                document.getElementById("panel-comments-table").classList.add("hidden");
+                document.getElementById("panel-wheel-fortune").classList.remove("hidden");
+                document.getElementById("btn-toggle-view").innerText = "📋 TABELA";
+                drawWheel();
+            } else {
+                currentRightView = 'table';
+                document.getElementById("panel-wheel-fortune").classList.add("hidden");
+                document.getElementById("panel-comments-table").classList.remove("hidden");
+                document.getElementById("btn-toggle-view").innerText = "🎯 WYRÓŻNIJ";
+            }
+        }
+
+        function updateSliderLabel(val) {
+            document.getElementById("slider-val-label").innerText = val + "s";
+        }
+
+        function drawWheel() {
+            const canvas = document.getElementById("wheel-canvas");
+            if (!canvas) return;
+            const ctx = canvas.getContext("2d");
+            const width = canvas.width;
+            const height = canvas.height;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radius = Math.min(centerX, centerY) - 20;
+
+            ctx.clearRect(0, 0, width, height);
+
+            const total = wheelEntries.length;
+            if (total === 0) {
+                // Empty state wheel
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                ctx.fillStyle = "#1e293b";
+                ctx.fill();
+                ctx.strokeStyle = "rgba(255,255,255,0.2)";
+                ctx.lineWidth = 4;
+                ctx.stroke();
+
+                ctx.fillStyle = "#94a3b8";
+                ctx.font = "16px Inter, sans-serif";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText("Brak wybranych użytkowników do koła fortuny", centerX, centerY);
+                return;
+            }
+
+            const sliceAngle = (2 * Math.PI) / total;
+
+            // Draw Slices
+            for (let i = 0; i < total; i++) {
+                const angleStart = currentWheelAngle + i * sliceAngle;
+                const angleEnd = angleStart + sliceAngle;
+
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, angleStart, angleEnd);
+                ctx.closePath();
+
+                ctx.fillStyle = WHEEL_COLORS[i % WHEEL_COLORS.length];
+                ctx.fill();
+
+                ctx.strokeStyle = "rgba(15, 23, 42, 0.6)";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Draw Text / Labels inside slice
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(angleStart + sliceAngle / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "#ffffff";
+                
+                // Adaptive font size based on slice count
+                const fontSize = total > 30 ? 10 : total > 15 ? 12 : 14;
+                ctx.font = `bold ${fontSize}px Inter, sans-serif`;
+
+                const labelText = wheelEntries[i].author;
+                ctx.fillText(labelText, radius - 18, 5);
+                ctx.restore();
+            }
+
+            // Draw Outer Ring
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+            ctx.strokeStyle = "#f59e0b";
+            ctx.lineWidth = 6;
+            ctx.stroke();
+
+            // Draw Center Hub
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 30, 0, 2 * Math.PI);
+            ctx.fillStyle = "#0f172a";
+            ctx.fill();
+            ctx.strokeStyle = "#f59e0b";
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // Draw Center Icon
+            ctx.fillStyle = "#f59e0b";
+            ctx.font = "18px Inter, sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("🎡", centerX, centerY);
+
+            // Draw Top Pointer Arrow (12 o'clock position = 270 degrees / -PI/2)
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(centerX - 16, centerY - radius - 8);
+            ctx.lineTo(centerX + 16, centerY - radius - 8);
+            ctx.lineTo(centerX, centerY - radius + 22);
+            ctx.closePath();
+            ctx.fillStyle = "#ef4444";
+            ctx.fill();
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        /* Power Hold Start Button Mechanics (20 Levels) */
+        function startChargingPower() {
+            if (isSpinning || wheelEntries.length === 0) return;
+
+            closeWinnerBanner();
+            isChargingPower = true;
+            currentPowerLevel = 0;
+            updatePowerButtonUI();
+
+            if (chargeIntervalId) clearInterval(chargeIntervalId);
+
+            // Charge from 1 to 20 levels over ~2 seconds
+            chargeIntervalId = setInterval(() => {
+                if (currentPowerLevel < 20) {
+                    currentPowerLevel++;
+                    updatePowerButtonUI();
+                }
+            }, 100);
+        }
+
+        function updatePowerButtonUI() {
+            const fillPct = (currentPowerLevel / 20) * 100;
+            document.getElementById("btn-power-fill").style.width = fillPct + "%";
+            
+            const btnText = document.getElementById("btn-power-text");
+            if (currentPowerLevel > 0) {
+                btnText.innerHTML = `<span>⚡ MOC KRĘCENIA: ${currentPowerLevel} / 20</span>`;
+            } else {
+                btnText.innerHTML = `<span>🎡 ZAPROŚ DO LOSOWANIA (PRZYTRZYMAJ START)</span>`;
+            }
+        }
+
+        function cancelChargingPower() {
+            if (!isChargingPower) return;
+            isChargingPower = false;
+            if (chargeIntervalId) clearInterval(chargeIntervalId);
+            currentPowerLevel = 0;
+            updatePowerButtonUI();
+        }
+
+        function stopChargingAndSpin() {
+            if (!isChargingPower) return;
+            isChargingPower = false;
+            if (chargeIntervalId) clearInterval(chargeIntervalId);
+
+            const powerUsed = Math.max(1, currentPowerLevel); // Min 1 level
+            const durationSec = parseInt(document.getElementById("wheel-duration-slider").value) || 15;
+
+            currentPowerLevel = 0;
+            updatePowerButtonUI();
+
+            spinWheel(durationSec, powerUsed);
+        }
+
+        function spinWheel(durationSec, powerLevel) {
+            if (isSpinning || wheelEntries.length === 0) return;
+            isSpinning = true;
+
+            const durationMs = durationSec * 1000;
+            const startTime = performance.now();
+            const startAngle = currentWheelAngle;
+
+            // Higher power level = more total rotations
+            const minRotations = 3 + Math.floor(powerLevel / 3);
+            const extraRandomRotations = (powerLevel / 20) * 8 + Math.random() * 4;
+            const totalAngleToRotate = (minRotations + extraRandomRotations) * 2 * Math.PI;
+
+            // Ease Out Cubic function (fast start, gradual deceleration)
+            function easeOutCubic(t) {
+                return 1 - Math.pow(1 - t, 3);
+            }
+
+            function animateSpin(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / durationMs, 1);
+                const easedProgress = easeOutCubic(progress);
+
+                currentWheelAngle = startAngle + totalAngleToRotate * easedProgress;
+                drawWheel();
+
+                if (progress < 1) {
+                    animationFrameId = requestAnimationFrame(animateSpin);
+                } else {
+                    isSpinning = false;
+                    onWheelStopped();
+                }
+            }
+
+            animationFrameId = requestAnimationFrame(animateSpin);
+        }
+
+        function onWheelStopped() {
+            const total = wheelEntries.length;
+            if (total === 0) return;
+
+            const sliceAngle = (2 * Math.PI) / total;
+            
+            // Pointer is at top position (12 o'clock = -PI/2)
+            const pointerAngle = (3 * Math.PI) / 2; // Equivalent to -PI/2 mod 2PI
+            const normalizedAngle = (pointerAngle - currentWheelAngle) % (2 * Math.PI);
+            const positiveAngle = (normalizedAngle + 2 * Math.PI) % (2 * Math.PI);
+
+            const winningIndex = Math.floor(positiveAngle / sliceAngle) % total;
+            const winner = wheelEntries[winningIndex];
+
+            showWinnerBanner(winner);
+        }
+
+        function showWinnerBanner(winner) {
+            document.getElementById("winner-name").innerText = winner.author;
+            document.getElementById("winner-comment").innerText = `"${winner.comment}"`;
+            document.getElementById("winner-banner").classList.add("active");
+        }
+
+        function closeWinnerBanner() {
+            document.getElementById("winner-banner").classList.remove("active");
         }
 
         function escapeHtml(text) {
