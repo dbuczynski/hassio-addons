@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube Koło Fortuny Online v1.5.6</title>
+    <title>Koło Fortuny by Weekendowy Detektorysta v1.5.8</title>
     <!-- Google Fonts Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -822,8 +822,8 @@
             <span class="brand-icon">🎡</span>
             <div>
                 <div class="brand-title">
-                    YouTube Koło Fortuny Online
-                    <span class="version-badge" id="app-version-badge">v1.5.6</span>
+                    Koło Fortuny by Weekendowy Detektorysta
+                    <span class="version-badge" id="app-version-badge">v1.5.8</span>
                 </div>
                 <div class="brand-subtitle" id="channel-subtitle">Ładowanie ustawień...</div>
             </div>
@@ -1070,7 +1070,6 @@
             const headers = {
                 "X-Channel-Handle": config.channel_handle || ""
             };
-            // Send custom API key ONLY if user selected custom key mode
             if (!config.use_global_key && config.api_key) {
                 headers["X-Api-Key"] = config.api_key;
             }
@@ -1078,7 +1077,7 @@
         };
 
         let serverInfo = {
-            version: "1.5.6",
+            version: "1.5.8",
             has_global_key: false,
             allowed_channels: [{"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"}]
         };
@@ -1160,7 +1159,6 @@
                 select.appendChild(opt);
             });
 
-            // Option to type custom if allowed
             const optCustom = document.createElement("option");
             optCustom.value = "__custom__";
             optCustom.textContent = "Inny kanał (wpisz ręcznie)";
@@ -1194,7 +1192,6 @@
             document.getElementById("input-target-users").value = (config.target_users || []).join(", ");
             document.getElementById("input-api-key").value = config.api_key || "";
 
-            // Set Radio Buttons for Key Mode
             if (config.use_global_key) {
                 document.getElementById("key-mode-global").checked = true;
             } else {
@@ -1202,7 +1199,6 @@
             }
             toggleKeyModeUI();
 
-            // Status text of global key
             const statusText = document.getElementById("global-key-status-text");
             if (serverInfo.has_global_key) {
                 statusText.innerText = "Dostępny na serwerze ✅";
@@ -1212,7 +1208,6 @@
                 statusText.style.color = "#ef4444";
             }
 
-            // Populate channel dropdown
             populateChannelSelect(currentChannelHandle);
         }
 
@@ -1221,7 +1216,6 @@
             loadConfig();
             const config = getUserConfig();
 
-            // If user opted for custom key but didn't type one and server has no global key
             if (!config.use_global_key && !config.api_key && !serverInfo.has_global_key) {
                 openSettingsModal();
             }

@@ -1,6 +1,13 @@
-# Changelog - YouTube Koło Fortuny Web Server (andrzejow.net)
+# Changelog - Koło Fortuny by Weekendowy Detektorysta (andrzejow.net)
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
+
+## [1.5.8] - 2026-08-05
+
+### Zmieniono
+- **Zmiana Tytułu Aplikacji**: Zmieniono nazwę i tytuł z *YouTube Koło Fortuny Online* na **Koło Fortuny by Weekendowy Detektorysta** na pasku nawigacyjnym, w nagłówku `<title>` oraz w metadanych dodatku Home Assistant (`config.yaml`).
+
+---
 
 ## [1.5.7] - 2026-08-05
 

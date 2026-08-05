@@ -7,7 +7,7 @@ import youtube_service
 
 app = Flask(__name__)
 
-APP_VERSION = "1.5.7"
+APP_VERSION = "1.5.8"
 
 # Lista dozwolonych kanałów YouTube dla których można listować filmy
 ALLOWED_CHANNELS = [
@@ -96,7 +96,7 @@ def home():
 @app.route("/youtube")
 @app.route("/youtube/")
 def youtube_app():
-    """Aplikacja YouTube Koło Fortuny dostępna pod adresem /youtube."""
+    """Aplikacja Koło Fortuny by Weekendowy Detektorysta dostępna pod adresem /youtube."""
     return render_template("index.html")
 
 

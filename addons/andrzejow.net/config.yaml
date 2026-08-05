@@ -1,7 +1,7 @@
-name: "YouTube Koło Fortuny Web Server (andrzejow.net)"
-version: "1.5.7"
+name: "Koło Fortuny by Weekendowy Detektorysta (andrzejow.net)"
+version: "1.5.8"
 slug: "andrzejow_net"
-description: "Serwer WWW dla andrzejow.net z aplikacją YouTube Koło Fortuny Online pod adresem /youtube"
+description: "Serwer WWW dla andrzejow.net z aplikacją Koło Fortuny by Weekendowy Detektorysta pod adresem /youtube"
 arch:
   - "aarch64"
   - "amd64"
@@ -10,7 +10,7 @@ boot: "auto"
 ports:
   8080/tcp: 8080
 ports_description:
-  8080/tcp: "Port HTTP serwera WWW i aplikacji YouTube"
+  8080/tcp: "Port HTTP serwera WWW i aplikacji Koło Fortuny"
 map:
   - "config:rw"
   - "share:rw"
