@@ -7,45 +7,57 @@ import youtube_service
 
 app = Flask(__name__)
 
-APP_VERSION = "1.5.6"
+APP_VERSION = "1.5.7"
 
 # Lista dozwolonych kanałów YouTube dla których można listować filmy
 ALLOWED_CHANNELS = [
     {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
 ]
 
-# Ścieżka do przechowywania trwałego klucza globalnego (poza gitem)
-def get_global_config_path():
-    data_dir = os.environ.get("CONFIG_PATH", "/data")
-    if os.path.exists(data_dir):
-        return os.path.join(data_dir, "global_config.json")
-    return os.path.join(os.path.dirname(__file__), "global_config.json")
 
-GLOBAL_CONFIG_PATH = get_global_config_path()
+def get_possible_config_paths():
+    """Zwraca listę możliwych ścieżek zapisu pliku global_config.json z obsługą fallbacków."""
+    paths = []
+    # Ścieżka 1: Trwały katalog danych Home Assistant Add-on
+    if os.path.exists("/data"):
+        paths.append("/data/global_config.json")
+
+    # Ścieżka 2: Katalog aplikacji
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    paths.append(os.path.join(base_dir, "global_config.json"))
+    paths.append(os.path.join(base_dir, "data", "global_config.json"))
+    return paths
 
 
 def load_global_api_key():
     """Wczytuje serwerowy (globalny) klucz API z pliku lokalnego."""
-    if os.path.exists(GLOBAL_CONFIG_PATH):
-        try:
-            with open(GLOBAL_CONFIG_PATH, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                return data.get("global_api_key", "").strip()
-        except Exception as e:
-            print("Błąd odczytu global_config.json:", e)
+    for path in get_possible_config_paths():
+        if os.path.exists(path):
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    key = data.get("global_api_key", "").strip()
+                    if key:
+                        return key
+            except Exception as e:
+                print(f"Błąd odczytu {path}:", e)
     return ""
 
 
 def save_global_api_key(key):
-    """Zapisuje serwerowy (globalny) klucz API w pliku lokalnym."""
-    try:
-        os.makedirs(os.path.dirname(GLOBAL_CONFIG_PATH), exist_ok=True)
-        with open(GLOBAL_CONFIG_PATH, "w", encoding="utf-8") as f:
-            json.dump({"global_api_key": key}, f, indent=2)
-        return True
-    except Exception as e:
-        print("Błąd zapisu global_config.json:", e)
-        return False
+    """Zapisuje serwerowy (globalny) klucz API w pliku lokalnym z próbą wszystkich dostępnych ścieżek."""
+    last_error = None
+    for path in get_possible_config_paths():
+        try:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump({"global_api_key": key}, f, indent=2)
+            print(f"Pomyślnie zapisano klucz globalny w: {path}")
+            return True, None
+        except Exception as e:
+            last_error = str(e)
+            print(f"Nie udało się zapisać w {path}:", e)
+    return False, last_error
 
 
 def get_request_credentials():
@@ -110,13 +122,14 @@ def set_global_key_endpoint():
     if not key:
         return jsonify({"error": "Brak wymaganego parametru 'global_api_key'."}), 400
 
-    if save_global_api_key(key):
+    success, err_msg = save_global_api_key(key)
+    if success:
         return jsonify({
             "success": True,
             "message": "Globalny klucz API został pomyślnie zapisany na serwerze."
         })
     else:
-        return jsonify({"error": "Nie udało się zapisać klucza na serwerze."}), 500
+        return jsonify({"error": f"Nie udało się zapisać klucza na serwerze: {err_msg}"}), 500
 
 
 @app.route("/api/videos", methods=["GET"])

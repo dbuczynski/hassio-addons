@@ -2,6 +2,13 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.5.7] - 2026-08-05
+
+### Naprawiono
+- **Zapis Klucza Globalnego API**: Dodano automatyczny fallback dla ścieżek zapisu `global_config.json` (`/data/global_config.json` oraz katalog aplikacji). Dodano szczegółową diagnostykę błędów w zapytaniu POST `/api/admin/set-global-key`.
+
+---
+
 ## [1.5.6] - 2026-08-05
 
 ### Dodano / Zmieniono
