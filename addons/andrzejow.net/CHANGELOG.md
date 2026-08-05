@@ -2,6 +2,13 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.6.2] - 2026-08-05
+
+### Dodano
+- **Kanał `@ArturK92`**: Dodano kanał `@ArturK92` (ArturK92) do listy dozwolonych kanałów (`ALLOWED_CHANNELS`).
+
+---
+
 ## [1.6.1] - 2026-08-05
 
 ### Dodano / Naprawiono / Zmieniono
