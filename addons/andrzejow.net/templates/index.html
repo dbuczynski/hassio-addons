@@ -98,7 +98,18 @@
 
         .nav-actions {
             display: flex;
+            align-items: center;
             gap: 10px;
+        }
+
+        .nav-actions .btn {
+            height: 38px;
+            padding: 0 14px;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
         }
 
         /* Buttons */
@@ -957,12 +968,15 @@
             <div>
                 <div class="brand-title">
                     Koło Fortuny by Weekendowy Detektorysta
-                    <span class="version-badge" id="app-version-badge">v1.8.1</span>
+                    <span class="version-badge" id="app-version-badge">v1.8.2</span>
                 </div>
                 <div class="brand-subtitle" id="channel-subtitle">Ładowanie ustawień...</div>
             </div>
         </div>
         <div class="nav-actions">
+            <select id="header-select-channel" class="form-select" style="padding: 0 12px; font-size: 13.5px; height: 38px; border-radius: var(--radius-md); background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); cursor: pointer; box-sizing: border-box;" onchange="onHeaderChannelChange(this.value)">
+                <!-- Wypełniane dynamicznie -->
+            </select>
             <button class="btn" onclick="toggleFullScreen()" title="Tryb pełnoekranowy (ukrywa pasek URL i menu HA)">⛶</button>
             <button class="btn" onclick="showVideosView()">🎬 YouTube</button>
             <button class="btn btn-wheel" onclick="openCustomListModal()">📋 Własna lista</button>
@@ -988,13 +1002,6 @@
         <div id="view-videos" class="hidden">
             <div class="section-header" style="flex-wrap: wrap; gap: 16px;">
                 <h2 class="section-title" style="margin-right: auto;">Lista materiałów</h2>
-                
-                <div class="video-type-tabs">
-                    <button class="tab-btn active" id="tab-type-video" onclick="filterVideoType('video')">🎬 Filmy</button>
-                    <button class="tab-btn" id="tab-type-short" onclick="filterVideoType('short')">⚡ Shorts</button>
-                    <button class="tab-btn" id="tab-type-live" onclick="filterVideoType('live')">🔴 Live</button>
-                    <button class="tab-btn" id="tab-type-all" onclick="filterVideoType('all')">🌐 Wszystkie</button>
-                </div>
 
                 <div style="display:flex; gap:10px;">
                     <button class="btn btn-primary" onclick="loadVideos()">🔄 Odśwież listy</button>
@@ -1215,6 +1222,15 @@
                     <div class="help-text">Użytkownicy wyróżnieni gwiazdką w Twojej sesji.</div>
                 </div>
 
+                <div class="form-group">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <label class="form-label" style="margin-bottom:0;">Liczba wyświetlanych najnowszych materiałów</label>
+                        <span id="video-limit-val-label" style="color:var(--accent-gold); font-weight:700; font-size:14px;">20 materiałów</span>
+                    </div>
+                    <input type="range" id="input-video-limit" class="wheel-slider" style="width:100%; cursor:pointer;" min="10" max="100" step="5" value="20" oninput="updateVideoLimitLabel(this.value)">
+                    <div class="help-text">Przesuń suwak, aby wybrać liczbę wyświetlanych materiałów (od 10 do 100 ze skokiem 5).</div>
+                </div>
+
                 <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
                     <button type="button" class="btn" onclick="closeSettingsModal()">Anuluj</button>
                     <button type="submit" class="btn btn-primary">Zapisz Ustawienia</button>
@@ -1236,7 +1252,8 @@
                 use_global_key: true,
                 api_key: "",
                 channel_handle: "@UncjuszPatyniusz",
-                target_users: []
+                target_users: [],
+                display_video_limit: 20
             };
         }
 
@@ -1358,22 +1375,49 @@
         }
 
         function populateChannelSelect(selectedHandle) {
-            const select = document.getElementById("select-channel");
-            select.innerHTML = "";
+            const selects = [
+                document.getElementById("select-channel"),
+                document.getElementById("header-select-channel")
+            ];
 
             const allowed = serverInfo.allowed_channels || [];
-            allowed.forEach(ch => {
-                const opt = document.createElement("option");
-                opt.value = ch.handle;
-                opt.textContent = `${ch.title} (${ch.handle})`;
-                if (ch.handle.toLowerCase() === (selectedHandle || "").toLowerCase()) {
-                    opt.selected = true;
-                }
-                select.appendChild(opt);
-            });
 
-            if (allowed.length > 0 && !allowed.some(c => c.handle.toLowerCase() === (selectedHandle || "").toLowerCase())) {
-                select.value = allowed[0].handle;
+            selects.forEach(select => {
+                if (!select) return;
+                select.innerHTML = "";
+                allowed.forEach(ch => {
+                    const opt = document.createElement("option");
+                    opt.value = ch.handle;
+                    opt.textContent = `${ch.title} (${ch.handle})`;
+                    if (ch.handle.toLowerCase() === (selectedHandle || "").toLowerCase()) {
+                        opt.selected = true;
+                    }
+                    select.appendChild(opt);
+                });
+
+                if (allowed.length > 0 && !allowed.some(c => c.handle.toLowerCase() === (selectedHandle || "").toLowerCase())) {
+                    select.value = allowed[0].handle;
+                }
+            });
+        }
+
+        function onHeaderChannelChange(newHandle) {
+            if (!newHandle) return;
+            const config = getUserConfig();
+            config.channel_handle = newHandle;
+            saveUserConfigToStorage(config);
+            loadConfig();
+            
+            // jeśli w widoku materiałów, odśwież listy
+            if (!document.getElementById("view-videos").classList.contains("hidden")) {
+                loadVideos();
+            }
+        }
+
+        function updateVideoLimitLabel(val) {
+            const label = document.getElementById("video-limit-val-label");
+            if (label) {
+                label.innerText = val + " materiałów";
             }
         }
 
@@ -1403,12 +1447,65 @@
             }
 
             populateChannelSelect(currentChannelHandle);
+
+            const videoLimit = config.display_video_limit || 20;
+            const inputLimit = document.getElementById("input-video-limit");
+            if (inputLimit) {
+                inputLimit.value = videoLimit;
+                updateVideoLimitLabel(videoLimit);
+            }
+
+            fetchChannelProfile();
         }
 
         function showLandingView() {
             document.getElementById("view-videos").classList.add("hidden");
             document.getElementById("view-comments").classList.add("hidden");
             document.getElementById("view-landing").classList.remove("hidden");
+            fetchChannelProfile();
+        }
+
+        async function fetchChannelProfile() {
+            try {
+                const res = await fetch(getApiUrl("/channel-profile"), { headers: getRequestHeaders() });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.title) {
+                        const titleEl = document.getElementById("channel-profile-title");
+                        if (titleEl) titleEl.innerText = data.title;
+                    }
+                    if (data.handle) {
+                        const handleEl = document.getElementById("channel-profile-handle");
+                        if (handleEl) handleEl.innerText = data.handle;
+                    }
+                    if (data.subscribers) {
+                        const subsEl = document.getElementById("channel-profile-subs");
+                        if (subsEl) subsEl.innerText = data.subscribers;
+                    }
+                    if (data.video_count) {
+                        const vidsEl = document.getElementById("channel-profile-videos");
+                        if (vidsEl) vidsEl.innerText = data.video_count;
+                    }
+                    if (data.description) {
+                        const descEl = document.getElementById("channel-profile-desc");
+                        if (descEl) descEl.innerText = data.description;
+                    }
+                    
+                    const avatarImg = document.getElementById("channel-avatar-img");
+                    const avatarPlaceholder = document.getElementById("channel-avatar-placeholder");
+                    if (avatarImg && data.avatar_url) {
+                        avatarImg.src = data.avatar_url;
+                        avatarImg.style.display = "block";
+                        if (avatarPlaceholder) avatarPlaceholder.style.display = "none";
+                    }
+                    
+                    const bannerImg = document.getElementById("channel-banner-img");
+                    if (bannerImg && data.banner_url) {
+                        bannerImg.src = data.banner_url;
+                        bannerImg.style.display = "block";
+                    }
+                }
+            } catch (e) {}
         }
 
         function showVideosView() {
@@ -1419,29 +1516,21 @@
         }
 
         let allFetchedVideos = [];
-        let currentVideoTypeFilter = 'video';
-
-        function filterVideoType(type) {
-            currentVideoTypeFilter = type;
-            document.querySelectorAll('.video-type-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
-            const activeBtn = document.getElementById(`tab-type-${type}`);
-            if (activeBtn) activeBtn.classList.add('active');
-            renderVideosGrid();
-        }
+        let currentVideoTypeFilter = 'all';
 
         function renderVideosGrid() {
             const grid = document.getElementById("videos-grid");
             grid.innerHTML = "";
 
-            let filtered = allFetchedVideos;
-            if (currentVideoTypeFilter !== 'all') {
-                filtered = allFetchedVideos.filter(v => v.videoType === currentVideoTypeFilter);
-            }
+            const config = getUserConfig();
+            const limit = parseInt(config.display_video_limit) || 20;
+
+            // Wyświetlaj zdeklarowaną liczbę najnowszych pozycji (od 10 do 100)
+            const filtered = allFetchedVideos.slice(0, limit);
 
             if (filtered.length === 0) {
-                const labelName = currentVideoTypeFilter === 'video' ? '🎬 Filmy' : currentVideoTypeFilter === 'short' ? '⚡ Shorts' : currentVideoTypeFilter === 'live' ? '🔴 Live' : 'Wszystkie';
                 grid.innerHTML = `<div style="grid-column: 1/-1; padding: 40px; text-align: center; color: var(--text-muted);">
-                    Brak materiałów w kategorii ${labelName}.
+                    Brak materiałów do wyświetlenia.
                 </div>`;
                 return;
             }
@@ -1451,21 +1540,11 @@
                     year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
                 });
 
-                let typeBadge = '';
-                if (vid.videoType === 'short') {
-                    typeBadge = '<div class="video-type-badge" style="border-color:rgba(236,72,153,0.5); color:#f472b6;">⚡ SHORT</div>';
-                } else if (vid.videoType === 'live') {
-                    typeBadge = '<div class="video-type-badge" style="border-color:rgba(239,68,68,0.5); color:#f87171;">🔴 LIVE</div>';
-                } else {
-                    typeBadge = '<div class="video-type-badge" style="border-color:rgba(99,102,241,0.5); color:#818cf8;">🎬 FILM</div>';
-                }
-
                 const card = document.createElement("div");
                 card.className = "video-card";
                 card.innerHTML = `
                     <div class="video-thumb-wrap">
                         <img src="${vid.thumbnail}" alt="${escapeHtml(vid.title)}" class="video-thumb">
-                        ${typeBadge}
                         <div class="comments-badge">💬 ${vid.commentCount} komentarzy</div>
                     </div>
                     <div class="video-info">
@@ -1527,7 +1606,9 @@
             document.getElementById("view-landing").classList.add("hidden");
             document.getElementById("view-videos").classList.add("hidden");
             document.getElementById("view-comments").classList.remove("hidden");
-            document.getElementById("active-video-title").innerText = `Komentarze pod: "${title}"`;
+
+            const ytUrl = `https://www.youtube.com/watch?v=${videoId}`;
+            document.getElementById("active-video-title").innerHTML = `Komentarze pod: <a href="${ytUrl}" target="_blank" rel="noopener noreferrer" style="color:var(--text-main); text-decoration:underline; font-weight:700;" title="Otwórz film w nowej karcie na YouTube">${escapeHtml(title)} ↗</a>`;
             
             const customParam = (!userConfig.use_global_key && userConfig.api_key) ? `&api_key=${encodeURIComponent(userConfig.api_key)}` : '';
             const csvUrl = getApiUrl(`/export-csv?video_id=${videoId}&channel_handle=${encodeURIComponent(userConfig.channel_handle || '')}${customParam}`);
@@ -1746,6 +1827,8 @@
             let allChecked = true;
 
             authorsList.forEach(author => {
+                const authorClean = author.toLowerCase().trim();
+                const isTarget = targetUsersList.some(t => authorClean.includes(t.replace("@", "")));
                 const isChecked = selectedAuthorsMap[author] !== false;
                 if (!isChecked) allChecked = false;
 
@@ -1753,7 +1836,7 @@
                 item.className = "author-item";
                 item.innerHTML = `
                     <input type="checkbox" ${isChecked ? "checked" : ""} onchange="onAuthorCheckboxToggle('${escapeJsString(author)}', this.checked)">
-                    <span class="author-name" title="${escapeHtml(author)}">${escapeHtml(author)}</span>
+                    <span class="author-name" title="${escapeHtml(author)}">${isTarget ? '⭐ ' : ''}${escapeHtml(author)}</span>
                     <span class="author-count-pill">${authorCounts[author]}</span>
                 `;
                 container.appendChild(item);
@@ -1843,8 +1926,7 @@
                     <td style="color:var(--text-muted); font-size:12px;">${idx + 1}</td>
                     <td>
                         <div class="author-badge">
-                            ${escapeHtml(c.author)}
-                            ${isTarget ? '<span class="badge-target">⭐ Wyróżniony</span>' : ''}
+                            ${isTarget ? '<span style="color:var(--accent-gold); font-weight:bold; margin-right:4px;">⭐</span>' : ''}${escapeHtml(c.author)}
                         </div>
                     </td>
                     <td style="white-space: pre-wrap;">${escapeHtml(c.comment)}</td>
@@ -2039,6 +2121,8 @@
             updatePowerButtonUI();
         }
 
+        let lastUsedPowerLevel = 1;
+
         function stopChargingAndSpin(e) {
             if (e && e.preventDefault) e.preventDefault();
             if (!isChargingPower) return;
@@ -2046,6 +2130,7 @@
             if (chargeIntervalId) clearInterval(chargeIntervalId);
 
             const powerUsed = Math.max(1, currentPowerLevel);
+            lastUsedPowerLevel = powerUsed;
             const durationSec = parseInt(document.getElementById("wheel-duration-slider").value) || 15;
 
             currentPowerLevel = 0;
@@ -2135,6 +2220,42 @@
             const winner = wheelEntries[winningIndex];
 
             showWinnerBanner(winner);
+            recordDrawResult(winner, lastUsedPowerLevel);
+        }
+
+        async function recordDrawResult(winner, powerLevel) {
+            try {
+                const config = getUserConfig();
+                const durationSec = parseInt(document.getElementById("wheel-duration-slider").value) || 15;
+                const participants = wheelEntries.map(e => e.author);
+                
+                const titleHeader = document.getElementById("active-video-title");
+                const rawTitleText = titleHeader ? (titleHeader.textContent || titleHeader.innerText || "").replace(/^Komentarze pod:\s*/, "") : "Film";
+
+                const payload = {
+                    channel_handle: config.channel_handle || "@UncjuszPatyniusz",
+                    video_id: activeVideoId || "",
+                    video_title: rawTitleText,
+                    spin_duration_sec: durationSec,
+                    power_level: powerLevel || 1,
+                    winner: {
+                        author: winner.author || "",
+                        comment: winner.comment || ""
+                    },
+                    participants: participants
+                };
+
+                await fetch(getApiUrl("/draw-result"), {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...getRequestHeaders()
+                    },
+                    body: JSON.stringify(payload)
+                });
+            } catch (err) {
+                console.error("Błąd podczas zapisywania wyników losowania:", err);
+            }
         }
 
         function showWinnerBanner(winner) {
@@ -2186,20 +2307,23 @@
             const targetUsersRaw = document.getElementById("input-target-users").value;
             const targetUsers = targetUsersRaw.split(",").map(u => u.trim()).filter(u => u);
 
+            const displayLimit = parseInt(document.getElementById("input-video-limit").value) || 20;
+
             const newConfig = {
                 use_global_key: useGlobalKey,
                 api_key: apiKey,
                 channel_handle: channelHandle,
-                target_users: targetUsers
+                target_users: targetUsers,
+                display_video_limit: displayLimit
             };
 
             saveUserConfigToStorage(newConfig);
             closeSettingsModal();
             loadConfig();
             
-            // If on videos view, refresh videos
+            // If on videos view, refresh videos grid
             if (!document.getElementById("view-videos").classList.contains("hidden")) {
-                loadVideos();
+                renderVideosGrid();
             }
         }
     </script>

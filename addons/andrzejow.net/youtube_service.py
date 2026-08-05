@@ -74,6 +74,93 @@ def resolve_channel_info(youtube, channel_input):
     raise ValueError(f"Nie znaleziono kanału YouTube dla: {channel_input}")
 
 
+def get_channel_profile_details(api_key, channel_handle="@UncjuszPatyniusz"):
+    """
+    Pobiera pełne metadane profilu kanału YouTube (banner, avatar, opis, statystyki).
+    """
+    if not api_key:
+        return {
+            "title": "Uncjusz Patyniusz",
+            "handle": channel_handle,
+            "description": "Jest to kanał który ma na celu popularyzację numizmatyki, poszerzanie wiedzy kolekcjonerskiej...",
+            "subscribers": "8,67 tys. subskrybentów",
+            "video_count": "297 filmów",
+            "avatar_url": "",
+            "banner_url": ""
+        }
+
+    try:
+        youtube = get_youtube_client(api_key)
+        handle_to_try = channel_handle if channel_handle.startswith("@") else f"@{channel_handle}"
+        
+        response = youtube.channels().list(
+            part="snippet,brandingSettings,statistics",
+            forHandle=handle_to_try
+        ).execute()
+
+        items = response.get("items", [])
+        if not items:
+            # Fallback po zapytaniu search
+            channel_id, _, _ = resolve_channel_info(youtube, channel_handle)
+            response = youtube.channels().list(
+                part="snippet,brandingSettings,statistics",
+                id=channel_id
+            ).execute()
+            items = response.get("items", [])
+
+        if items:
+            ch = items[0]
+            snippet = ch.get("snippet", {})
+            branding = ch.get("brandingSettings", {}).get("image", {})
+            stats = ch.get("statistics", {})
+
+            title = snippet.get("title", channel_handle)
+            handle = snippet.get("customUrl") or channel_handle
+            if not handle.startswith("@"):
+                handle = "@" + handle
+
+            desc = snippet.get("description", "")
+            
+            thumbnails = snippet.get("thumbnails", {})
+            avatar_url = thumbnails.get("high", {}).get("url") or thumbnails.get("medium", {}).get("url") or thumbnails.get("default", {}).get("url", "")
+            
+            banner_url = branding.get("bannerExternalUrl", "")
+            if banner_url:
+                banner_url += "=w1707-fcrop64=1,00005a57ffffa5a8-k-c0xffffffff-no-nd-rj"
+
+            raw_subs = int(stats.get("subscriberCount", 0))
+            if raw_subs >= 1000000:
+                subs_str = f"{raw_subs / 1000000:.2f} mln subskrybentów".replace(".", ",")
+            elif raw_subs >= 1000:
+                subs_str = f"{raw_subs / 1000:.2f} tys. subskrybentów".replace(".", ",")
+            else:
+                subs_str = f"{raw_subs} subskrybentów"
+
+            video_count_str = f"{stats.get('videoCount', '0')} filmów"
+
+            return {
+                "title": title,
+                "handle": handle,
+                "description": desc,
+                "subscribers": subs_str,
+                "video_count": video_count_str,
+                "avatar_url": avatar_url,
+                "banner_url": banner_url
+            }
+    except Exception as e:
+        print(f"Błąd pobierania profilu kanału {channel_handle}: {e}", flush=True)
+
+    return {
+        "title": channel_handle.replace("@", ""),
+        "handle": channel_handle,
+        "description": "Kanał YouTube",
+        "subscribers": "Subskrybenci YouTube",
+        "video_count": "Filmy YouTube",
+        "avatar_url": "",
+        "banner_url": ""
+    }
+
+
 def parse_iso8601_duration(duration_str):
     """Przekształca czas ISO 8601 (np. PT1M30S, PT45S) na sekundowe wartości numeryczne."""
     if not duration_str:
@@ -91,7 +178,7 @@ def parse_iso8601_duration(duration_str):
 
 def classify_video_type(item):
     """
-    Klasyfikuje film na: 'live' (transmisja na żywo - aktualna, zaplanowana lub archiwalny zapis live),
+    Klasyfikuje film na: 'live' (transmisja na żywo - aktualna, zaplanowana lub archiwalny zapis streamu),
     'short' (Shorts <= 60s), 'video' (zwykły film / opublikowana premiera).
     """
     snippet = item.get("snippet", {})
@@ -101,32 +188,25 @@ def classify_video_type(item):
     live_broadcast = snippet.get("liveBroadcastContent", "none")
     title = snippet.get("title", "").lower()
 
-    # 1. Trwająca lub zaplanowana transmisja na żywo
-    if live_broadcast in ["live", "upcoming"]:
+    # 1. Jeżeli występuje liveStreamingDetails lub status transmisji - jest to transmisja na żywo
+    if live_details is not None or live_broadcast in ["live", "upcoming", "completed"]:
         return "live"
 
-    # 2. Archiwalna transmisja na żywo (posiada liveStreamingDetails oraz słowo kluczowe w tytule lub aktywny czat)
-    if live_details:
-        has_live_keyword = any(kw in title for kw in ["live", "stream", "transmisja", "na żywo", "na zywo"])
-        has_chat = bool(live_details.get("activeLiveChatId"))
-        if has_live_keyword or has_chat:
-            return "live"
-
-    # 3. Shorts (krótkie pionowe filmy <= 60s lub #shorts w tytule)
+    # 2. Shorts (krótkie pionowe filmy <= 60s lub #shorts w tytule)
     duration_str = content_details.get("duration", "")
     duration_sec = parse_iso8601_duration(duration_str)
     
     if (0 < duration_sec <= 60) or "#shorts" in title:
         return "short"
 
-    # 4. Standardowy film (w tym zakończona premiera)
+    # 3. Standardowy film
     return "video"
 
 
-def get_channel_videos(api_key, channel_handle_or_id=None, channel_handle=None, max_results=50):
+def get_channel_videos(api_key, channel_handle_or_id=None, channel_handle=None, max_results=200):
     """
-    Pobiera listę najnowszych filmów ze wskazanego kanału wraz z datą publikacji,
-    klasyfikacją typu (video, short, live) oraz ilością komentarzy pod każdym filmem.
+    Pobiera listę najnowszych filmów ze wskazanego kanału (co najmniej 200 pozycji)
+    wraz z datą publikacji, klasyfikacją typu (video, short, live) oraz ilością komentarzy.
     """
     target_handle = channel_handle or channel_handle_or_id or "@UncjuszPatyniusz"
     if not api_key:
@@ -138,59 +218,83 @@ def get_channel_videos(api_key, channel_handle_or_id=None, channel_handle=None, 
     video_items = []
     next_page_token = None
     
-    request = youtube.playlistItems().list(
-        part="snippet,contentDetails",
-        playlistId=uploads_playlist_id,
-        maxResults=min(max_results, 50),
-        pageToken=next_page_token
-    )
-    response = request.execute()
-    
-    for item in response.get("items", []):
-        snippet = item.get("snippet", {})
-        vid_id = item.get("contentDetails", {}).get("videoId") or snippet.get("resourceId", {}).get("videoId")
-        if not vid_id:
-            continue
-
-        title = snippet.get("title", "")
-        published_at = snippet.get("publishedAt", "")
-        thumbnails = snippet.get("thumbnails", {})
-        thumb_url = thumbnails.get("medium", {}).get("url") or thumbnails.get("default", {}).get("url", "")
+    while len(video_items) < max_results:
+        pageSize = min(50, max_results - len(video_items))
+        request = youtube.playlistItems().list(
+            part="snippet,contentDetails",
+            playlistId=uploads_playlist_id,
+            maxResults=pageSize,
+            pageToken=next_page_token
+        )
+        response = request.execute()
         
-        video_items.append({
-            "id": vid_id,
-            "title": title,
-            "publishedAt": published_at,
-            "thumbnail": thumb_url,
-            "channelId": channel_id,
-            "channelTitle": channel_title,
-            "commentCount": 0,
-            "videoType": "video"
-        })
+        items = response.get("items", [])
+        if not items:
+            break
+
+        for item in items:
+            snippet = item.get("snippet", {})
+            vid_id = item.get("contentDetails", {}).get("videoId") or snippet.get("resourceId", {}).get("videoId")
+            if not vid_id:
+                continue
+
+            title = snippet.get("title", "")
+            published_at = snippet.get("publishedAt", "")
+            thumbnails = snippet.get("thumbnails", {})
+            thumb_url = thumbnails.get("medium", {}).get("url") or thumbnails.get("default", {}).get("url", "")
+            
+            video_items.append({
+                "id": vid_id,
+                "title": title,
+                "publishedAt": published_at,
+                "thumbnail": thumb_url,
+                "channelId": channel_id,
+                "channelTitle": channel_title,
+                "commentCount": 0,
+                "videoType": "video"
+            })
+
+        next_page_token = response.get("nextPageToken")
+        if not next_page_token:
+            break
 
     if not video_items:
         return {"channel_title": channel_title, "channel_id": channel_id, "videos": []}
 
     video_ids = [v["id"] for v in video_items]
-    details_response = youtube.videos().list(
-        part="snippet,statistics,contentDetails,liveStreamingDetails",
-        id=",".join(video_ids)
-    ).execute()
-
     details_map = {}
-    for item in details_response.get("items", []):
-        v_id = item["id"]
-        comment_count = int(item.get("statistics", {}).get("commentCount", 0))
-        v_type = classify_video_type(item)
-        details_map[v_id] = {
-            "commentCount": comment_count,
-            "videoType": v_type
-        }
+
+    for i in range(0, len(video_ids), 50):
+        chunk_ids = video_ids[i:i+50]
+        details_response = youtube.videos().list(
+            part="snippet,statistics,contentDetails,liveStreamingDetails",
+            id=",".join(chunk_ids)
+        ).execute()
+
+        for item in details_response.get("items", []):
+            v_id = item["id"]
+            comment_count = int(item.get("statistics", {}).get("commentCount", 0))
+            v_type = classify_video_type(item)
+            
+            snippet = item.get("snippet", {})
+            real_title = snippet.get("title", "")
+            real_published_at = snippet.get("publishedAt", "")
+
+            details_map[v_id] = {
+                "commentCount": comment_count,
+                "videoType": v_type,
+                "realTitle": real_title,
+                "realPublishedAt": real_published_at
+            }
 
     for v in video_items:
-        info = details_map.get(v["id"], {"commentCount": 0, "videoType": "video"})
-        v["commentCount"] = info["commentCount"]
-        v["videoType"] = info["videoType"]
+        info = details_map.get(v["id"], {})
+        v["commentCount"] = info.get("commentCount", 0)
+        v["videoType"] = info.get("videoType", "video")
+        if info.get("realTitle"):
+            v["title"] = info["realTitle"]
+        if info.get("realPublishedAt"):
+            v["publishedAt"] = info["realPublishedAt"]
 
     return {
         "channel_title": channel_title,

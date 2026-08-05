@@ -7,7 +7,7 @@ import youtube_service
 
 app = Flask(__name__)
 
-APP_VERSION = "1.8.1"
+APP_VERSION = "1.8.2"
 
 DEFAULT_ALLOWED_CHANNELS = [
     {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
@@ -91,6 +91,29 @@ def save_discord_bot_token(token):
     with open(GLOBAL_CONFIG_PATH, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
+DRAW_HISTORY_PATH = os.path.join(DATA_DIR, "draw_history.json")
+
+def load_draw_history():
+    """Pobiera historię wygranych losowań z pliku JSON."""
+    if os.path.exists(DRAW_HISTORY_PATH):
+        try:
+            with open(DRAW_HISTORY_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return []
+
+def save_draw_result_entry(entry):
+    """Zapisuje wynik losowania do historii archiwalnej (max 500 wpisów)."""
+    history = load_draw_history()
+    history.insert(0, entry)
+    history = history[:500]
+    try:
+        with open(DRAW_HISTORY_PATH, "w", encoding="utf-8") as f:
+            json.dump(history, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"Błąd zapisu historii losowań: {e}", flush=True)
+
 def resolve_api_key():
     """Ustala klucz API z nagłówka żądania klienta X-Api-Key lub z pliku globalnego."""
     custom_key = request.headers.get("X-Api-Key", "").strip()
@@ -138,6 +161,15 @@ def api_info():
         "has_discord_token": bool(discord_token),
         "allowed_channels": channels
     })
+
+@app.route('/api/channel-profile')
+@app.route('/youtube/api/channel-profile')
+def channel_profile():
+    """Zwraca baner, avatar, opis i statystyki aktualnie wybranego kanału."""
+    api_key = resolve_api_key()
+    channel_handle = resolve_channel_handle()
+    profile = youtube_service.get_channel_profile_details(api_key, channel_handle=channel_handle)
+    return jsonify(profile)
 
 @app.route('/api/admin/set-global-key', methods=['POST'])
 @app.route('/youtube/api/admin/set-global-key', methods=['POST'])
@@ -198,7 +230,7 @@ def add_admin_channel():
         if not handle:
             return jsonify({"error": "Brak wymaganego parametru 'handle' (np. @ArturK92)."}), 400
 
-        if not handle.startswith("@"):
+        if not handle.startsWith("@") if hasattr(handle, "startsWith") else not handle.startswith("@"):
             handle = "@" + handle
 
         channels = load_allowed_channels()
@@ -256,7 +288,7 @@ def remove_admin_channel():
         channels = [c for c in channels if c["handle"].lower() != handle.lower()]
 
         if len(channels) == initial_count:
-            return jsonify({"error": f"Nie odnaleziono kanału {handle} na liście."}), 404
+            return jsonify({"error": f"Nie odnaleziono kanału {handle} na liście."}), 444 if False else 404
 
         save_allowed_channels(channels)
         return jsonify({
@@ -277,7 +309,7 @@ def get_videos():
     channel_handle = resolve_channel_handle()
 
     try:
-        data = youtube_service.get_channel_videos(api_key, channel_handle=channel_handle, max_results=12)
+        data = youtube_service.get_channel_videos(api_key, channel_handle=channel_handle, max_results=200)
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -329,6 +361,99 @@ def export_csv():
         )
     except Exception as e:
         return f"Błąd tworzenia pliku CSV: {str(e)}", 500
+
+@app.route('/api/draw-result', methods=['POST'])
+@app.route('/youtube/api/draw-result', methods=['POST'])
+def record_draw_result():
+    """
+    Rejestruje wynik przeprowadzonego losowania, wypisuje szczegółowy log do konsoli HA
+    oraz zapisuje wpis w archiwalnym pliku JSON.
+    """
+    from datetime import datetime
+    try:
+        data = request.get_json(silent=True) or {}
+        
+        # Pobieramy IP klienta z nagłówków proxy HA lub bezpośredniego połączenia
+        client_ip = request.headers.get("X-Forwarded-For", request.remote_addr or "Nieznane IP")
+        if client_ip and "," in client_ip:
+            client_ip = client_ip.split(",")[0].strip()
+
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        channel_handle = data.get("channel_handle") or resolve_channel_handle()
+        video_id = data.get("video_id", "")
+        video_title = data.get("video_title", "Nieznany film")
+        
+        video_url = f"https://www.youtube.com/watch?v={video_id}" if video_id and video_id != "custom_list" else "Własna lista użytkowników"
+        
+        spin_duration_sec = data.get("spin_duration_sec", 15)
+        power_level = data.get("power_level", 1)
+        
+        winner_data = data.get("winner", {})
+        winner_author = winner_data.get("author", "Brak")
+        winner_comment = winner_data.get("comment", "")
+        
+        participants = data.get("participants", [])
+        participants_count = len(participants)
+
+        entry = {
+            "timestamp": now_str,
+            "client_ip": client_ip,
+            "channel_handle": channel_handle,
+            "video_id": video_id,
+            "video_title": video_title,
+            "video_url": video_url,
+            "spin_duration_sec": spin_duration_sec,
+            "power_level": power_level,
+            "winner": {
+                "author": winner_author,
+                "comment": winner_comment
+            },
+            "participants_count": participants_count,
+            "participants": participants
+        }
+
+        # Trwałe zapisanie do pliku JSON
+        save_draw_result_entry(entry)
+
+        # Wypisanie czytelnego loga do konsoli HA (stdout / sys.stderr)
+        sample_participants = ", ".join(participants[:30])
+        if participants_count > 30:
+            sample_participants += f" ... (+{participants_count - 30} więcej)"
+
+        ha_log_entry = f"""
+================================================================================
+🎉 [KOŁO FORTUNY - WYGRANE LOSOWANIE]
+--------------------------------------------------------------------------------
+📅 Data i czas:      {now_str}
+🌐 IP Klienta:       {client_ip}
+📺 Kanał YouTube:    {channel_handle}
+🎬 Materiał:         {video_title} ({video_url})
+⏱️ Czas kręcenia:    {spin_duration_sec}s
+⚡ Siła losowania:   {power_level} / 20
+👥 Liczba osób:      {participants_count}
+📋 Uczestnicy:       {sample_participants}
+🏆 Wygrany autor:    {winner_author}
+💬 Komentarz:        "{winner_comment}"
+================================================================================
+"""
+        print(ha_log_entry, flush=True)
+        app.logger.info(ha_log_entry)
+
+        return jsonify({"status": "success", "message": "Losowanie zarejestrowane w logach HA", "entry": entry})
+    except Exception as e:
+        return jsonify({"error": f"Błąd rejestrowania losowania: {str(e)}"}), 500
+
+@app.route('/api/admin/draw-history', methods=['GET'])
+@app.route('/youtube/api/admin/draw-history', methods=['GET'])
+def get_draw_history():
+    """Zwraca archiwalną listę zrealizowanych losowań z pliku json."""
+    history = load_draw_history()
+    return jsonify({
+        "status": "success",
+        "total": len(history),
+        "history": history
+    })
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)

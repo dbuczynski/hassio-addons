@@ -2,6 +2,18 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.8.2] - 2026-08-05
+
+### Dodano / Zmieniono
+- **Szybki Wybór Kanału w Nagłówku**: Dodano listę rozwijaną kanałów w prawym górnym rogu navbara dla natychmiastowego przełączania profilu i filmików.
+- **Profil Aktywnego Kanału na Stronie Startowej**: Wyświetlanie baneru, avatara, nazwy, statystyk (subskrybenci, wideo) i opisu wybranego kanału.
+- **Płynny Suwak Materiałów**: Zamieniono dropdown w Ustawieniach na suwak od 10 do 100 materiałów ze skokiem 5.
+- **Kompaktowe Oznaczenie Wyróżnionych**: Zamieniono pigułkę wyróżnionego widzów na małą złotą gwiazdkę `⭐` wyświetlaną bezpośrednio przed nazwą użytkownika.
+- **Wyrównanie Nagłówka**: Dopasowano wysokość przycisków nawigacyjnych (`38px`) do listy rozwijanej bez załamywania wierszy.
+- **Przeniesienie Dokumentacji do DOCS.md**: Instrukcje administracyjne API `curl` przeniesiono do pliku `DOCS.md` dodatku Home Assistant.
+
+---
+
 ## [1.8.1] - 2026-08-05
 
 ### Dodano / Zmieniono

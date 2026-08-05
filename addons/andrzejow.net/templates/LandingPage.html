@@ -1,159 +1,29 @@
-<!-- LandingPage.html - Strona Startowa i Dokumentacja Administracyjna -->
+<!-- LandingPage.html - Profil Aktywnego Kanału YouTube -->
 <div class="landing-container">
-    <div class="landing-hero">
-        <div class="landing-badge">🎡 Koło Fortuny v1.8.1</div>
-        <h1 class="landing-title">Koło Fortuny <span class="highlight-text">by Weekendowy Detektorysta</span></h1>
-        <p class="landing-description">
-            Wybieraj ciekawe komentarze spod najnowszych filmów na YouTube lub uruchamiaj losowanie dla własnych list użytkowników z plików CSV/TXT. 
-            Szybkie, płynne i w pełni responsywne narzędzie z podglądem w czasie rzeczywistym!
-        </p>
-
-        <div class="landing-actions">
-            <button class="btn btn-primary btn-hero" onclick="showVideosView()">
-                🎬 Przeglądaj Najnowsze Filmy
-            </button>
-            <button class="btn btn-wheel btn-hero" onclick="openCustomListModal()">
-                📋 Własna Lista Użytkowników
-            </button>
-            <button class="btn btn-hero" onclick="openSettingsModal()">
-                ⚙️ Ustawienia
-            </button>
+    <!-- YOUTUBE CHANNEL PROFILE CARD -->
+    <div class="landing-hero channel-profile-card">
+        <div class="channel-banner-wrap">
+            <img src="" alt="Baner Kanału" id="channel-banner-img" class="channel-banner-img" style="display:none;">
         </div>
-    </div>
-
-    <!-- Features Grid -->
-    <div class="landing-features">
-        <div class="feature-card">
-            <div class="feature-icon">🎡</div>
-            <div class="feature-title">Interaktywne Koło 60 FPS</div>
-            <div class="feature-desc">
-                Dynamiczne koło fortuny z pomiarem mocy naciśnięcia przycisku (poziomy 1-20), fizyką hamowania oraz wyciszoną grafiką przy dużej liczbie wycinków.
+        
+        <div class="channel-profile-body">
+            <div class="channel-avatar-wrap">
+                <img src="" alt="Avatar Kanału" id="channel-avatar-img" class="channel-avatar-img" style="display:none;">
+                <div id="channel-avatar-placeholder" class="channel-avatar-placeholder">📺</div>
             </div>
-        </div>
-
-        <div class="feature-card">
-            <div class="feature-icon">💡</div>
-            <div class="feature-title">Live HUD Ticker "On Top"</div>
-            <div class="feature-desc">
-                Złote okienko nad kołem w czasie rzeczywistym prezentuje pełnego autora i treść komentarza przechodzącego pod czerwoną strzałką.
-            </div>
-        </div>
-
-        <div class="feature-card">
-            <div class="feature-icon">⏱️</div>
-            <div class="feature-title">Odliczanie Czasu & Restart</div>
-            <div class="feature-desc">
-                Precyzyjny stoper odliczający sekundy do zatrzymania koła oraz czerwony przycisk natychmiastowego restartu w trakcie obrotu.
-            </div>
-        </div>
-
-        <div class="feature-card">
-            <div class="feature-icon">📋</div>
-            <div class="feature-title">Import Własnych List (CSV/TXT)</div>
-            <div class="feature-desc">
-                Wgrywaj pliki CSV/TXT lub wklejaj nazwy użytkowników bezpośrednio do pola tekstowego – uruchom koło dla dowolnej grupy osób.
-            </div>
-        </div>
-
-        <div class="feature-card">
-            <div class="feature-icon">⭐</div>
-            <div class="feature-title">Filtrowanie i Wyróżnienia</div>
-            <div class="feature-desc">
-                Wykluczanie autora kanału, unikalni użytkownicy (1 komentarz/osobę), wyszukiwarka słów oraz złote gwiazdki dla wyróżnionych widzów.
-            </div>
-        </div>
-
-        <div class="feature-card">
-            <div class="feature-icon">🔒</div>
-            <div class="feature-title">Bezpieczeństwo & API Admina</div>
-            <div class="feature-desc">
-                Trwałe zapisywanie konfiguracji na serwerze (`global_config.json`) z możliwością zarządzania przez dedykowane API `curl`.
-            </div>
-        </div>
-    </div>
-
-    <!-- DOCUMENTATION SECTION -->
-    <div class="doc-section">
-        <h2 class="doc-main-title">📚 Dokumentacja & API Administracyjne</h2>
-        <p class="doc-subtext">Kompletny przewodnik zarządzania kluczami API, kanałami YouTube oraz integracją bota Discord.</p>
-
-        <!-- API CURL COMMANDS -->
-        <div class="doc-card">
-            <h3 class="doc-card-title">💻 Polecenia `curl` do zarządzania API</h3>
             
-            <div class="doc-item">
-                <div class="doc-item-title">1. Zmiana globalnego klucza API YouTube na serwerze:</div>
-                <pre class="code-block"><code>curl -X POST https://andrzejow.net/youtube/api/admin/set-global-key \
-  -H "Content-Type: application/json" \
-  -d '{"global_api_key": "AIzaSy_TWOJ_KLUCZ_API"}'</code></pre>
-            </div>
-
-            <div class="doc-item">
-                <div class="doc-item-title">2. Dodanie nowego obsługiwanego kanału do listy:</div>
-                <pre class="code-block"><code>curl -X POST https://andrzejow.net/youtube/api/admin/channels/add \
-  -H "Content-Type: application/json" \
-  -d '{"handle": "@NowyKanal", "title": "Opcjonalna Nazwa Kanału"}'</code></pre>
-            </div>
-
-            <div class="doc-item">
-                <div class="doc-item-title">3. Usunięcie kanału z listy obsługiwanych:</div>
-                <pre class="code-block"><code>curl -X POST https://andrzejow.net/youtube/api/admin/channels/remove \
-  -H "Content-Type: application/json" \
-  -d '{"handle": "@ArturK92"}'</code></pre>
-            </div>
-
-            <div class="doc-item">
-                <div class="doc-item-title">4. Dodanie / zmiana tokenu bota Discord:</div>
-                <pre class="code-block"><code>curl -X POST https://andrzejow.net/youtube/api/admin/set-discord-token \
-  -H "Content-Type: application/json" \
-  -d '{"discord_bot_token": "MTEyMzQ1Njc4OTA...TOKEN_BOTA"}'</code></pre>
-            </div>
-        </div>
-
-        <!-- GUIDES STEP-BY-STEP -->
-        <div class="doc-grid">
-            <!-- Guide 1: YouTube API Key -->
-            <div class="doc-card">
-                <h3 class="doc-card-title">🔑 Wygenerowanie klucza YouTube Data API v3</h3>
-                <ol class="doc-steps">
-                    <li>Wejdź na stronę <a href="https://console.cloud.google.com/" target="_blank" class="doc-link">Google Cloud Console</a> i zaloguj się kontem Google.</li>
-                    <li>Stwórz nowy projekt lub wybierz istniejący w górnym menu.</li>
-                    <li>Przejdź do zakładki <strong>APIs & Services ➔ Library</strong>.</li>
-                    <li>Wyszukaj <strong>YouTube Data API v3</strong> i kliknij niebieski przycisk <strong>Enable</strong> (Włącz).</li>
-                    <li>Przejdź do <strong>APIs & Services ➔ Credentials</strong>.</li>
-                    <li>Kliknij <strong>+ Create Credentials ➔ API key</strong>.</li>
-                    <li>Skopiuj wygenerowany klucz API (zaczyna się od <code>AIzaSy...</code>) i wklej go w Ustawieniach aplikacji lub wyślij poleceniem `curl`.</li>
-                </ol>
-            </div>
-
-            <!-- Guide 2: Discord Bot & Token -->
-            <div class="doc-card">
-                <h3 class="doc-card-title">🤖 Wygenerowanie darmowego Bota i Tokenu Discord</h3>
-                <ol class="doc-steps">
-                    <li>Otwórz portal <a href="https://discord.com/developers/applications" target="_blank" class="doc-link">Discord Developer Portal</a>.</li>
-                    <li>Kliknij przycisk <strong>New Application</strong> w prawym górnym rogu i wpisz nazwę (np. <code>KoloFortunyBot</code>).</li>
-                    <li>Z menu po lewej stronie wybierz zakładkę <strong>Bot</strong>.</li>
-                    <li>Kliknij <strong>Reset Token</strong> (lub <em>Copy Token</em>), aby pobrać swój **Bot Token**. Przechowuj go w bezpiecznym miejscu!</li>
-                    <li>Przewiń stronę w dół do sekcji <strong>Privileged Gateway Intents</strong>.</li>
-                    <li>Zaznacz przełącznik przy <strong>Message Content Intent</strong> (umożliwia odczytanie treści wiadomości z kanału) i zapisz zmiany (**Save Changes**).</li>
-                </ol>
-            </div>
-
-            <!-- Guide 3: Invite Bot to Server -->
-            <div class="doc-card">
-                <h3 class="doc-card-title">📩 Zaproszenie Bota na swój serwer Discord</h3>
-                <ol class="doc-steps">
-                    <li>W panelu <a href="https://discord.com/developers/applications" target="_blank" class="doc-link">Discord Developer Portal</a> wejdź w zakładkę <strong>OAuth2 ➔ URL Generator</strong>.</li>
-                    <li>W sekcji <strong>Scopes</strong> zaznacz kratkę przy: <code>bot</code>.</li>
-                    <li>W sekcji <strong>Bot Permissions</strong> zaznacz uprawnienia:
-                        <ul>
-                            <li><code>Read Messages / View Channels</code></li>
-                            <li><code>Read Message History</code></li>
-                        </ul>
-                    </li>
-                    <li>Na dole strony pojawi się wygenerowany link URL. Skopiuj go i otwórz w nowej karcie przeglądarki.</li>
-                    <li>Z listy wybierz swój serwer Discord i kliknij <strong>Autoryzuj</strong> (Authorize). Bot pojawi się na Twoim serwerze!</li>
-                </ol>
+            <div class="channel-meta">
+                <h2 class="channel-title" id="channel-profile-title">Ładowanie profilu kanału...</h2>
+                <div class="channel-sub-info">
+                    <span id="channel-profile-handle">@UncjuszPatyniusz</span>
+                    <span class="dot-separator">•</span>
+                    <span id="channel-profile-subs">8,67 tys. subskrybentów</span>
+                    <span class="dot-separator">•</span>
+                    <span id="channel-profile-videos">297 filmów</span>
+                </div>
+                <p class="channel-desc" id="channel-profile-desc">
+                    Jest to kanał który ma na celu popularyzację numizmatyki, poszerzanie wiedzy kolekcjonerskiej...
+                </p>
             </div>
         </div>
     </div>
@@ -180,187 +50,93 @@
         box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
     }
 
-    .landing-badge {
-        display: inline-block;
-        background: rgba(245, 158, 11, 0.15);
-        color: var(--accent-gold);
-        border: 1px solid rgba(245, 158, 11, 0.3);
-        padding: 6px 16px;
-        border-radius: 20px;
-        font-size: 13px;
-        font-weight: 700;
-        margin-bottom: 16px;
+    .channel-profile-card {
+        padding: 0 0 28px 0 !important;
+        overflow: hidden;
+        align-items: stretch !important;
+        text-align: left !important;
     }
 
-    .landing-title {
-        font-size: 32px;
-        font-weight: 800;
-        letter-spacing: -0.8px;
-        margin-bottom: 12px;
+    .channel-banner-wrap {
+        width: 100%;
+        height: 180px;
+        background: linear-gradient(135deg, #1e293b, #0f172a);
+        position: relative;
+        overflow: hidden;
     }
 
-    .highlight-text {
-        background: linear-gradient(135deg, #f59e0b, #ef4444);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+    .channel-banner-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
     }
 
-    .landing-description {
-        font-size: 15px;
-        color: var(--text-muted);
-        max-width: 720px;
-        line-height: 1.6;
-        margin-bottom: 28px;
-    }
-
-    .landing-actions {
+    .channel-profile-body {
+        padding: 0 32px;
         display: flex;
-        gap: 14px;
-        flex-wrap: wrap;
+        gap: 24px;
+        align-items: flex-start;
+        margin-top: -40px;
+        position: relative;
+        z-index: 2;
+    }
+
+    .channel-avatar-wrap {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        border: 4px solid #1e293b;
+        background: #0f172a;
+        overflow: hidden;
+        flex-shrink: 0;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
         justify-content: center;
     }
 
-    .btn-hero {
-        padding: 12px 24px;
-        font-size: 14.5px;
-        font-weight: 700;
-        border-radius: 12px;
+    .channel-avatar-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
     }
 
-    .landing-features {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 20px;
+    .channel-avatar-placeholder {
+        font-size: 40px;
     }
 
-    .feature-card {
-        background: var(--bg-card);
-        backdrop-filter: var(--glass-blur);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-lg);
-        padding: 24px;
+    .channel-meta {
         display: flex;
         flex-direction: column;
-        gap: 10px;
-        transition: transform 0.2s ease, border-color 0.2s ease;
+        gap: 6px;
+        padding-top: 48px;
+        flex-grow: 1;
     }
 
-    .feature-card:hover {
-        transform: translateY(-4px);
-        border-color: rgba(99, 102, 241, 0.4);
-    }
-
-    .feature-icon {
-        font-size: 32px;
-    }
-
-    .feature-title {
-        font-size: 16px;
-        font-weight: 700;
-    }
-
-    .feature-desc {
-        font-size: 13.5px;
-        color: var(--text-muted);
-        line-height: 1.5;
-    }
-
-    /* Documentation Section Styling */
-    .doc-section {
-        margin-top: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 24px;
-    }
-
-    .doc-main-title {
-        font-size: 22px;
+    .channel-title {
+        font-size: 24px;
         font-weight: 800;
         color: var(--text-main);
-        letter-spacing: -0.5px;
     }
 
-    .doc-subtext {
-        font-size: 14px;
+    .channel-sub-info {
+        font-size: 13.5px;
         color: var(--text-muted);
-        margin-top: -16px;
-    }
-
-    .doc-card {
-        background: var(--bg-card);
-        backdrop-filter: var(--glass-blur);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-lg);
-        padding: 24px 28px;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-    }
-
-    .doc-card-title {
-        font-size: 17px;
-        font-weight: 700;
-        color: var(--accent-gold);
         display: flex;
         align-items: center;
         gap: 8px;
-        border-bottom: 1px solid rgba(255,255,255,0.08);
-        padding-bottom: 12px;
+        flex-wrap: wrap;
     }
 
-    .doc-item-title {
+    .dot-separator {
+        color: var(--accent-gold);
+    }
+
+    .channel-desc {
         font-size: 13.5px;
-        font-weight: 600;
-        color: var(--text-main);
-        margin-bottom: 6px;
-    }
-
-    .code-block {
-        background: #090d16;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
-        padding: 12px 16px;
-        overflow-x: auto;
-        font-family: 'Consolas', 'Courier New', monospace;
-        font-size: 13px;
-        color: #38bdf8;
-        line-height: 1.45;
-    }
-
-    .doc-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-        gap: 20px;
-    }
-
-    .doc-steps {
-        padding-left: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        font-size: 13.5px;
-        color: var(--text-main);
-        line-height: 1.5;
-    }
-
-    .doc-steps li {
-        margin-bottom: 4px;
-    }
-
-    .doc-steps ul {
-        padding-left: 18px;
-        margin-top: 4px;
         color: var(--text-muted);
-    }
-
-    .doc-link {
-        color: var(--accent-primary);
-        text-decoration: none;
-        font-weight: 600;
-    }
-
-    .doc-link:hover {
-        text-decoration: underline;
+        line-height: 1.5;
+        margin-top: 8px;
+        max-width: 900px;
     }
 </style>
