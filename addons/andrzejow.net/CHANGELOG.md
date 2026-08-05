@@ -2,6 +2,18 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.5.6] - 2026-08-05
+
+### Dodano / Zmieniono
+- **Informacja o Wersji na Pasku Nawigacji**: Obok nazwy aplikacji w nagłówku strony wyświetlana jest dynamiczna plakietka z numerem wersji (np. `v1.5.6`).
+- **Lista Dozwolonych Kanałów (`ALLOWED_CHANNELS`)**: Dodano w kodzie serwera listę dozwolonych kanałów YouTube (np. `@UncjuszPatyniusz`), które użytkownik może łatwo wybrać z listy rozwijanej w ustawieniach.
+- **Wsparcie dla Globalnego Klucza API (Poza Git-em)**:
+  - Serwer wspiera przechowywanie globalnego klucza API w pliku `global_config.json` w trwałym katalogu danych serwera (poza repozytorium Git, niewidoczny na GitHubie).
+  - W Ustawieniach dodano możliwość wyboru: `(o) Użyj klucza serwerowego (globalnego)` lub `( ) Użyj własnego klucza API`.
+  - **Punkt Końcowy API dla Administratora**: Ustawianie/aktualizacja globalnego klucza API przez zapytanie HTTP POST `/api/admin/set-global-key` z parametrem `global_api_key`.
+
+---
+
 ## [1.5.5] - 2026-08-05
 
 ### Naprawiono / Zmieniono

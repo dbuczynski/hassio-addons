@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube Koło Fortuny Online</title>
+    <title>YouTube Koło Fortuny Online v1.5.6</title>
     <!-- Google Fonts Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -72,6 +72,20 @@
             font-size: 20px;
             font-weight: 700;
             letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .version-badge {
+            font-size: 11px;
+            font-weight: 700;
+            background: rgba(99, 102, 241, 0.2);
+            color: var(--accent-primary);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            padding: 2px 8px;
+            border-radius: 12px;
+            letter-spacing: 0.5px;
         }
 
         .brand-subtitle {
@@ -541,7 +555,7 @@
             cursor: pointer;
         }
 
-        /* Power Hold Button (Robust Event Catching) */
+        /* Power Hold Button */
         .btn-power-start {
             position: relative;
             background: #1e293b;
@@ -572,7 +586,7 @@
             width: 0%;
             background: linear-gradient(90deg, #f59e0b, #ef4444, #ec4899);
             z-index: 1;
-            pointer-events: none; /* Critical fix: do not intercept mouse events */
+            pointer-events: none;
             transition: width 0.05s linear;
         }
 
@@ -582,7 +596,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            pointer-events: none; /* Critical fix: do not intercept mouse events */
+            pointer-events: none;
             text-shadow: 0 2px 4px rgba(0,0,0,0.8);
             white-space: nowrap;
         }
@@ -604,14 +618,14 @@
             box-shadow: 0 0 40px rgba(99, 102, 241, 0.25);
         }
 
-        /* Winner Celebration Card (Wider & Responsive) */
+        /* Winner Celebration Card */
         .winner-banner {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) scale(0.8);
             width: 92%;
-            max-width: 580px; /* Increased width so long names fit comfortably */
+            max-width: 580px;
             background: rgba(15, 23, 42, 0.96);
             backdrop-filter: blur(20px);
             border: 2px solid var(--accent-gold);
@@ -693,7 +707,7 @@
             border: 1px solid var(--border-color);
             border-radius: var(--radius-lg);
             width: 100%;
-            max-width: 520px;
+            max-width: 540px;
             padding: 28px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.5);
             transform: scale(0.95);
@@ -736,7 +750,7 @@
             margin-bottom: 8px;
         }
 
-        .form-input {
+        .form-input, .form-select {
             width: 100%;
             background: rgba(15, 23, 42, 0.8);
             border: 1px solid var(--border-color);
@@ -747,8 +761,19 @@
             outline: none;
         }
 
-        .form-input:focus {
+        .form-input:focus, .form-select:focus {
             border-color: var(--accent-primary);
+        }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(15, 23, 42, 0.5);
+            padding: 12px 14px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            margin-bottom: 10px;
         }
 
         .help-text {
@@ -796,8 +821,11 @@
         <div class="brand">
             <span class="brand-icon">🎡</span>
             <div>
-                <div class="brand-title">YouTube Koło Fortuny Online</div>
-                <div class="brand-subtitle" id="channel-subtitle">Ładowanie ustawień przeglądarki...</div>
+                <div class="brand-title">
+                    YouTube Koło Fortuny Online
+                    <span class="version-badge" id="app-version-badge">v1.5.6</span>
+                </div>
+                <div class="brand-subtitle" id="channel-subtitle">Ładowanie ustawień...</div>
             </div>
         </div>
         <div class="nav-actions">
@@ -921,7 +949,7 @@
                             <span id="slider-val-label" style="color:var(--accent-gold); font-weight:700;">15s</span>
                         </div>
 
-                        <!-- Hold to Charge Power Start Button (Isolated Text & Fill) -->
+                        <!-- Hold to Charge Power Start Button -->
                         <button id="btn-power-start" class="btn-power-start" 
                                 onmousedown="startChargingPower(event)" 
                                 onmouseup="stopChargingAndSpin(event)" 
@@ -958,31 +986,52 @@
     <div class="modal-overlay" id="settings-modal">
         <div class="modal">
             <div class="modal-header">
-                <div class="modal-title">⚙️ Twoje Indywidualne Ustawienia</div>
+                <div class="modal-title">⚙️ Ustawienia Aplikacji</div>
                 <button class="close-btn" onclick="closeSettingsModal()">✕</button>
             </div>
             <form onsubmit="saveSettings(event)">
+                <!-- API Key Selection Mode -->
                 <div class="form-group">
                     <label class="form-label">Klucz YouTube Data API v3</label>
-                    <input type="password" id="input-api-key" class="form-input" placeholder="Wklej swój osobisty klucz API (np. AIzaSy...)">
-                    <div class="help-text">Klucz zapisuje się wyłącznie w Twojej przeglądarce (localStorage) i nie jest dzielony z innymi użytkownikami.</div>
+                    <div class="radio-group">
+                        <label class="filter-checkbox">
+                            <input type="radio" name="key_mode" id="key-mode-global" value="global" onchange="toggleKeyModeUI()">
+                            <span>Użyj klucza serwerowego (globalnego)</span>
+                        </label>
+                        <label class="filter-checkbox">
+                            <input type="radio" name="key_mode" id="key-mode-custom" value="custom" onchange="toggleKeyModeUI()">
+                            <span>Użyj własnego klucza API</span>
+                        </label>
+                    </div>
+
+                    <div id="custom-key-wrapper" class="hidden" style="margin-top:10px;">
+                        <input type="password" id="input-api-key" class="form-input" placeholder="Wklej swój osobisty klucz API (AIzaSy...)">
+                        <div class="help-text">Twój własny klucz jest zapisywany wyłącznie w Twojej przeglądarce.</div>
+                    </div>
+                    <div id="global-key-info" class="help-text" style="color:var(--accent-gold);">
+                        Status klucza globalnego: <span id="global-key-status-text">sprawdzanie...</span>
+                    </div>
                 </div>
 
+                <!-- Channel Selector / Input -->
                 <div class="form-group">
-                    <label class="form-label">Wybrany Kanał YouTube (Handle lub ID)</label>
-                    <input type="text" id="input-channel-handle" class="form-input" placeholder="np. @UncjuszPatyniusz lub UC..." required>
-                    <div class="help-text">Kanał, z którego chcesz wybierać filmy.</div>
+                    <label class="form-label">Wybrany Kanał YouTube</label>
+                    <select id="select-channel" class="form-select" onchange="onChannelSelectChange(this.value)">
+                        <!-- Populated dynamically -->
+                    </select>
+                    <input type="text" id="input-channel-handle" class="form-input hidden" style="margin-top:8px;" placeholder="np. @UncjuszPatyniusz">
+                    <div class="help-text">Kanał, z którego będą pobierane najnowsze filmy.</div>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Wyróżnieni Użytkownicy (oddzieleni przecinkami)</label>
                     <input type="text" id="input-target-users" class="form-input" placeholder="np. @nazwa1, @nazwa2">
-                    <div class="help-text">Użytkownicy, których komentarze będą wyróżnione gwiazdką w Twojej sesji.</div>
+                    <div class="help-text">Użytkownicy wyróżnieni gwiazdką w Twojej sesji.</div>
                 </div>
 
                 <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
                     <button type="button" class="btn" onclick="closeSettingsModal()">Anuluj</button>
-                    <button type="submit" class="btn btn-primary">Zapisz Ustawienia w Przeglądarce</button>
+                    <button type="submit" class="btn btn-primary">Zapisz Ustawienia</button>
                 </div>
             </form>
         </div>
@@ -998,8 +1047,9 @@
                 if (stored) return JSON.parse(stored);
             } catch (e) {}
             return {
+                use_global_key: true,
                 api_key: "",
-                channel_handle: "",
+                channel_handle: "@UncjuszPatyniusz",
                 target_users: []
             };
         }
@@ -1017,10 +1067,20 @@
 
         const getRequestHeaders = () => {
             const config = getUserConfig();
-            return {
-                "X-Api-Key": config.api_key || "",
+            const headers = {
                 "X-Channel-Handle": config.channel_handle || ""
             };
+            // Send custom API key ONLY if user selected custom key mode
+            if (!config.use_global_key && config.api_key) {
+                headers["X-Api-Key"] = config.api_key;
+            }
+            return headers;
+        };
+
+        let serverInfo = {
+            version: "1.5.6",
+            has_global_key: false,
+            allowed_channels: [{"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"}]
         };
 
         let allComments = [];
@@ -1029,33 +1089,41 @@
         let currentChannelTitle = "";
         let activeVideoId = null;
 
-        // Map storing selection state of authors: { authorName: boolean }
         let selectedAuthorsMap = {};
-
-        // Active View State: 'table' or 'wheel'
         let currentRightView = 'table';
 
-        // Wheel Physics & Animation Variables
-        let wheelEntries = []; // Array of active slice objects: [{ author, comment }]
-        let currentWheelAngle = 0; // In radians
+        let wheelEntries = [];
+        let currentWheelAngle = 0;
         let isSpinning = false;
         let animationFrameId = null;
 
-        // Power Button Charge State (20 Levels)
         let isChargingPower = false;
-        let currentPowerLevel = 0; // 0 to 20
+        let currentPowerLevel = 0;
         let chargeIntervalId = null;
 
-        // Slice Palette Colors
         const WHEEL_COLORS = [
             "#6366f1", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6", 
             "#ec4899", "#14b8a6", "#f97316", "#06b6d4", "#a855f7"
         ];
 
         document.addEventListener("DOMContentLoaded", () => {
-            loadConfig();
-            loadVideos();
+            fetchServerInfo().then(() => {
+                loadConfig();
+                loadVideos();
+            });
         });
+
+        async function fetchServerInfo() {
+            try {
+                const res = await fetch(getApiUrl("/info"));
+                if (res.ok) {
+                    serverInfo = await res.json();
+                    if (serverInfo.version) {
+                        document.getElementById("app-version-badge").innerText = "v" + serverInfo.version;
+                    }
+                }
+            } catch (e) {}
+        }
 
         function showError(msg) {
             const alert = document.getElementById("error-alert");
@@ -1067,15 +1135,85 @@
             document.getElementById("error-alert").classList.add("hidden");
         }
 
+        function toggleKeyModeUI() {
+            const isCustom = document.getElementById("key-mode-custom").checked;
+            const customWrapper = document.getElementById("custom-key-wrapper");
+            if (isCustom) {
+                customWrapper.classList.remove("hidden");
+            } else {
+                customWrapper.classList.add("hidden");
+            }
+        }
+
+        function populateChannelSelect(selectedHandle) {
+            const select = document.getElementById("select-channel");
+            select.innerHTML = "";
+
+            const allowed = serverInfo.allowed_channels || [];
+            allowed.forEach(ch => {
+                const opt = document.createElement("option");
+                opt.value = ch.handle;
+                opt.textContent = `${ch.title} (${ch.handle})`;
+                if (ch.handle.toLowerCase() === (selectedHandle || "").toLowerCase()) {
+                    opt.selected = true;
+                }
+                select.appendChild(opt);
+            });
+
+            // Option to type custom if allowed
+            const optCustom = document.createElement("option");
+            optCustom.value = "__custom__";
+            optCustom.textContent = "Inny kanał (wpisz ręcznie)";
+            select.appendChild(optCustom);
+
+            if (!allowed.some(c => c.handle.toLowerCase() === (selectedHandle || "").toLowerCase()) && selectedHandle) {
+                select.value = "__custom__";
+                document.getElementById("input-channel-handle").classList.remove("hidden");
+                document.getElementById("input-channel-handle").value = selectedHandle;
+            } else {
+                document.getElementById("input-channel-handle").classList.add("hidden");
+            }
+        }
+
+        function onChannelSelectChange(val) {
+            const inputCustom = document.getElementById("input-channel-handle");
+            if (val === "__custom__") {
+                inputCustom.classList.remove("hidden");
+            } else {
+                inputCustom.classList.add("hidden");
+                inputCustom.value = val;
+            }
+        }
+
         function loadConfig() {
             const config = getUserConfig();
-            currentChannelHandle = config.channel_handle || "";
+            currentChannelHandle = config.channel_handle || "@UncjuszPatyniusz";
             targetUsersList = (config.target_users || []).map(u => u.toLowerCase().trim());
 
             document.getElementById("channel-subtitle").innerText = "Kanał: " + (currentChannelHandle || "Nieustawiony");
-            document.getElementById("input-channel-handle").value = currentChannelHandle;
             document.getElementById("input-target-users").value = (config.target_users || []).join(", ");
             document.getElementById("input-api-key").value = config.api_key || "";
+
+            // Set Radio Buttons for Key Mode
+            if (config.use_global_key) {
+                document.getElementById("key-mode-global").checked = true;
+            } else {
+                document.getElementById("key-mode-custom").checked = true;
+            }
+            toggleKeyModeUI();
+
+            // Status text of global key
+            const statusText = document.getElementById("global-key-status-text");
+            if (serverInfo.has_global_key) {
+                statusText.innerText = "Dostępny na serwerze ✅";
+                statusText.style.color = "#10b981";
+            } else {
+                statusText.innerText = "Brak na serwerze ⚠️ (wymaga podania własnego klucza)";
+                statusText.style.color = "#ef4444";
+            }
+
+            // Populate channel dropdown
+            populateChannelSelect(currentChannelHandle);
         }
 
         async function loadVideos() {
@@ -1083,7 +1221,8 @@
             loadConfig();
             const config = getUserConfig();
 
-            if (!config.api_key || !config.channel_handle) {
+            // If user opted for custom key but didn't type one and server has no global key
+            if (!config.use_global_key && !config.api_key && !serverInfo.has_global_key) {
                 openSettingsModal();
             }
 
@@ -1151,7 +1290,8 @@
             document.getElementById("view-comments").classList.remove("hidden");
             document.getElementById("active-video-title").innerText = `Komentarze pod: "${title}"`;
             
-            const csvUrl = getApiUrl(`/export-csv?video_id=${videoId}&api_key=${encodeURIComponent(userConfig.api_key || '')}&channel_handle=${encodeURIComponent(userConfig.channel_handle || '')}`);
+            const customParam = (!userConfig.use_global_key && userConfig.api_key) ? `&api_key=${encodeURIComponent(userConfig.api_key)}` : '';
+            const csvUrl = getApiUrl(`/export-csv?video_id=${videoId}&channel_handle=${encodeURIComponent(userConfig.channel_handle || '')}${customParam}`);
             document.getElementById("btn-export-csv").href = csvUrl;
 
             const loader = document.getElementById("comments-loader");
@@ -1171,7 +1311,6 @@
 
                 allComments = data.comments;
                 
-                // Reset selected authors map
                 selectedAuthorsMap = {};
                 allComments.forEach(c => {
                     selectedAuthorsMap[c.author] = true;
@@ -1183,7 +1322,6 @@
                 document.getElementById("chk-unique-users").checked = false;
                 document.getElementById("chk-target-only").checked = false;
 
-                // Default view: Table
                 currentRightView = 'table';
                 document.getElementById("panel-comments-table").classList.remove("hidden");
                 document.getElementById("panel-wheel-fortune").classList.add("hidden");
@@ -1198,7 +1336,6 @@
             }
         }
 
-        // Helper to check if author is channel owner
         function isChannelOwner(authorName) {
             const cleanAuthor = authorName.toLowerCase().replace("@", "").trim();
             const cleanHandle = (currentChannelHandle || "").toLowerCase().replace("@", "").trim();
@@ -1215,7 +1352,6 @@
             const uniqueUsersOnly = document.getElementById("chk-unique-users").checked;
             const targetOnly = document.getElementById("chk-target-only").checked;
 
-            // Step 1: Base filtering by channel owner exclusion & search query & target users
             let matchingComments = allComments.filter(c => {
                 if (excludeAuthor && isChannelOwner(c.author)) {
                     return false;
@@ -1236,7 +1372,6 @@
                 return true;
             });
 
-            // Step 2: Build dynamic unique authors list from matchingComments
             const authorCounts = {};
             matchingComments.forEach(c => {
                 authorCounts[c.author] = (authorCounts[c.author] || 0) + 1;
@@ -1252,10 +1387,8 @@
 
             renderAuthorsSidebar(matchingAuthorsList, authorCounts);
 
-            // Step 3: Filter comments by checked authors in sidebar
             let tableComments = matchingComments.filter(c => selectedAuthorsMap[c.author] === true);
 
-            // Step 4: Unique users filter (only 1 comment per author)
             if (uniqueUsersOnly) {
                 const seenAuthors = new Set();
                 const uniqueList = [];
@@ -1268,10 +1401,8 @@
                 tableComments = uniqueList;
             }
 
-            // Step 5: Render active view (Table or Wheel)
             renderCommentsTable(tableComments);
 
-            // Update Wheel Entries
             wheelEntries = tableComments;
             drawWheel();
 
@@ -1436,7 +1567,6 @@
 
             const total = wheelEntries.length;
             if (total === 0) {
-                // Empty state wheel
                 ctx.beginPath();
                 ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
                 ctx.fillStyle = "#1e293b";
@@ -1455,7 +1585,6 @@
 
             const sliceAngle = (2 * Math.PI) / total;
 
-            // Draw Slices
             for (let i = 0; i < total; i++) {
                 const angleStart = currentWheelAngle + i * sliceAngle;
                 const angleEnd = angleStart + sliceAngle;
@@ -1472,14 +1601,12 @@
                 ctx.lineWidth = 2;
                 ctx.stroke();
 
-                // Draw Text / Labels inside slice
                 ctx.save();
                 ctx.translate(centerX, centerY);
                 ctx.rotate(angleStart + sliceAngle / 2);
                 ctx.textAlign = "right";
                 ctx.fillStyle = "#ffffff";
                 
-                // Adaptive font size based on slice count
                 const fontSize = total > 30 ? 10 : total > 15 ? 12 : 14;
                 ctx.font = `bold ${fontSize}px Inter, sans-serif`;
 
@@ -1488,14 +1615,12 @@
                 ctx.restore();
             }
 
-            // Draw Outer Ring
             ctx.beginPath();
             ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
             ctx.strokeStyle = "#f59e0b";
             ctx.lineWidth = 6;
             ctx.stroke();
 
-            // Draw Center Hub
             ctx.beginPath();
             ctx.arc(centerX, centerY, 30, 0, 2 * Math.PI);
             ctx.fillStyle = "#0f172a";
@@ -1504,14 +1629,12 @@
             ctx.lineWidth = 4;
             ctx.stroke();
 
-            // Draw Center Icon
             ctx.fillStyle = "#f59e0b";
             ctx.font = "18px Inter, sans-serif";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             ctx.fillText("🎡", centerX, centerY);
 
-            // Draw Top Pointer Arrow (12 o'clock position = 270 degrees / -PI/2)
             ctx.save();
             ctx.beginPath();
             ctx.moveTo(centerX - 16, centerY - radius - 8);
@@ -1526,7 +1649,6 @@
             ctx.restore();
         }
 
-        /* Power Hold Start Button Mechanics (Fixed event bubbling & label text) */
         function startChargingPower(e) {
             if (e && e.preventDefault) e.preventDefault();
             if (isSpinning || wheelEntries.length === 0) return;
@@ -1538,7 +1660,6 @@
 
             if (chargeIntervalId) clearInterval(chargeIntervalId);
 
-            // Charge from 1 to 20 levels over ~2 seconds
             chargeIntervalId = setInterval(() => {
                 if (currentPowerLevel < 20) {
                     currentPowerLevel++;
@@ -1573,7 +1694,7 @@
             isChargingPower = false;
             if (chargeIntervalId) clearInterval(chargeIntervalId);
 
-            const powerUsed = Math.max(1, currentPowerLevel); // Min 1 level
+            const powerUsed = Math.max(1, currentPowerLevel);
             const durationSec = parseInt(document.getElementById("wheel-duration-slider").value) || 15;
 
             currentPowerLevel = 0;
@@ -1590,12 +1711,10 @@
             const startTime = performance.now();
             const startAngle = currentWheelAngle;
 
-            // Higher power level = more total rotations
             const minRotations = 3 + Math.floor(powerLevel / 3);
             const extraRandomRotations = (powerLevel / 20) * 8 + Math.random() * 4;
             const totalAngleToRotate = (minRotations + extraRandomRotations) * 2 * Math.PI;
 
-            // Ease Out Cubic function (fast start, gradual deceleration)
             function easeOutCubic(t) {
                 return 1 - Math.pow(1 - t, 3);
             }
@@ -1624,9 +1743,7 @@
             if (total === 0) return;
 
             const sliceAngle = (2 * Math.PI) / total;
-            
-            // Pointer is at top position (12 o'clock = -PI/2)
-            const pointerAngle = (3 * Math.PI) / 2; // Equivalent to -PI/2 mod 2PI
+            const pointerAngle = (3 * Math.PI) / 2;
             const normalizedAngle = (pointerAngle - currentWheelAngle) % (2 * Math.PI);
             const positiveAngle = (normalizedAngle + 2 * Math.PI) % (2 * Math.PI);
 
@@ -1675,12 +1792,18 @@
 
         function saveSettings(e) {
             e.preventDefault();
+            const useGlobalKey = document.getElementById("key-mode-global").checked;
             const apiKey = document.getElementById("input-api-key").value.trim();
-            const channelHandle = document.getElementById("input-channel-handle").value.trim();
+            
+            const selectVal = document.getElementById("select-channel").value;
+            const customVal = document.getElementById("input-channel-handle").value.trim();
+            const channelHandle = (selectVal === "__custom__") ? customVal : (selectVal || customVal);
+
             const targetUsersRaw = document.getElementById("input-target-users").value;
             const targetUsers = targetUsersRaw.split(",").map(u => u.trim()).filter(u => u);
 
             const newConfig = {
+                use_global_key: useGlobalKey,
                 api_key: apiKey,
                 channel_handle: channelHandle,
                 target_users: targetUsers
