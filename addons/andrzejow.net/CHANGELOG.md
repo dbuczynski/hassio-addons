@@ -2,6 +2,15 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.5.9] - 2026-08-05
+
+### Dodano / Naprawiono / Zmieniono
+- **Kanał `@ZlotyBazyliszek`**: Dodano kanał `@ZlotyBazyliszek` (Złoty Bazyliszek) do listy dozwolonych kanałów (`ALLOWED_CHANNELS`).
+- **Naprawiono Szerokość Przycisku Start (`width: 480px`)**: Ustalono stałą szerokość przycisku start (`width: 480px; min-width: 480px`), dzięki czemu po zmianie tekstu z domyślnego na "MOC WSKAZANIA: X / 20" przycisk nie zmniejsza swoich wymiarów, a kursor myszy pozostaje idealnie w granicach przycisku niezależnie od tego, z której strony klikamy.
+- **Zmiana Słownictwa**: Usunięto z interfejsu słowa sugerujące "losowanie" (np. "Zaproś do losowania") i zastąpiono je jednoznacznymi sformułowaniami dotyczącymi wyboru ciekawego komentarza (np. `🎯 WYBIERZ CIEKAWY KOMENTARZ (PRZYTRZYMAJ START)` oraz `🎉 WYBRANY AUTOR I KOMENTARZ 🎉`).
+
+---
+
 ## [1.5.8] - 2026-08-05
 
 ### Zmieniono

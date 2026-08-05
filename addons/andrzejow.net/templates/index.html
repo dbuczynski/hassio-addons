@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Koło Fortuny by Weekendowy Detektorysta v1.5.8</title>
+    <title>Koło Fortuny by Weekendowy Detektorysta v1.5.9</title>
     <!-- Google Fonts Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -555,15 +555,15 @@
             cursor: pointer;
         }
 
-        /* Power Hold Button */
+        /* Fixed width Power Hold Button */
         .btn-power-start {
             position: relative;
             background: #1e293b;
             border: 2px solid var(--accent-gold);
             color: #fff;
-            padding: 12px 32px;
+            padding: 12px 24px;
             border-radius: var(--radius-md);
-            font-size: 15px;
+            font-size: 13.5px;
             font-weight: 800;
             cursor: pointer;
             overflow: hidden;
@@ -572,6 +572,11 @@
             box-shadow: 0 4px 18px rgba(245, 158, 11, 0.35);
             transition: transform 0.1s ease;
             touch-action: manipulation;
+            width: 480px;
+            max-width: 100%;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .btn-power-start:active {
@@ -595,6 +600,8 @@
             z-index: 2;
             display: flex;
             align-items: center;
+            justify-content: center;
+            width: 100%;
             gap: 8px;
             pointer-events: none;
             text-shadow: 0 2px 4px rgba(0,0,0,0.8);
@@ -823,7 +830,7 @@
             <div>
                 <div class="brand-title">
                     Koło Fortuny by Weekendowy Detektorysta
-                    <span class="version-badge" id="app-version-badge">v1.5.8</span>
+                    <span class="version-badge" id="app-version-badge">v1.5.9</span>
                 </div>
                 <div class="brand-subtitle" id="channel-subtitle">Ładowanie ustawień...</div>
             </div>
@@ -949,7 +956,7 @@
                             <span id="slider-val-label" style="color:var(--accent-gold); font-weight:700;">15s</span>
                         </div>
 
-                        <!-- Hold to Charge Power Start Button -->
+                        <!-- Fixed width Hold to Charge Power Start Button -->
                         <button id="btn-power-start" class="btn-power-start" 
                                 onmousedown="startChargingPower(event)" 
                                 onmouseup="stopChargingAndSpin(event)" 
@@ -958,7 +965,7 @@
                                 ontouchend="stopChargingAndSpin(event)">
                             <div class="btn-power-fill" id="btn-power-fill"></div>
                             <div class="btn-power-text">
-                                <span id="btn-power-label">🎡 ZAPROŚ DO LOSOWANIA (PRZYTRZYMAJ START)</span>
+                                <span id="btn-power-label">🎯 WYBIERZ CIEKAWY KOMENTARZ (PRZYTRZYMAJ START)</span>
                             </div>
                         </button>
                     </div>
@@ -967,9 +974,9 @@
                     <div class="wheel-stage">
                         <canvas id="wheel-canvas" width="540" height="540"></canvas>
 
-                        <!-- Winner Card Overlay -->
+                        <!-- Winner Celebration Card -->
                         <div class="winner-banner" id="winner-banner">
-                            <div class="winner-title">🎉 ZWYCIĘZCA KOŁA FORTUNY 🎉</div>
+                            <div class="winner-title">🎉 WYBRANY AUTOR I KOMENTARZ 🎉</div>
                             <div class="winner-name" id="winner-name">@Autor</div>
                             <div class="winner-comment" id="winner-comment">"Treść komentarza..."</div>
                             <button class="btn btn-gold btn-sm" style="margin-top:16px;" onclick="closeWinnerBanner()">Zamknij</button>
@@ -1077,9 +1084,12 @@
         };
 
         let serverInfo = {
-            version: "1.5.8",
+            version: "1.5.9",
             has_global_key: false,
-            allowed_channels: [{"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"}]
+            allowed_channels: [
+                {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
+                {"handle": "@ZlotyBazyliszek", "title": "Złoty Bazyliszek"}
+            ]
         };
 
         let allComments = [];
@@ -1573,7 +1583,7 @@
                 ctx.font = "16px Inter, sans-serif";
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
-                ctx.fillText("Brak wybranych użytkowników do koła fortuny", centerX, centerY);
+                ctx.fillText("Brak wybranych komentarzy do koła fortuny", centerX, centerY);
                 return;
             }
 
@@ -1668,9 +1678,9 @@
             
             const btnLabel = document.getElementById("btn-power-label");
             if (currentPowerLevel > 0) {
-                btnLabel.textContent = `⚡ MOC KRĘCENIA: ${currentPowerLevel} / 20`;
+                btnLabel.textContent = `⚡ MOC WSKAZANIA: ${currentPowerLevel} / 20`;
             } else {
-                btnLabel.textContent = `🎡 ZAPROŚ DO LOSOWANIA (PRZYTRZYMAJ START)`;
+                btnLabel.textContent = `🎯 WYBIERZ CIEKAWY KOMENTARZ (PRZYTRZYMAJ START)`;
             }
         }
 
