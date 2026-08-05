@@ -2,6 +2,13 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.8.3] - 2026-08-05
+
+### Dodano / Zmieniono
+- **Stabilny Live HUD Ticker**: Usztywniono wysokość okienka podglądu komentarzy do 70px oraz ograniczono podgląd do pojedynczej linijki z wielokropkiem, co wyeliminowało przeskakiwanie i skakanie koła fortuny w pionie podczas obrotu.
+
+---
+
 ## [1.8.2] - 2026-08-05
 
 ### Dodano / Zmieniono

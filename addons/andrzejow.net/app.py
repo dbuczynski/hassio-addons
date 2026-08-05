@@ -7,7 +7,7 @@ import youtube_service
 
 app = Flask(__name__)
 
-APP_VERSION = "1.8.2"
+APP_VERSION = "1.8.3"
 
 DEFAULT_ALLOWED_CHANNELS = [
     {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
