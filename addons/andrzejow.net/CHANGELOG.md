@@ -2,6 +2,14 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.5.5] - 2026-08-05
+
+### Naprawiono / Zmieniono
+- **Rozszerzona Karta Zwycięzcy**: Poszerzono baner ogłoszenia zwycięzcy (`width: 92%`, `max-width: 580px`) oraz dodano `word-break: break-word; overflow-wrap: anywhere;`. Długie nazwy użytkowników (np. `@ukaszgaazewski7197`) i wielolinijkowe komentarze mieszczą się teraz idealnie.
+- **Naprawiony Przycisk START (Przytrzymanie Mocy)**: Dodano `pointer-events: none` do pod-elementów paska wypełnienia (`.btn-power-fill`) oraz etykiety tekstowej (`.btn-power-text`). Przytrzymanie przycisku start myszą lub dotykiem działa teraz stabilnie na całej powierzchni przycisku (od lewej do prawej krawędzi) bez przerywania i znikania.
+
+---
+
 ## [1.5.4] - 2026-08-04
 
 ### Dodano

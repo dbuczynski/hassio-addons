@@ -1,5 +1,5 @@
 name: "YouTube Koło Fortuny Web Server (andrzejow.net)"
-version: "1.5.4"
+version: "1.5.5"
 slug: "andrzejow_net"
 description: "Serwer WWW dla andrzejow.net z aplikacją YouTube Koło Fortuny Online pod adresem /youtube"
 arch:
