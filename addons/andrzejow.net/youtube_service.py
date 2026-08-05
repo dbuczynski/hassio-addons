@@ -74,16 +74,17 @@ def resolve_channel_info(youtube, channel_input):
     raise ValueError(f"Nie znaleziono kanału YouTube dla: {channel_input}")
 
 
-def get_channel_videos(api_key, channel_handle_or_id, max_results=50):
+def get_channel_videos(api_key, channel_handle_or_id=None, channel_handle=None, max_results=50):
     """
     Pobiera listę najnowszych filmów ze wskazanego kanału wraz z datą publikacji
     oraz ilością komentarzy pod każdym filmem.
     """
+    target_handle = channel_handle or channel_handle_or_id or "@UncjuszPatyniusz"
     if not api_key:
         raise ValueError("Brak klucza API YouTube.")
 
     youtube = get_youtube_client(api_key)
-    channel_id, uploads_playlist_id, channel_title = resolve_channel_info(youtube, channel_handle_or_id)
+    channel_id, uploads_playlist_id, channel_title = resolve_channel_info(youtube, target_handle)
 
     video_items = []
     next_page_token = None

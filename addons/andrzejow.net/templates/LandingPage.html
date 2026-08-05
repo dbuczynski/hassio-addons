@@ -1,0 +1,186 @@
+<!-- LandingPage.html - Strona Startowa Koło Fortuny by Weekendowy Detektorysta -->
+<div class="landing-container">
+    <div class="landing-hero">
+        <div class="landing-badge">🎡 Koło Fortuny v1.7.1</div>
+        <h1 class="landing-title">Koło Fortuny <span class="highlight-text">by Weekendowy Detektorysta</span></h1>
+        <p class="landing-description">
+            Wybieraj ciekawe komentarze spod najnowszych filmów na YouTube lub uruchamiaj losowanie dla własnych list użytkowników z plików CSV/TXT. 
+            Szybkie, płynne i w pełni responsywne narzędzie z podglądem w czasie rzeczywistym!
+        </p>
+
+        <div class="landing-actions">
+            <button class="btn btn-primary btn-hero" onclick="showVideosView()">
+                🎬 Przeglądaj Najnowsze Filmy
+            </button>
+            <button class="btn btn-wheel btn-hero" onclick="openCustomListModal()">
+                📋 Własna Lista Użytkowników
+            </button>
+            <button class="btn btn-hero" onclick="openSettingsModal()">
+                ⚙️ Ustawienia
+            </button>
+        </div>
+    </div>
+
+    <!-- Features Grid -->
+    <div class="landing-features">
+        <div class="feature-card">
+            <div class="feature-icon">🎡</div>
+            <div class="feature-title">Interaktywne Koło 60 FPS</div>
+            <div class="feature-desc">
+                Dynamiczne koło fortuny z pomiarem mocy naciśnięcia przycisku (poziomy 1-20), fizyką hamowania oraz wyciszoną grafiką przy dużej liczbie wycinków.
+            </div>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">💡</div>
+            <div class="feature-title">Live HUD Ticker "On Top"</div>
+            <div class="feature-desc">
+                Złote okienko nad kołem w czasie rzeczywistym prezentuje pełnego autora i treść komentarza przechodzącego pod czerwoną strzałką.
+            </div>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">⏱️</div>
+            <div class="feature-title">Odliczanie Czasu & Restart</div>
+            <div class="feature-desc">
+                Precyzyjny stoper odliczający sekundy do zatrzymania koła oraz czerwony przycisk natychmiastowego restartu w trakcie obrotu.
+            </div>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">📋</div>
+            <div class="feature-title">Import Własnych List (CSV/TXT)</div>
+            <div class="feature-desc">
+                Wgrywaj pliki CSV/TXT lub wklejaj nazwy użytkowników bezpośrednio do pola tekstowego – uruchom koło dla dowolnej grupy osób.
+            </div>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">⭐</div>
+            <div class="feature-title">Filtrowanie i Wyróżnienia</div>
+            <div class="feature-desc">
+                Wykluczanie autora kanału, unikalni użytkownicy (1 komentarz/osobę), wyszukiwarka słów oraz złote gwiazdki dla wyróżnionych widzów.
+            </div>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">🔒</div>
+            <div class="feature-title">Bezpieczeństwo & Prywatność</div>
+            <div class="feature-desc">
+                Obsługa klucza globalnego lub własnego klucza zapisywanego wyłącznie w Twojej przeglądarce (`localStorage`).
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .landing-container {
+        display: flex;
+        flex-direction: column;
+        gap: 40px;
+        padding: 20px 0 40px 0;
+    }
+
+    .landing-hero {
+        background: var(--bg-card);
+        backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 48px 36px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+    }
+
+    .landing-badge {
+        display: inline-block;
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--accent-gold);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 12.5px;
+        font-weight: 700;
+        margin-bottom: 20px;
+        letter-spacing: 0.5px;
+    }
+
+    .landing-title {
+        font-size: 36px;
+        font-weight: 800;
+        letter-spacing: -1px;
+        line-height: 1.2;
+        margin-bottom: 16px;
+    }
+
+    .highlight-text {
+        background: linear-gradient(135deg, #f59e0b, #ec4899);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .landing-description {
+        font-size: 16px;
+        color: var(--text-muted);
+        max-width: 760px;
+        line-height: 1.6;
+        margin-bottom: 32px;
+    }
+
+    .landing-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        justify-content: center;
+    }
+
+    .btn-hero {
+        padding: 12px 24px;
+        font-size: 14.5px;
+        font-weight: 600;
+        border-radius: var(--radius-md);
+    }
+
+    .landing-features {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 24px;
+    }
+
+    .feature-card {
+        background: var(--bg-card);
+        backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        transition: all 0.25s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(99, 102, 241, 0.4);
+        background: var(--bg-card-hover);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .feature-icon {
+        font-size: 32px;
+    }
+
+    .feature-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-main);
+    }
+
+    .feature-desc {
+        font-size: 13.5px;
+        color: var(--text-muted);
+        line-height: 1.55;
+    }
+</style>

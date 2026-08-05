@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Koło Fortuny by Weekendowy Detektorysta v1.7.0</title>
+    <title>Koło Fortuny by Weekendowy Detektorysta v1.7.1</title>
     <!-- Google Fonts Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -59,6 +59,8 @@
             display: flex;
             align-items: center;
             gap: 12px;
+            cursor: pointer;
+            user-select: none;
         }
 
         .brand-icon {
@@ -879,17 +881,18 @@
 
     <!-- Navbar -->
     <nav class="navbar">
-        <div class="brand">
+        <div class="brand" onclick="showLandingView()" title="Przejdź do strony startowej">
             <span class="brand-icon">🎡</span>
             <div>
                 <div class="brand-title">
                     Koło Fortuny by Weekendowy Detektorysta
-                    <span class="version-badge" id="app-version-badge">v1.7.0</span>
+                    <span class="version-badge" id="app-version-badge">v1.7.1</span>
                 </div>
                 <div class="brand-subtitle" id="channel-subtitle">Ładowanie ustawień...</div>
             </div>
         </div>
         <div class="nav-actions">
+            <button class="btn" onclick="showVideosView()">🎬 Lista filmów</button>
             <button class="btn btn-wheel" onclick="openCustomListModal()">📋 Własna lista</button>
             <button class="btn" onclick="openSettingsModal()">⚙️ Ustawienia</button>
         </div>
@@ -904,8 +907,13 @@
             <button class="btn btn-sm" onclick="closeAlert()">Zamknij</button>
         </div>
 
+        <!-- VIEW 0: LANDING PAGE -->
+        <div id="view-landing">
+            {% include 'LandingPage.html' %}
+        </div>
+
         <!-- VIEW 1: VIDEOS LIST -->
-        <div id="view-videos">
+        <div id="view-videos" class="hidden">
             <div class="section-header">
                 <h2 class="section-title">Lista najnowszych filmów</h2>
                 <div style="display:flex; gap:10px;">
@@ -1181,7 +1189,7 @@
         };
 
         let serverInfo = {
-            version: "1.7.0",
+            version: "1.7.1",
             has_global_key: false,
             allowed_channels: [
                 {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
@@ -1216,7 +1224,14 @@
         document.addEventListener("DOMContentLoaded", () => {
             fetchServerInfo().then(() => {
                 loadConfig();
-                loadVideos();
+                const config = getUserConfig();
+                const hasGlobal = serverInfo.has_global_key;
+                const hasCustom = !config.use_global_key && config.api_key;
+
+                // Open settings automatically if no global key is set and no custom key provided!
+                if (!hasGlobal && !hasCustom) {
+                    openSettingsModal();
+                }
             });
         });
 
@@ -1319,6 +1334,19 @@
             populateChannelSelect(currentChannelHandle);
         }
 
+        function showLandingView() {
+            document.getElementById("view-videos").classList.add("hidden");
+            document.getElementById("view-comments").classList.add("hidden");
+            document.getElementById("view-landing").classList.remove("hidden");
+        }
+
+        function showVideosView() {
+            document.getElementById("view-landing").classList.add("hidden");
+            document.getElementById("view-comments").classList.add("hidden");
+            document.getElementById("view-videos").classList.remove("hidden");
+            loadVideos();
+        }
+
         async function loadVideos() {
             closeAlert();
             loadConfig();
@@ -1388,6 +1416,7 @@
             const title = decodeURIComponent(encodedTitle);
             const userConfig = getUserConfig();
 
+            document.getElementById("view-landing").classList.add("hidden");
             document.getElementById("view-videos").classList.add("hidden");
             document.getElementById("view-comments").classList.remove("hidden");
             document.getElementById("active-video-title").innerText = `Komentarze pod: "${title}"`;
@@ -1498,6 +1527,7 @@
                 selectedAuthorsMap[c.author] = true;
             });
 
+            document.getElementById("view-landing").classList.add("hidden");
             document.getElementById("view-videos").classList.add("hidden");
             document.getElementById("view-comments").classList.remove("hidden");
             document.getElementById("active-video-title").innerText = `Własna lista użytkowników (${userList.length} osób)`;
@@ -2030,11 +2060,6 @@
             return str.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
         }
 
-        function showVideosView() {
-            document.getElementById("view-comments").classList.add("hidden");
-            document.getElementById("view-videos").classList.remove("hidden");
-        }
-
         function openSettingsModal() {
             document.getElementById("settings-modal").classList.add("active");
         }
@@ -2065,7 +2090,11 @@
             saveUserConfigToStorage(newConfig);
             closeSettingsModal();
             loadConfig();
-            loadVideos();
+            
+            // If on videos view, refresh videos
+            if (!document.getElementById("view-videos").classList.contains("hidden")) {
+                loadVideos();
+            }
         }
     </script>
 </body>
