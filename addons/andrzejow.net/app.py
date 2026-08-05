@@ -7,229 +7,166 @@ import youtube_service
 
 app = Flask(__name__)
 
-APP_VERSION = "1.6.2"
+APP_VERSION = "1.7.0"
 
 # Lista dozwolonych kanałów YouTube dla których można listować filmy
 ALLOWED_CHANNELS = [
     {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
     {"handle": "@ZlotyBazyliszek", "title": "Złoty Bazyliszek"},
-    {"handle": "@ArturK92", "title": "ArturK92"},
+    {"handle": "@ArturK92", "title": "ArturK92"}
 ]
 
+DATA_DIR = "/data" if os.path.exists("/data") else os.path.dirname(os.path.abspath(__file__))
+GLOBAL_CONFIG_PATH = os.path.join(DATA_DIR, "global_config.json")
 
-def get_possible_config_paths():
-    """Zwraca listę możliwych ścieżek zapisu pliku global_config.json z obsługą fallbacków."""
-    paths = []
-    # Ścieżka 1: Trwały katalog danych Home Assistant Add-on
-    if os.path.exists("/data"):
-        paths.append("/data/global_config.json")
-
-    # Ścieżka 2: Katalog aplikacji
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    paths.append(os.path.join(base_dir, "global_config.json"))
-    paths.append(os.path.join(base_dir, "data", "global_config.json"))
-    return paths
-
-
-def load_global_api_key():
-    """Wczytuje serwerowy (globalny) klucz API z pliku lokalnego."""
-    for path in get_possible_config_paths():
-        if os.path.exists(path):
-            try:
-                with open(path, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    key = data.get("global_api_key", "").strip()
-                    if key:
-                        return key
-            except Exception as e:
-                print(f"Błąd odczytu {path}:", e)
+def get_global_api_key():
+    """Pobiera globalny klucz API z pliku global_config.json jeśli istnieje."""
+    if os.path.exists(GLOBAL_CONFIG_PATH):
+        try:
+            with open(GLOBAL_CONFIG_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                return data.get("global_api_key", "").strip()
+        except Exception:
+            pass
     return ""
 
-
 def save_global_api_key(key):
-    """Zapisuje serwerowy (globalny) klucz API w pliku lokalnym z próbą wszystkich dostępnych ścieżek."""
-    last_error = None
-    for path in get_possible_config_paths():
+    """Zapisuje globalny klucz API do pliku global_config.json."""
+    data = {}
+    if os.path.exists(GLOBAL_CONFIG_PATH):
         try:
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-            with open(path, "w", encoding="utf-8") as f:
-                json.dump({"global_api_key": key}, f, indent=2)
-            print(f"Pomyślnie zapisano klucz globalny w: {path}")
-            return True, None
-        except Exception as e:
-            last_error = str(e)
-            print(f"Nie udało się zapisać w {path}:", e)
-    return False, last_error
+            with open(GLOBAL_CONFIG_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except Exception:
+            data = {}
+    data["global_api_key"] = key.strip()
+    with open(GLOBAL_CONFIG_PATH, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
 
+def resolve_api_key():
+    """Ustala klucz API z nagłówka żądania klienta X-Api-Key lub z pliku globalnego."""
+    custom_key = request.headers.get("X-Api-Key", "").strip()
+    if custom_key:
+        return custom_key
+    
+    query_key = request.args.get("api_key", "").strip()
+    if query_key:
+        return query_key
 
-def get_request_credentials():
-    """
-    Pobiera klucz API oraz nazwę kanału z nagłówków żądania HTTP (lub parametrów URL).
-    Jeśli użytkownik nie podał własnego klucza API, używa klucza globalnego zapisanego na serwerze.
-    """
-    api_key = request.headers.get("X-Api-Key") or request.args.get("api_key", "").strip()
-    channel_handle = request.headers.get("X-Channel-Handle") or request.args.get("channel_handle", "").strip()
+    global_key = get_global_api_key()
+    if global_key:
+        return global_key
 
-    # Jeśli brak własnego klucza użytkownika -> użyj klucza globalnego z serwera
-    if not api_key:
-        api_key = load_global_api_key()
+    return None
 
-    return api_key, channel_handle
+def resolve_channel_handle():
+    """Pobiera preferowaną nazwę kanału z nagłówka klienta X-Channel-Handle."""
+    header_handle = request.headers.get("X-Channel-Handle", "").strip()
+    if header_handle:
+        return header_handle
+    query_handle = request.args.get("channel_handle", "").strip()
+    if query_handle:
+        return query_handle
+    return "@UncjuszPatyniusz"
 
+@app.route('/')
 
-def is_channel_allowed(channel_handle):
-    """Sprawdza czy kanał znajduje się na liście dozwolonych kanałów (jeśli lista jest zdefiniowana)."""
-    if not ALLOWED_CHANNELS:
-        return True
-    clean_req = channel_handle.lower().replace("@", "").strip()
-    for item in ALLOWED_CHANNELS:
-        clean_allowed = item["handle"].lower().replace("@", "").strip()
-        if clean_req == clean_allowed:
-            return True
-    return False
+@app.route('/youtube')
+def index():
+    return render_template('index.html')
 
-
-@app.route("/")
-def home():
-    """Domyślna strona pod adresem głównym (z pliku default.html)."""
-    return render_template("default.html")
-
-
-@app.route("/youtube")
-@app.route("/youtube/")
-def youtube_app():
-    """Aplikacja Koło Fortuny by Weekendowy Detektorysta dostępna pod adresem /youtube."""
-    return render_template("index.html")
-
-
-@app.route("/api/info", methods=["GET"])
-@app.route("/youtube/api/info", methods=["GET"])
-def info_endpoint():
-    """Zwraca metadane aplikacji: wersję, status klucza globalnego i listę dozwolonych kanałów."""
-    global_key = load_global_api_key()
+@app.route('/api/info')
+@app.route('/youtube/api/info')
+def api_info():
+    """Zwraca wersję aplikacji, status klucza globalnego i listę dozwolonych kanałów."""
+    global_key = get_global_api_key()
     return jsonify({
         "version": APP_VERSION,
         "has_global_key": bool(global_key),
         "allowed_channels": ALLOWED_CHANNELS
     })
 
-
-@app.route("/api/admin/set-global-key", methods=["POST"])
-@app.route("/youtube/api/admin/set-global-key", methods=["POST"])
-def set_global_key_endpoint():
-    """Umożliwia ustawienie serwerowego klucza globalnego przez API."""
-    data = request.get_json(silent=True) or {}
-    key = data.get("global_api_key", "").strip() or request.form.get("global_api_key", "").strip()
-
-    if not key:
-        return jsonify({"error": "Brak wymaganego parametru 'global_api_key'."}), 400
-
-    success, err_msg = save_global_api_key(key)
-    if success:
+@app.route('/api/admin/set-global-key', methods=['POST'])
+@app.route('/youtube/api/admin/set-global-key', methods=['POST'])
+def set_global_key():
+    """Endpoint administracyjny do ustawiania klucza globalnego przez POST JSON."""
+    try:
+        data = request.get_json(force=True, silent=True) or {}
+        key = data.get("global_api_key", "").strip()
+        if not key:
+            return jsonify({"error": "Brak parametru global_api_key w żądaniu."}), 400
+        
+        save_global_api_key(key)
         return jsonify({
-            "success": True,
-            "message": "Globalny klucz API został pomyślnie zapisany na serwerze."
+            "status": "success",
+            "message": "Globalny klucz API został pomyślnie zapisany na serwerze.",
+            "path": GLOBAL_CONFIG_PATH
         })
-    else:
-        return jsonify({"error": f"Nie udało się zapisać klucza na serwerze: {err_msg}"}), 500
+    except Exception as e:
+        return jsonify({"error": f"Nie udało się zapisać klucza na serwerze: {str(e)}"}), 500
 
-
-@app.route("/api/videos", methods=["GET"])
-@app.route("/youtube/api/videos", methods=["GET"])
-def list_videos_endpoint():
-    api_key, channel_handle = get_request_credentials()
-
+@app.route('/api/videos')
+@app.route('/youtube/api/videos')
+def get_videos():
+    api_key = resolve_api_key()
     if not api_key:
-        return jsonify({
-            "error": "Brak klucza YouTube API. Serwer nie posiada skonfigurowanego klucza globalnego. Otwórz Ustawienia ⚙️ i wprowadź swój klucz API."
-        }), 400
+        return jsonify({"error": "Brak klucza API. Ustaw klucz globalny na serwerze lub podaj własny klucz w Ustawieniach."}), 400
 
-    if not channel_handle:
-        return jsonify({"error": "Brak nazwy/ID kanału. Otwórz Ustawienia ⚙️ i wybierz lub wpisz nazwę kanału."}), 400
-
-    if not is_channel_allowed(channel_handle):
-        return jsonify({
-            "error": f"Kanał '{channel_handle}' nie znajduje się na liście dozwolonych kanałów."
-        }), 403
+    channel_handle = resolve_channel_handle()
 
     try:
-        data = youtube_service.get_channel_videos(api_key, channel_handle)
+        data = youtube_service.get_channel_videos(api_key, channel_handle=channel_handle, max_results=12)
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-@app.route("/api/comments", methods=["GET"])
-@app.route("/youtube/api/comments", methods=["GET"])
-def get_comments_endpoint():
-    video_id = request.args.get("video_id", "").strip()
-    if not video_id:
-        return jsonify({"error": "Brak wymaganego parametru video_id."}), 400
-
-    api_key, channel_handle = get_request_credentials()
-
+@app.route('/api/comments')
+@app.route('/youtube/api/comments')
+def get_comments():
+    api_key = resolve_api_key()
     if not api_key:
-        return jsonify({"error": "Brak klucza YouTube API."}), 400
+        return jsonify({"error": "Brak klucza API."}), 400
 
-    if not is_channel_allowed(channel_handle):
-        return jsonify({"error": f"Kanał '{channel_handle}' nie znajduje się na liście dozwolonych kanałów."}), 403
-
-    try:
-        comments = youtube_service.get_video_comments(
-            api_key=api_key,
-            video_id=video_id,
-            allowed_channel_handle_or_id=channel_handle
-        )
-        return jsonify({
-            "video_id": video_id,
-            "channel_handle": channel_handle,
-            "total_comments": len(comments),
-            "comments": comments
-        })
-    except PermissionError as pe:
-        return jsonify({"error": str(pe)}), 403
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route("/api/export-csv", methods=["GET"])
-@app.route("/youtube/api/export-csv", methods=["GET"])
-def export_csv_endpoint():
-    video_id = request.args.get("video_id", "").strip()
+    video_id = request.args.get('video_id')
     if not video_id:
-        return jsonify({"error": "Brak parametru video_id."}), 400
-
-    api_key, channel_handle = get_request_credentials()
+        return jsonify({"error": "Brak parametru video_id"}), 400
 
     try:
-        comments = youtube_service.get_video_comments(
-            api_key=api_key,
-            video_id=video_id,
-            allowed_channel_handle_or_id=channel_handle
-        )
-
-        output = io.StringIO()
-        writer = csv.DictWriter(output, fieldnames=["Autor", "Komentarz", "Data"])
-        writer.writeheader()
-        for c in comments:
-            writer.writerow({
-                "Autor": c["author"],
-                "Komentarz": c["comment"],
-                "Data": c["date"]
-            })
-
-        csv_content = output.getvalue()
-        output.close()
-
-        return Response(
-            csv_content,
-            mimetype="text/csv",
-            headers={"Content-Disposition": f"attachment; filename=komentarze-{video_id}.csv"}
-        )
+        comments = youtube_service.get_all_comments_for_video(api_key, video_id)
+        return jsonify({"video_id": video_id, "comments": comments})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/export-csv')
+@app.route('/youtube/api/export-csv')
+def export_csv():
+    api_key = resolve_api_key()
+    if not api_key:
+        return "Brak klucza API", 400
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8080))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    video_id = request.args.get('video_id')
+    if not video_id:
+        return "Brak parametru video_id", 400
+
+    try:
+        comments = youtube_service.get_all_comments_for_video(api_key, video_id)
+        
+        output = io.StringIO()
+        writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL)
+        writer.writerow(['Lp', 'Autor', 'Komentarz', 'Data publikacji'])
+        
+        for idx, c in enumerate(comments, 1):
+            writer.writerow([idx, c['author'], c['comment'], c['date']])
+            
+        csv_data = output.getvalue()
+        
+        return Response(
+            csv_data,
+            mimetype="text/csv",
+            headers={"Content-disposition": f"attachment; filename=komentarze_{video_id}.csv"}
+        )
+    except Exception as e:
+        return f"Błąd tworzenia pliku CSV: {str(e)}", 500
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8080, debug=True)

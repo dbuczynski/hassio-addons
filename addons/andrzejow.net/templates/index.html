@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Koło Fortuny by Weekendowy Detektorysta v1.6.2</title>
+    <title>Koło Fortuny by Weekendowy Detektorysta v1.7.0</title>
     <!-- Google Fonts Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -810,7 +810,7 @@
             margin-bottom: 8px;
         }
 
-        .form-input, .form-select {
+        .form-input, .form-select, textarea.form-input {
             width: 100%;
             background: rgba(15, 23, 42, 0.8);
             border: 1px solid var(--border-color);
@@ -819,9 +819,10 @@
             color: var(--text-main);
             font-size: 14px;
             outline: none;
+            font-family: inherit;
         }
 
-        .form-input:focus, .form-select:focus {
+        .form-input:focus, .form-select:focus, textarea.form-input:focus {
             border-color: var(--accent-primary);
         }
 
@@ -883,12 +884,13 @@
             <div>
                 <div class="brand-title">
                     Koło Fortuny by Weekendowy Detektorysta
-                    <span class="version-badge" id="app-version-badge">v1.6.1</span>
+                    <span class="version-badge" id="app-version-badge">v1.7.0</span>
                 </div>
                 <div class="brand-subtitle" id="channel-subtitle">Ładowanie ustawień...</div>
             </div>
         </div>
         <div class="nav-actions">
+            <button class="btn btn-wheel" onclick="openCustomListModal()">📋 Własna lista</button>
             <button class="btn" onclick="openSettingsModal()">⚙️ Ustawienia</button>
         </div>
     </nav>
@@ -906,7 +908,10 @@
         <div id="view-videos">
             <div class="section-header">
                 <h2 class="section-title">Lista najnowszych filmów</h2>
-                <button class="btn btn-primary" onclick="loadVideos()">🔄 Odśwież listy</button>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn btn-wheel" onclick="openCustomListModal()">📋 Własna Lista Użytkowników</button>
+                    <button class="btn btn-primary" onclick="loadVideos()">🔄 Odśwież listy</button>
+                </div>
             </div>
 
             <div id="videos-loader" class="spinner"></div>
@@ -1053,6 +1058,34 @@
 
     </div>
 
+    <!-- MODAL: CUSTOM USERS LIST IMPORT -->
+    <div class="modal-overlay" id="custom-list-modal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <div class="modal-title">📋 Własna Lista Użytkowników do Koła</div>
+                <button class="close-btn" onclick="closeCustomListModal()">✕</button>
+            </div>
+            <div>
+                <div class="form-group">
+                    <label class="form-label">Wgraj plik CSV lub TXT z listą użytkowników</label>
+                    <input type="file" id="input-custom-file" accept=".csv, .txt" class="form-input" onchange="handleCustomFileUpload(event)">
+                    <div class="help-text">Wybierz plik tekstowy lub CSV (jeden użytkownik w linijce lub rozdzieleni przecinkami).</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Lub wklej listę użytkowników bezpośrednio:</label>
+                    <textarea id="textarea-custom-users" class="form-input" rows="8" placeholder="np.&#10;@JanKowalski&#10;@AnnaNowak&#10;@PiotrWiśniewski&#10;lub Jan, Anna, Piotr"></textarea>
+                    <div class="help-text">Każdy użytkownik w nowej linii lub oddzielony przecinkiem.</div>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
+                    <button type="button" class="btn" onclick="closeCustomListModal()">Anuluj</button>
+                    <button type="button" class="btn btn-wheel" onclick="submitCustomList()">🎯 URUCHOM KOŁO FORTUNY</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL: SETTINGS -->
     <div class="modal-overlay" id="settings-modal">
         <div class="modal">
@@ -1148,7 +1181,7 @@
         };
 
         let serverInfo = {
-            version: "1.6.2",
+            version: "1.7.0",
             has_global_key: false,
             allowed_channels: [
                 {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
@@ -1362,6 +1395,7 @@
             const customParam = (!userConfig.use_global_key && userConfig.api_key) ? `&api_key=${encodeURIComponent(userConfig.api_key)}` : '';
             const csvUrl = getApiUrl(`/export-csv?video_id=${videoId}&channel_handle=${encodeURIComponent(userConfig.channel_handle || '')}${customParam}`);
             document.getElementById("btn-export-csv").href = csvUrl;
+            document.getElementById("btn-export-csv").classList.remove("hidden");
 
             const loader = document.getElementById("comments-loader");
             const layout = document.getElementById("comments-layout-wrapper");
@@ -1403,6 +1437,89 @@
             } finally {
                 loader.classList.add("hidden");
             }
+        }
+
+        /* ----------------------------------------------------
+           CUSTOM USERS LIST IMPORT MODAL LOGIC
+           ---------------------------------------------------- */
+        function openCustomListModal() {
+            document.getElementById("custom-list-modal").classList.add("active");
+        }
+
+        function closeCustomListModal() {
+            document.getElementById("custom-list-modal").classList.remove("active");
+        }
+
+        function handleCustomFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const content = evt.target.result;
+                document.getElementById("textarea-custom-users").value = content;
+            };
+            reader.readAsText(file, "UTF-8");
+        }
+
+        function submitCustomList() {
+            const rawText = document.getElementById("textarea-custom-users").value;
+            if (!rawText.trim()) {
+                alert("Wprowadź lub wgraj listę użytkowników przed uruchomieniem koła.");
+                return;
+            }
+
+            // Split by newlines or commas
+            const lines = rawText.split(/[\r\n,]+/);
+            const userList = [];
+
+            lines.forEach(line => {
+                let clean = line.trim();
+                if (clean) {
+                    if (!clean.startsWith("@")) clean = "@" + clean;
+                    userList.push(clean);
+                }
+            });
+
+            if (userList.length === 0) {
+                alert("Nie odnaleziono prawidłowych nazw użytkowników.");
+                return;
+            }
+
+            activeVideoId = "custom_list";
+            allComments = userList.map(u => ({
+                author: u,
+                comment: "Wpis z własnej listy",
+                date: new Date().toISOString()
+            }));
+
+            selectedAuthorsMap = {};
+            allComments.forEach(c => {
+                selectedAuthorsMap[c.author] = true;
+            });
+
+            document.getElementById("view-videos").classList.add("hidden");
+            document.getElementById("view-comments").classList.remove("hidden");
+            document.getElementById("active-video-title").innerText = `Własna lista użytkowników (${userList.length} osób)`;
+            document.getElementById("btn-export-csv").classList.add("hidden");
+
+            document.getElementById("chk-select-all-authors").checked = true;
+            document.getElementById("search-input").value = "";
+            document.getElementById("chk-exclude-author").checked = false;
+            document.getElementById("chk-unique-users").checked = false;
+            document.getElementById("chk-target-only").checked = false;
+
+            closeCustomListModal();
+
+            onFilterChange();
+            document.getElementById("comments-layout-wrapper").classList.remove("hidden");
+
+            // Open wheel view directly!
+            currentRightView = 'wheel';
+            document.getElementById("panel-comments-table").classList.add("hidden");
+            document.getElementById("panel-wheel-fortune").classList.remove("hidden");
+            document.getElementById("btn-toggle-view").innerText = "📋 TABELA";
+            drawWheel();
         }
 
         function isChannelOwner(authorName) {
@@ -1475,7 +1592,7 @@
             wheelEntries = tableComments;
             drawWheel();
 
-            document.getElementById("comments-count-summary").innerText = `Wyświetlono: ${tableComments.length} z ${allComments.length} komentarzy`;
+            document.getElementById("comments-count-summary").innerText = `Wyświetlono: ${tableComments.length} z ${allComments.length} użytkowników`;
         }
 
         function renderAuthorsSidebar(authorsList, authorCounts) {
@@ -1577,9 +1694,9 @@
                 const authorClean = c.author.toLowerCase().trim();
                 const isTarget = targetUsersList.some(t => authorClean.includes(t.replace("@", "")));
 
-                const dateStr = new Date(c.date).toLocaleDateString("pl-PL", {
+                const dateStr = (c.date && c.date !== "Wpis z własnej listy") ? new Date(c.date).toLocaleDateString("pl-PL", {
                     year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
-                });
+                }) : "-";
 
                 const tr = document.createElement("tr");
                 if (isTarget) tr.className = "highlighted-row";
@@ -1650,10 +1767,10 @@
                 ctx.font = "16px Inter, sans-serif";
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
-                ctx.fillText("Brak wybranych komentarzy do koła fortuny", centerX, centerY);
+                ctx.fillText("Brak wybranych użytkowników do koła fortuny", centerX, centerY);
 
                 document.getElementById("hud-author").innerText = "👉 BIAŁA KARTA";
-                document.getElementById("hud-comment").innerText = "Brak wybranych komentarzy";
+                document.getElementById("hud-comment").innerText = "Brak wybranych użytkowników";
                 return;
             }
 
@@ -1668,7 +1785,14 @@
 
             if (activeEntry) {
                 document.getElementById("hud-author").innerText = "👉 " + activeEntry.author;
-                document.getElementById("hud-comment").innerText = `"${activeEntry.comment}"`;
+                const hudComment = document.getElementById("hud-comment");
+                if (activeEntry.comment && activeEntry.comment !== "Wpis z własnej listy") {
+                    hudComment.innerText = `"${activeEntry.comment}"`;
+                    hudComment.style.display = "block";
+                } else {
+                    hudComment.innerText = "";
+                    hudComment.style.display = "none";
+                }
             }
 
             for (let i = 0; i < total; i++) {
@@ -1877,7 +2001,14 @@
 
         function showWinnerBanner(winner) {
             document.getElementById("winner-name").innerText = winner.author;
-            document.getElementById("winner-comment").innerText = `"${winner.comment}"`;
+            const winnerCommentEl = document.getElementById("winner-comment");
+            if (winner.comment && winner.comment !== "Wpis z własnej listy") {
+                winnerCommentEl.innerText = `"${winner.comment}"`;
+                winnerCommentEl.style.display = "block";
+            } else {
+                winnerCommentEl.innerText = "";
+                winnerCommentEl.style.display = "none";
+            }
             document.getElementById("winner-banner").classList.add("active");
         }
 

@@ -2,6 +2,18 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.7.0] - 2026-08-05
+
+### Dodano
+- **Własna Lista Użytkowników (Import CSV / TXT / Pole tekstowe)**:
+  - Dodano przycisk **`📋 Własna lista`** na pasku nawigacyjnym oraz na ekranie z listą filmów.
+  - Opcja wgrywania własnego pliku `.csv` lub `.txt` z listą użytkowników (jedna osoba na linijkę lub rozdzieleni przecinkami).
+  - Pole tekstowe do bezpośredniego wklejania własnych loginów.
+  - Wykorzystanie **istniejącego silnika Koła Fortuny** – przejście bezpośrednio do widoku z kołem, filtrami, listą autorów, pomiarem mocy startu i wskaźnikiem *Live HUD*.
+  - Gdy koło zakręci się dla własnej listy użytkowników, wyświetla czysto i czytelnie **samą nazwę wybranego użytkownika** (bez zbędnej sekcji komentarza).
+
+---
+
 ## [1.6.2] - 2026-08-05
 
 ### Dodano
@@ -35,121 +47,3 @@ Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 - **Kanał `@ZlotyBazyliszek`**: Dodano kanał `@ZlotyBazyliszek` (Złoty Bazyliszek) do listy dozwolonych kanałów (`ALLOWED_CHANNELS`).
 - **Naprawiono Szerokość Przycisku Start (`width: 480px`)**: Ustalono stałą szerokość przycisku start (`width: 480px; min-width: 480px`), dzięki czemu po zmianie tekstu z domyślnego na "MOC WSKAZANIA: X / 20" przycisk nie zmniejsza swoich wymiarów, a kursor myszy pozostaje idealnie w granicach przycisku niezależnie od tego, z której strony klikamy.
 - **Zmiana Słownictwa**: Usunięto z interfejsu słowa sugerujące "losowanie" (np. "Zaproś do losowania") i zastąpiono je jednoznacznymi sformułowaniami dotyczącymi wyboru ciekawego komentarza (np. `🎯 WYBIERZ CIEKAWY KOMENTARZ (PRZYTRZYMAJ START)` oraz `🎉 WYBRANY AUTOR I KOMENTARZ 🎉`).
-
----
-
-## [1.5.8] - 2026-08-05
-
-### Zmieniono
-- **Zmiana Tytułu Aplikacji**: Zmieniono nazwę i tytuł z *YouTube Koło Fortuny Online* na **Koło Fortuny by Weekendowy Detektorysta** na pasku nawigacyjnym, w nagłówku `<title>` oraz w metadanych dodatku Home Assistant (`config.yaml`).
-
----
-
-## [1.5.7] - 2026-08-05
-
-### Naprawiono
-- **Zapis Klucza Globalnego API**: Dodano automatyczny fallback dla ścieżek zapisu `global_config.json` (`/data/global_config.json` oraz katalog aplikacji). Dodano szczegółową diagnostykę błędów w zapytaniu POST `/api/admin/set-global-key`.
-
----
-
-## [1.5.6] - 2026-08-05
-
-### Dodano / Zmieniono
-- **Informacja o Wersji na Pasku Nawigacji**: Obok nazwy aplikacji w nagłówku strony wyświetlana jest dynamiczna plakietka z numerem wersji (np. `v1.5.6`).
-- **Lista Dozwolonych Kanałów (`ALLOWED_CHANNELS`)**: Dodano w kodzie serwera listę dozwolonych kanałów YouTube (np. `@UncjuszPatyniusz`), które użytkownik może łatwo wybrać z listy rozwijanej w ustawieniach.
-- **Wsparcie dla Globalnego Klucza API (Poza Git-em)**:
-  - Serwer wspiera przechowywanie globalnego klucza API w pliku `global_config.json` w trwałym katalogu danych serwera (poza repozytorium Git, niewidoczny na GitHubie).
-  - W Ustawieniach dodano możliwość wyboru: `(o) Użyj klucza serwerowego (globalnego)` lub `( ) Użyj własnego klucza API`.
-  - **Punkt Końcowy API dla Administratora**: Ustawianie/aktualizacja globalnego klucza API przez zapytanie HTTP POST `/api/admin/set-global-key` z parametrem `global_api_key`.
-
----
-
-## [1.5.5] - 2026-08-05
-
-### Naprawiono / Zmieniono
-- **Rozszerzona Karta Zwycięzcy**: Poszerzono baner ogłoszenia zwycięzcy (`width: 92%`, `max-width: 580px`) oraz dodano `word-break: break-word; overflow-wrap: anywhere;`. Długie nazwy użytkowników (np. `@ukaszgaazewski7197`) i wielolinijkowe komentarze mieszczą się teraz idealnie.
-- **Naprawiony Przycisk START (Przytrzymanie Mocy)**: Dodano `pointer-events: none` do pod-elementów paska wypełnienia (`.btn-power-fill`) oraz etykiety tekstowej (`.btn-power-text`). Przytrzymanie przycisku start myszą lub dotykiem działa teraz stabilnie na całej powierzchni przycisku (od lewej do prawej krawędzi) bez przerywania i znikania.
-
----
-
-## [1.5.4] - 2026-08-04
-
-### Dodano
-- **Przycisk "WYRÓŻNIJ" (Koło Fortuny)** w nagłówku panelu bocznego autorów.
-- **Interaktywne Koło Fortuny (Wykres Pie Canvas)**:
-  - Przełączanie widoku z tabeli na animowane Koło Fortuny.
-  - Proporcjonalne wyliczanie wycinków koła w zależności od wybranych filtrów (unikalni autorzy = 1 wycinek/osobę, z powtórzeniami = wielokrotne wycinki wg kolejności komentarzy).
-- **Sterowanie fizyką i czasem**:
-  - Suwak czasu kręcenia w zakresie od `5 sekund` do `120 sekund`.
-  - **Przycisk START z pomiarem mocy (20 poziomów)**: Przytrzymanie przycisku ładuje pasek mocy (poziomy 1-20), a puszczenie wprawia koło w ruch obrotowy.
-  - Płynny obrót z fizyką hamowania (ease-out cubic) i wskaźnikiem wygrywającego wycinka na samej górze.
-  - Ogłoszenie zwycięzcy z banerem i podświetleniem komentarza.
-
----
-
-## [1.5.3] - 2026-08-04
-
-### Zmieniono
-- Podbicie wersji dodatku Home Assistant do `1.5.3` z pełnym wymuszeniem aktualizacji z repozytorium GitHub.
-
----
-
-## [1.5.2] - 2026-08-04
-
-### Zmieniono / Dodano
-- **Pełna izolacja sesji użytkowników**: Ustawienia (`api_key`, `channel_handle`, `target_users`) są od teraz zapisywane **wyłącznie w przeglądarce klienta** (`localStorage`).
-- Każda przeglądarka i urządzenie posiada własne, niezależne ustawienia, które nie są widoczne dla innych użytkowników wchodzących na ten sam adres URL.
-- Serwer działa w trybie bezstanowym proxy – nie zapisuje kluczy API użytkowników na dysku serwera.
-
----
-
-## [1.5.1] - 2026-08-04
-
-### Usunięto
-- Usunięto domyślny klucz API z kodu źródłowego oraz plików konfiguracyjnych.
-- Usunięto domyślną nazwę kanału oraz domyślną listę wyróżnionych użytkowników.
-
----
-
-## [1.5.0] - 2026-08-04
-
-### Dodano
-- **Nowy układ 2-kolumnowy** w widoku komentarzy filmu.
-- **Panel boczny z listą autorów**: Unikalna, posortowana alfabetycznie lista wszystkich użytkowników, którzy napisali komentarze pod danym filmem.
-- **Sterowanie masowe autorami**: Checkbox `Zaznacz / Odznacz wszystko` oraz przycisk `Odwróć` dla listy autorów.
-- **Filtr wykluczania autora kanału**: Nowy checkbox `Wyklucz autora kanału` (ukrywa komentarze oraz usuwa właściciela kanału z panelu autorów).
-- **Filtr unikalności**: Checkbox `Unikalni użytkownicy (1 komentarz / osobę)`.
-- Dynamiczne przefiltrowywanie panelu autorów po wpisaniu słowa w wyszukiwarkę.
-
----
-
-## [1.2.1] - 2026-08-04
-
-### Naprawiono
-- Naprawiono błąd `KeyError: 'contentDetails'` występujący podczas parsowania listy filmów dla niektórych kanałów YouTube.
-- Uodporniono rozpoznawanie kanałów po identyfikatorze, uchwycie `@handle` lub wyszukiwarce.
-
----
-
-## [1.2.0] - 2026-08-03
-
-### Zmieniono
-- Domyślna strona pod adresem głównym (`/`) serwera summeryjnego.
-- Aplikacja YouTube Koło Fortuny Online została przeniesiona pod dedykowany adres `https://URL/youtube`.
-
----
-
-## [1.1.0] - 2026-08-03
-
-### Dodano
-- Serwer WWW oparty o Flask w kontenerze Home Assistant Add-on.
-- Wyświetlanie listy najnowszych filmów z kanału (miniaturki, tytuły, daty publikacji, statystyki komentarzy).
-- Pobieranie i prezentacja komentarzy pod wybranym filmem w responsywnej tabeli z wyróżnianiem użytkowników i eksportem do CSV.
-- Modal ustawień umożliwiający bezpieczną edycję klucza API, nazwy kanału i wyróżnionych użytkowników.
-
----
-
-## [1.0.1] - 2026-08-03
-
-### Dodano
-- Pierwotna wersja dodadku dla serwera WWW `andrzejow.net`.
