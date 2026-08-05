@@ -74,10 +74,59 @@ def resolve_channel_info(youtube, channel_input):
     raise ValueError(f"Nie znaleziono kanału YouTube dla: {channel_input}")
 
 
+def parse_iso8601_duration(duration_str):
+    """Przekształca czas ISO 8601 (np. PT1M30S, PT45S) na sekundowe wartości numeryczne."""
+    if not duration_str:
+        return 0
+    pattern = re.compile(r'PT(?:(?P<hours>\d+)H)?(?:(?P<minutes>\d+)M)?(?:(?P<seconds>\d+)S)?')
+    match = pattern.match(duration_str)
+    if not match:
+        return 0
+    parts = match.groupdict()
+    hours = int(parts['hours'] or 0)
+    minutes = int(parts['minutes'] or 0)
+    seconds = int(parts['seconds'] or 0)
+    return hours * 3600 + minutes * 60 + seconds
+
+
+def classify_video_type(item):
+    """
+    Klasyfikuje film na: 'live' (transmisja na żywo - aktualna, zaplanowana lub archiwalny zapis live),
+    'short' (Shorts <= 60s), 'video' (zwykły film / opublikowana premiera).
+    """
+    snippet = item.get("snippet", {})
+    content_details = item.get("contentDetails", {})
+    live_details = item.get("liveStreamingDetails")
+    
+    live_broadcast = snippet.get("liveBroadcastContent", "none")
+    title = snippet.get("title", "").lower()
+
+    # 1. Trwająca lub zaplanowana transmisja na żywo
+    if live_broadcast in ["live", "upcoming"]:
+        return "live"
+
+    # 2. Archiwalna transmisja na żywo (posiada liveStreamingDetails oraz słowo kluczowe w tytule lub aktywny czat)
+    if live_details:
+        has_live_keyword = any(kw in title for kw in ["live", "stream", "transmisja", "na żywo", "na zywo"])
+        has_chat = bool(live_details.get("activeLiveChatId"))
+        if has_live_keyword or has_chat:
+            return "live"
+
+    # 3. Shorts (krótkie pionowe filmy <= 60s lub #shorts w tytule)
+    duration_str = content_details.get("duration", "")
+    duration_sec = parse_iso8601_duration(duration_str)
+    
+    if (0 < duration_sec <= 60) or "#shorts" in title:
+        return "short"
+
+    # 4. Standardowy film (w tym zakończona premiera)
+    return "video"
+
+
 def get_channel_videos(api_key, channel_handle_or_id=None, channel_handle=None, max_results=50):
     """
-    Pobiera listę najnowszych filmów ze wskazanego kanału wraz z datą publikacji
-    oraz ilością komentarzy pod każdym filmem.
+    Pobiera listę najnowszych filmów ze wskazanego kanału wraz z datą publikacji,
+    klasyfikacją typu (video, short, live) oraz ilością komentarzy pod każdym filmem.
     """
     target_handle = channel_handle or channel_handle_or_id or "@UncjuszPatyniusz"
     if not api_key:
@@ -115,26 +164,33 @@ def get_channel_videos(api_key, channel_handle_or_id=None, channel_handle=None, 
             "thumbnail": thumb_url,
             "channelId": channel_id,
             "channelTitle": channel_title,
-            "commentCount": 0
+            "commentCount": 0,
+            "videoType": "video"
         })
 
     if not video_items:
         return {"channel_title": channel_title, "channel_id": channel_id, "videos": []}
 
     video_ids = [v["id"] for v in video_items]
-    stats_response = youtube.videos().list(
-        part="statistics",
+    details_response = youtube.videos().list(
+        part="snippet,statistics,contentDetails,liveStreamingDetails",
         id=",".join(video_ids)
     ).execute()
 
-    stats_map = {}
-    for item in stats_response.get("items", []):
+    details_map = {}
+    for item in details_response.get("items", []):
         v_id = item["id"]
         comment_count = int(item.get("statistics", {}).get("commentCount", 0))
-        stats_map[v_id] = comment_count
+        v_type = classify_video_type(item)
+        details_map[v_id] = {
+            "commentCount": comment_count,
+            "videoType": v_type
+        }
 
     for v in video_items:
-        v["commentCount"] = stats_map.get(v["id"], 0)
+        info = details_map.get(v["id"], {"commentCount": 0, "videoType": "video"})
+        v["commentCount"] = info["commentCount"]
+        v["videoType"] = info["videoType"]
 
     return {
         "channel_title": channel_title,
@@ -143,68 +199,47 @@ def get_channel_videos(api_key, channel_handle_or_id=None, channel_handle=None, 
     }
 
 
-def get_video_comments(api_key, video_id, allowed_channel_handle_or_id=None):
+def get_all_comments_for_video(api_key, video_id):
     """
-    Pobiera wszystkie komentarze spod wskazanego filmu.
-    Jeśli podano allowed_channel_handle_or_id, weryfikuje czy film należy do tego kanału.
+    Pobiera wszystkie komentarze (top-level) z danego filmu na YouTube.
+    Zwraca listę słowników: [{"author": "...", "comment": "...", "date": "..."}, ...]
     """
     if not api_key:
         raise ValueError("Brak klucza API YouTube.")
 
     youtube = get_youtube_client(api_key)
-
-    if allowed_channel_handle_or_id:
-        allowed_channel_id, _, _ = resolve_channel_info(youtube, allowed_channel_handle_or_id)
-        video_check = youtube.videos().list(
-            part="snippet",
-            id=video_id
-        ).execute()
-
-        items = video_check.get("items", [])
-        if not items:
-            raise ValueError(f"Nie odnaleziono filmu o ID: {video_id}")
-        
-        video_channel_id = items[0]["snippet"].get("channelId")
-        if video_channel_id != allowed_channel_id:
-            raise PermissionError("Wybór tego filmu jest niedozwolony (film nie należy do skonfigurowanego użytkownika).")
-
     comments = []
     next_page_token = None
 
-    try:
-        while True:
-            request = youtube.commentThreads().list(
+    while True:
+        try:
+            req = youtube.commentThreads().list(
                 part="snippet",
                 videoId=video_id,
                 maxResults=100,
                 pageToken=next_page_token,
                 textFormat="plainText"
             )
-            response = request.execute()
+            res = req.execute()
 
-            for item in response.get("items", []):
+            for item in res.get("items", []):
                 snippet = item["snippet"]["topLevelComment"]["snippet"]
-                author = snippet.get("authorDisplayName", "")
-                comment_text = snippet.get("textDisplay", "")
-                published_at = snippet.get("publishedAt", "")
-                author_channel_url = snippet.get("authorChannelUrl", "")
+                author = snippet.get("authorDisplayName", "Anonim")
+                text = snippet.get("textDisplay", "")
+                pub_at = snippet.get("publishedAt", "")
 
                 comments.append({
                     "author": author,
-                    "comment": comment_text,
-                    "date": published_at,
-                    "authorChannelUrl": author_channel_url
+                    "comment": text,
+                    "date": pub_at
                 })
 
-            next_page_token = response.get("nextPageToken")
+            next_page_token = res.get("nextPageToken")
             if not next_page_token:
                 break
-
-    except HttpError as e:
-        raise RuntimeError(f"Błąd YouTube API przy pobieraniu komentarzy: {e}")
+        except HttpError as err:
+            if "commentsDisabled" in str(err):
+                raise ValueError("Komentarze pod tym filmem zostały wyłączone.")
+            raise err
 
     return comments
-
-
-# Alias dla kompatybilności wstecznej
-get_all_comments_for_video = get_video_comments

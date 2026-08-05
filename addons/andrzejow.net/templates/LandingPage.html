@@ -1,7 +1,7 @@
-<!-- LandingPage.html - Strona Startowa Koło Fortuny by Weekendowy Detektorysta -->
+<!-- LandingPage.html - Strona Startowa i Dokumentacja Administracyjna -->
 <div class="landing-container">
     <div class="landing-hero">
-        <div class="landing-badge">🎡 Koło Fortuny v1.7.2</div>
+        <div class="landing-badge">🎡 Koło Fortuny v1.8.1</div>
         <h1 class="landing-title">Koło Fortuny <span class="highlight-text">by Weekendowy Detektorysta</span></h1>
         <p class="landing-description">
             Wybieraj ciekawe komentarze spod najnowszych filmów na YouTube lub uruchamiaj losowanie dla własnych list użytkowników z plików CSV/TXT. 
@@ -65,9 +65,95 @@
 
         <div class="feature-card">
             <div class="feature-icon">🔒</div>
-            <div class="feature-title">Bezpieczeństwo & Prywatność</div>
+            <div class="feature-title">Bezpieczeństwo & API Admina</div>
             <div class="feature-desc">
-                Obsługa klucza globalnego lub własnego klucza zapisywanego wyłącznie w Twojej przeglądarce (`localStorage`).
+                Trwałe zapisywanie konfiguracji na serwerze (`global_config.json`) z możliwością zarządzania przez dedykowane API `curl`.
+            </div>
+        </div>
+    </div>
+
+    <!-- DOCUMENTATION SECTION -->
+    <div class="doc-section">
+        <h2 class="doc-main-title">📚 Dokumentacja & API Administracyjne</h2>
+        <p class="doc-subtext">Kompletny przewodnik zarządzania kluczami API, kanałami YouTube oraz integracją bota Discord.</p>
+
+        <!-- API CURL COMMANDS -->
+        <div class="doc-card">
+            <h3 class="doc-card-title">💻 Polecenia `curl` do zarządzania API</h3>
+            
+            <div class="doc-item">
+                <div class="doc-item-title">1. Zmiana globalnego klucza API YouTube na serwerze:</div>
+                <pre class="code-block"><code>curl -X POST https://andrzejow.net/youtube/api/admin/set-global-key \
+  -H "Content-Type: application/json" \
+  -d '{"global_api_key": "AIzaSy_TWOJ_KLUCZ_API"}'</code></pre>
+            </div>
+
+            <div class="doc-item">
+                <div class="doc-item-title">2. Dodanie nowego obsługiwanego kanału do listy:</div>
+                <pre class="code-block"><code>curl -X POST https://andrzejow.net/youtube/api/admin/channels/add \
+  -H "Content-Type: application/json" \
+  -d '{"handle": "@NowyKanal", "title": "Opcjonalna Nazwa Kanału"}'</code></pre>
+            </div>
+
+            <div class="doc-item">
+                <div class="doc-item-title">3. Usunięcie kanału z listy obsługiwanych:</div>
+                <pre class="code-block"><code>curl -X POST https://andrzejow.net/youtube/api/admin/channels/remove \
+  -H "Content-Type: application/json" \
+  -d '{"handle": "@ArturK92"}'</code></pre>
+            </div>
+
+            <div class="doc-item">
+                <div class="doc-item-title">4. Dodanie / zmiana tokenu bota Discord:</div>
+                <pre class="code-block"><code>curl -X POST https://andrzejow.net/youtube/api/admin/set-discord-token \
+  -H "Content-Type: application/json" \
+  -d '{"discord_bot_token": "MTEyMzQ1Njc4OTA...TOKEN_BOTA"}'</code></pre>
+            </div>
+        </div>
+
+        <!-- GUIDES STEP-BY-STEP -->
+        <div class="doc-grid">
+            <!-- Guide 1: YouTube API Key -->
+            <div class="doc-card">
+                <h3 class="doc-card-title">🔑 Wygenerowanie klucza YouTube Data API v3</h3>
+                <ol class="doc-steps">
+                    <li>Wejdź na stronę <a href="https://console.cloud.google.com/" target="_blank" class="doc-link">Google Cloud Console</a> i zaloguj się kontem Google.</li>
+                    <li>Stwórz nowy projekt lub wybierz istniejący w górnym menu.</li>
+                    <li>Przejdź do zakładki <strong>APIs & Services ➔ Library</strong>.</li>
+                    <li>Wyszukaj <strong>YouTube Data API v3</strong> i kliknij niebieski przycisk <strong>Enable</strong> (Włącz).</li>
+                    <li>Przejdź do <strong>APIs & Services ➔ Credentials</strong>.</li>
+                    <li>Kliknij <strong>+ Create Credentials ➔ API key</strong>.</li>
+                    <li>Skopiuj wygenerowany klucz API (zaczyna się od <code>AIzaSy...</code>) i wklej go w Ustawieniach aplikacji lub wyślij poleceniem `curl`.</li>
+                </ol>
+            </div>
+
+            <!-- Guide 2: Discord Bot & Token -->
+            <div class="doc-card">
+                <h3 class="doc-card-title">🤖 Wygenerowanie darmowego Bota i Tokenu Discord</h3>
+                <ol class="doc-steps">
+                    <li>Otwórz portal <a href="https://discord.com/developers/applications" target="_blank" class="doc-link">Discord Developer Portal</a>.</li>
+                    <li>Kliknij przycisk <strong>New Application</strong> w prawym górnym rogu i wpisz nazwę (np. <code>KoloFortunyBot</code>).</li>
+                    <li>Z menu po lewej stronie wybierz zakładkę <strong>Bot</strong>.</li>
+                    <li>Kliknij <strong>Reset Token</strong> (lub <em>Copy Token</em>), aby pobrać swój **Bot Token**. Przechowuj go w bezpiecznym miejscu!</li>
+                    <li>Przewiń stronę w dół do sekcji <strong>Privileged Gateway Intents</strong>.</li>
+                    <li>Zaznacz przełącznik przy <strong>Message Content Intent</strong> (umożliwia odczytanie treści wiadomości z kanału) i zapisz zmiany (**Save Changes**).</li>
+                </ol>
+            </div>
+
+            <!-- Guide 3: Invite Bot to Server -->
+            <div class="doc-card">
+                <h3 class="doc-card-title">📩 Zaproszenie Bota na swój serwer Discord</h3>
+                <ol class="doc-steps">
+                    <li>W panelu <a href="https://discord.com/developers/applications" target="_blank" class="doc-link">Discord Developer Portal</a> wejdź w zakładkę <strong>OAuth2 ➔ URL Generator</strong>.</li>
+                    <li>W sekcji <strong>Scopes</strong> zaznacz kratkę przy: <code>bot</code>.</li>
+                    <li>W sekcji <strong>Bot Permissions</strong> zaznacz uprawnienia:
+                        <ul>
+                            <li><code>Read Messages / View Channels</code></li>
+                            <li><code>Read Message History</code></li>
+                        </ul>
+                    </li>
+                    <li>Na dole strony pojawi się wygenerowany link URL. Skopiuj go i otwórz w nowej karcie przeglądarki.</li>
+                    <li>Z listy wybierz swój serwer Discord i kliknij <strong>Autoryzuj</strong> (Authorize). Bot pojawi się na Twoim serwerze!</li>
+                </ol>
             </div>
         </div>
     </div>
@@ -77,8 +163,8 @@
     .landing-container {
         display: flex;
         flex-direction: column;
-        gap: 40px;
-        padding: 20px 0 40px 0;
+        gap: 32px;
+        padding: 10px 0 40px 0;
     }
 
     .landing-hero {
@@ -86,7 +172,7 @@
         backdrop-filter: var(--glass-blur);
         border: 1px solid var(--border-color);
         border-radius: var(--radius-lg);
-        padding: 48px 36px;
+        padding: 40px 32px;
         text-align: center;
         display: flex;
         flex-direction: column;
@@ -101,52 +187,50 @@
         border: 1px solid rgba(245, 158, 11, 0.3);
         padding: 6px 16px;
         border-radius: 20px;
-        font-size: 12.5px;
+        font-size: 13px;
         font-weight: 700;
-        margin-bottom: 20px;
-        letter-spacing: 0.5px;
-    }
-
-    .landing-title {
-        font-size: 36px;
-        font-weight: 800;
-        letter-spacing: -1px;
-        line-height: 1.2;
         margin-bottom: 16px;
     }
 
+    .landing-title {
+        font-size: 32px;
+        font-weight: 800;
+        letter-spacing: -0.8px;
+        margin-bottom: 12px;
+    }
+
     .highlight-text {
-        background: linear-gradient(135deg, #f59e0b, #ec4899);
+        background: linear-gradient(135deg, #f59e0b, #ef4444);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
 
     .landing-description {
-        font-size: 16px;
+        font-size: 15px;
         color: var(--text-muted);
-        max-width: 760px;
+        max-width: 720px;
         line-height: 1.6;
-        margin-bottom: 32px;
+        margin-bottom: 28px;
     }
 
     .landing-actions {
         display: flex;
+        gap: 14px;
         flex-wrap: wrap;
-        gap: 16px;
         justify-content: center;
     }
 
     .btn-hero {
         padding: 12px 24px;
         font-size: 14.5px;
-        font-weight: 600;
-        border-radius: var(--radius-md);
+        font-weight: 700;
+        border-radius: 12px;
     }
 
     .landing-features {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-        gap: 24px;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
     }
 
     .feature-card {
@@ -157,15 +241,13 @@
         padding: 24px;
         display: flex;
         flex-direction: column;
-        gap: 12px;
-        transition: all 0.25s ease;
+        gap: 10px;
+        transition: transform 0.2s ease, border-color 0.2s ease;
     }
 
     .feature-card:hover {
         transform: translateY(-4px);
         border-color: rgba(99, 102, 241, 0.4);
-        background: var(--bg-card-hover);
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
     }
 
     .feature-icon {
@@ -175,12 +257,110 @@
     .feature-title {
         font-size: 16px;
         font-weight: 700;
-        color: var(--text-main);
     }
 
     .feature-desc {
         font-size: 13.5px;
         color: var(--text-muted);
-        line-height: 1.55;
+        line-height: 1.5;
+    }
+
+    /* Documentation Section Styling */
+    .doc-section {
+        margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .doc-main-title {
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--text-main);
+        letter-spacing: -0.5px;
+    }
+
+    .doc-subtext {
+        font-size: 14px;
+        color: var(--text-muted);
+        margin-top: -16px;
+    }
+
+    .doc-card {
+        background: var(--bg-card);
+        backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 24px 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+
+    .doc-card-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: var(--accent-gold);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        padding-bottom: 12px;
+    }
+
+    .doc-item-title {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--text-main);
+        margin-bottom: 6px;
+    }
+
+    .code-block {
+        background: #090d16;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 12px 16px;
+        overflow-x: auto;
+        font-family: 'Consolas', 'Courier New', monospace;
+        font-size: 13px;
+        color: #38bdf8;
+        line-height: 1.45;
+    }
+
+    .doc-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+        gap: 20px;
+    }
+
+    .doc-steps {
+        padding-left: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        font-size: 13.5px;
+        color: var(--text-main);
+        line-height: 1.5;
+    }
+
+    .doc-steps li {
+        margin-bottom: 4px;
+    }
+
+    .doc-steps ul {
+        padding-left: 18px;
+        margin-top: 4px;
+        color: var(--text-muted);
+    }
+
+    .doc-link {
+        color: var(--accent-primary);
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .doc-link:hover {
+        text-decoration: underline;
     }
 </style>

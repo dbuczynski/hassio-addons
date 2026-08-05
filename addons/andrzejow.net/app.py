@@ -7,7 +7,7 @@ import youtube_service
 
 app = Flask(__name__)
 
-APP_VERSION = "1.8.0"
+APP_VERSION = "1.8.1"
 
 DEFAULT_ALLOWED_CHANNELS = [
     {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
@@ -67,6 +67,30 @@ def save_allowed_channels(channels):
     with open(GLOBAL_CONFIG_PATH, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
+def get_discord_bot_token():
+    """Pobiera token bota Discord z pliku global_config.json jeśli istnieje."""
+    if os.path.exists(GLOBAL_CONFIG_PATH):
+        try:
+            with open(GLOBAL_CONFIG_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                return data.get("discord_bot_token", "").strip()
+        except Exception:
+            pass
+    return ""
+
+def save_discord_bot_token(token):
+    """Zapisuje token bota Discord do pliku global_config.json."""
+    data = {}
+    if os.path.exists(GLOBAL_CONFIG_PATH):
+        try:
+            with open(GLOBAL_CONFIG_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except Exception:
+            data = {}
+    data["discord_bot_token"] = token.strip()
+    with open(GLOBAL_CONFIG_PATH, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
 def resolve_api_key():
     """Ustala klucz API z nagłówka żądania klienta X-Api-Key lub z pliku globalnego."""
     custom_key = request.headers.get("X-Api-Key", "").strip()
@@ -104,12 +128,14 @@ def index():
 @app.route('/api/info')
 @app.route('/youtube/api/info')
 def api_info():
-    """Zwraca wersję aplikacji, status klucza globalnego i listę dozwolonych kanałów."""
+    """Zwraca wersję aplikacji, status kluczy i listę dozwolonych kanałów."""
     global_key = get_global_api_key()
+    discord_token = get_discord_bot_token()
     channels = load_allowed_channels()
     return jsonify({
         "version": APP_VERSION,
         "has_global_key": bool(global_key),
+        "has_discord_token": bool(discord_token),
         "allowed_channels": channels
     })
 
@@ -131,6 +157,25 @@ def set_global_key():
         })
     except Exception as e:
         return jsonify({"error": f"Nie udało się zapisać klucza na serwerze: {str(e)}"}), 500
+
+@app.route('/api/admin/set-discord-token', methods=['POST'])
+@app.route('/youtube/api/admin/set-discord-token', methods=['POST'])
+def set_discord_token():
+    """Endpoint administracyjny do ustawiania tokenu bota Discord przez POST JSON."""
+    try:
+        data = request.get_json(force=True, silent=True) or {}
+        token = data.get("discord_bot_token", "").strip()
+        if not token:
+            return jsonify({"error": "Brak parametru discord_bot_token w żądaniu."}), 400
+        
+        save_discord_bot_token(token)
+        return jsonify({
+            "status": "success",
+            "message": "Token bota Discord został pomyślnie zapisany na serwerze.",
+            "path": GLOBAL_CONFIG_PATH
+        })
+    except Exception as e:
+        return jsonify({"error": f"Nie udało się zapisać tokenu bota Discord: {str(e)}"}), 500
 
 @app.route('/api/admin/channels', methods=['GET'])
 @app.route('/youtube/api/admin/channels', methods=['GET'])
