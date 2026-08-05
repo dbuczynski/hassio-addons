@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Koło Fortuny by Weekendowy Detektorysta v1.5.9</title>
+    <title>Koło Fortuny by Weekendowy Detektorysta v1.6.0</title>
     <!-- Google Fonts Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -534,7 +534,7 @@
             justify-content: space-between;
             align-items: center;
             gap: 16px;
-            margin-bottom: 24px;
+            margin-bottom: 16px;
             background: rgba(15, 23, 42, 0.6);
             padding: 16px 20px;
             border-radius: var(--radius-md);
@@ -553,6 +553,49 @@
             accent-color: var(--accent-primary);
             width: 160px;
             cursor: pointer;
+        }
+
+        /* Live HUD Ticker overlay on top of wheel */
+        .wheel-live-hud {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--accent-gold);
+            border-radius: var(--radius-md);
+            padding: 12px 20px;
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            text-align: center;
+            user-select: none;
+        }
+
+        .wheel-live-author {
+            font-size: 17px;
+            font-weight: 800;
+            color: var(--accent-gold);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            word-break: break-word;
+        }
+
+        .wheel-live-comment {
+            font-size: 13.5px;
+            color: var(--text-main);
+            font-style: italic;
+            max-height: 48px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            line-height: 1.35;
+            word-break: break-word;
+            opacity: 0.95;
         }
 
         /* Fixed width Power Hold Button */
@@ -830,7 +873,7 @@
             <div>
                 <div class="brand-title">
                     Koło Fortuny by Weekendowy Detektorysta
-                    <span class="version-badge" id="app-version-badge">v1.5.9</span>
+                    <span class="version-badge" id="app-version-badge">v1.6.0</span>
                 </div>
                 <div class="brand-subtitle" id="channel-subtitle">Ładowanie ustawień...</div>
             </div>
@@ -956,7 +999,7 @@
                             <span id="slider-val-label" style="color:var(--accent-gold); font-weight:700;">15s</span>
                         </div>
 
-                        <!-- Fixed width Hold to Charge Power Start Button -->
+                        <!-- Fixed width Power Hold Button -->
                         <button id="btn-power-start" class="btn-power-start" 
                                 onmousedown="startChargingPower(event)" 
                                 onmouseup="stopChargingAndSpin(event)" 
@@ -968,6 +1011,12 @@
                                 <span id="btn-power-label">🎯 WYBIERZ CIEKAWY KOMENTARZ (PRZYTRZYMAJ START)</span>
                             </div>
                         </button>
+                    </div>
+
+                    <!-- Live HUD Ticker overlay "on a top" of wheel stage -->
+                    <div class="wheel-live-hud" id="wheel-live-hud">
+                        <div class="wheel-live-author" id="hud-author">👉 WSKAZYWANY AUTOR</div>
+                        <div class="wheel-live-comment" id="hud-comment">Przytrzymaj START, aby rozpocząć obrót koła</div>
                     </div>
 
                     <!-- Wheel Canvas Stage -->
@@ -1084,7 +1133,7 @@
         };
 
         let serverInfo = {
-            version: "1.5.9",
+            version: "1.6.0",
             has_global_key: false,
             allowed_channels: [
                 {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
@@ -1584,10 +1633,25 @@
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
                 ctx.fillText("Brak wybranych komentarzy do koła fortuny", centerX, centerY);
+
+                document.getElementById("hud-author").innerText = "👉 BIAŁA KARTA";
+                document.getElementById("hud-comment").innerText = "Brak wybranych komentarzy";
                 return;
             }
 
             const sliceAngle = (2 * Math.PI) / total;
+
+            // Determine active entry under top pointer arrow (3*PI/2)
+            const pointerAngle = (3 * Math.PI) / 2;
+            const normalizedAngle = (pointerAngle - currentWheelAngle) % (2 * Math.PI);
+            const positiveAngle = (normalizedAngle + 2 * Math.PI) % (2 * Math.PI);
+            const currentActiveIndex = Math.floor(positiveAngle / sliceAngle) % total;
+            const activeEntry = wheelEntries[currentActiveIndex];
+
+            if (activeEntry) {
+                document.getElementById("hud-author").innerText = "👉 " + activeEntry.author;
+                document.getElementById("hud-comment").innerText = `"${activeEntry.comment}"`;
+            }
 
             for (let i = 0; i < total; i++) {
                 const angleStart = currentWheelAngle + i * sliceAngle;
@@ -1602,21 +1666,24 @@
                 ctx.fill();
 
                 ctx.strokeStyle = "rgba(15, 23, 42, 0.6)";
-                ctx.lineWidth = 2;
+                ctx.lineWidth = total > 100 ? 0.5 : 1.5;
                 ctx.stroke();
 
-                ctx.save();
-                ctx.translate(centerX, centerY);
-                ctx.rotate(angleStart + sliceAngle / 2);
-                ctx.textAlign = "right";
-                ctx.fillStyle = "#ffffff";
-                
-                const fontSize = total > 30 ? 10 : total > 15 ? 12 : 14;
-                ctx.font = `bold ${fontSize}px Inter, sans-serif`;
+                // Only draw inline slice text if <= 50 entries, to keep wheel canvas crisp and clean!
+                if (total <= 50) {
+                    ctx.save();
+                    ctx.translate(centerX, centerY);
+                    ctx.rotate(angleStart + sliceAngle / 2);
+                    ctx.textAlign = "right";
+                    ctx.fillStyle = "#ffffff";
+                    
+                    const fontSize = total > 30 ? 10 : total > 15 ? 12 : 14;
+                    ctx.font = `bold ${fontSize}px Inter, sans-serif`;
 
-                const labelText = wheelEntries[i].author;
-                ctx.fillText(labelText, radius - 18, 5);
-                ctx.restore();
+                    const labelText = wheelEntries[i].author;
+                    ctx.fillText(labelText, radius - 18, 5);
+                    ctx.restore();
+                }
             }
 
             ctx.beginPath();

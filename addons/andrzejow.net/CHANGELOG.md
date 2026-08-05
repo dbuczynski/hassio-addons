@@ -2,6 +2,15 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.6.0] - 2026-08-05
+
+### Dodano / Zmieniono
+- **Okienko Live HUD Ticker ("on a top") nad Kołem Fortuny**:
+  - Dodano dedykowane okienko nad wykresem koła fortuny, które w czasie rzeczywistym (60 FPS) wyświetla aktualnie wskazywanego przez czerwoną strzałkę **autora oraz treść jego komentarza**.
+  - Przy dużej liczbie użytkowników (> 50) napisy wewnątrz bardzo wąskich wycinków koła są automatycznie ukrywane, zapobiegając zlewaniu się tekstu i zapewniając idealną czytelność wykresu, przy jednoczesnym wyraźnym pokazywaniu każdego komentarza w górnym okienku Live HUD.
+
+---
+
 ## [1.5.9] - 2026-08-05
 
 ### Dodano / Naprawiono / Zmieniono

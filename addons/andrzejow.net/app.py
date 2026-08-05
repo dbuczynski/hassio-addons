@@ -7,7 +7,7 @@ import youtube_service
 
 app = Flask(__name__)
 
-APP_VERSION = "1.5.9"
+APP_VERSION = "1.6.0"
 
 # Lista dozwolonych kanałów YouTube dla których można listować filmy
 ALLOWED_CHANNELS = [
