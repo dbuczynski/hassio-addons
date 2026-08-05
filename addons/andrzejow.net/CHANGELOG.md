@@ -2,6 +2,17 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.6.1] - 2026-08-05
+
+### Dodano / Naprawiono / Zmieniono
+- **Odliczanie Czasu w Czasie Kręcenia**: Podczas obrotu koła fortuny etykieta przy suwaku dynamicznie maleje (np. `15s` ➔ `14s` ➔ `...` ➔ `0s`), co dokładnie wskazuje, ile sekund pozostało do zatrzymania koła.
+- **Dynamiczne Przyciski (Start / Restart)**:
+  - Podczas kręcenia przycisk Start automatycznie znika.
+  - W jego miejscu pojawia się czerwony przycisk **`🔄 RESTARTUJ`**, który umożliwia natychmiastowe przerwanie obrotu, zresetowanie stanu koła i ponowne wyświetlenie przycisku Start.
+- **Krótszy Opis Przycisku Start**: Usunięto tekst `(PRZYTRZYMAJ START)`, skracając etykietę do zwięzłego `🎯 WYBIERZ CIEKAWY KOMENTARZ` oraz zwężając szerokość przycisku z `480px` do zgrabnego `320px`.
+
+---
+
 ## [1.6.0] - 2026-08-05
 
 ### Dodano / Zmieniono
@@ -116,7 +127,7 @@ Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 ## [1.2.0] - 2026-08-03
 
 ### Zmieniono
-- Domyślna strona pod adresem głównym (`/`) serwuje treść z pliku `default.html`.
+- Domyślna strona pod adresem głównym (`/`) serwera summeryjnego.
 - Aplikacja YouTube Koło Fortuny Online została przeniesiona pod dedykowany adres `https://URL/youtube`.
 
 ---

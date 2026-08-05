@@ -1,5 +1,5 @@
 name: "Koło Fortuny by Weekendowy Detektorysta (andrzejow.net)"
-version: "1.6.0"
+version: "1.6.1"
 slug: "andrzejow_net"
 description: "Serwer WWW dla andrzejow.net z aplikacją Koło Fortuny by Weekendowy Detektorysta pod adresem /youtube"
 arch:

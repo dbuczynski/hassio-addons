@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Koło Fortuny by Weekendowy Detektorysta v1.6.0</title>
+    <title>Koło Fortuny by Weekendowy Detektorysta v1.6.1</title>
     <!-- Google Fonts Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -598,8 +598,8 @@
             opacity: 0.95;
         }
 
-        /* Fixed width Power Hold Button */
-        .btn-power-start {
+        /* Compact Start & Restart Buttons */
+        .btn-power-start, .btn-restart {
             position: relative;
             background: #1e293b;
             border: 2px solid var(--accent-gold);
@@ -615,15 +615,25 @@
             box-shadow: 0 4px 18px rgba(245, 158, 11, 0.35);
             transition: transform 0.1s ease;
             touch-action: manipulation;
-            width: 480px;
+            width: 320px;
             max-width: 100%;
             display: inline-flex;
             justify-content: center;
             align-items: center;
         }
 
-        .btn-power-start:active {
+        .btn-power-start:active, .btn-restart:active {
             transform: scale(0.98);
+        }
+
+        .btn-restart {
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            border-color: #f87171;
+            box-shadow: 0 4px 18px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-restart:hover {
+            background: linear-gradient(135deg, #dc2626, #991b1b);
         }
 
         .btn-power-fill {
@@ -873,7 +883,7 @@
             <div>
                 <div class="brand-title">
                     Koło Fortuny by Weekendowy Detektorysta
-                    <span class="version-badge" id="app-version-badge">v1.6.0</span>
+                    <span class="version-badge" id="app-version-badge">v1.6.1</span>
                 </div>
                 <div class="brand-subtitle" id="channel-subtitle">Ładowanie ustawień...</div>
             </div>
@@ -999,7 +1009,7 @@
                             <span id="slider-val-label" style="color:var(--accent-gold); font-weight:700;">15s</span>
                         </div>
 
-                        <!-- Fixed width Power Hold Button -->
+                        <!-- Compact Start Button -->
                         <button id="btn-power-start" class="btn-power-start" 
                                 onmousedown="startChargingPower(event)" 
                                 onmouseup="stopChargingAndSpin(event)" 
@@ -1008,15 +1018,20 @@
                                 ontouchend="stopChargingAndSpin(event)">
                             <div class="btn-power-fill" id="btn-power-fill"></div>
                             <div class="btn-power-text">
-                                <span id="btn-power-label">🎯 WYBIERZ CIEKAWY KOMENTARZ (PRZYTRZYMAJ START)</span>
+                                <span id="btn-power-label">🎯 WYBIERZ CIEKAWY KOMENTARZ</span>
                             </div>
+                        </button>
+
+                        <!-- Restart Button (shown during spin) -->
+                        <button id="btn-restart" class="btn-restart hidden" onclick="restartWheel()">
+                            🔄 RESTARTUJ
                         </button>
                     </div>
 
                     <!-- Live HUD Ticker overlay "on a top" of wheel stage -->
                     <div class="wheel-live-hud" id="wheel-live-hud">
                         <div class="wheel-live-author" id="hud-author">👉 WSKAZYWANY AUTOR</div>
-                        <div class="wheel-live-comment" id="hud-comment">Przytrzymaj START, aby rozpocząć obrót koła</div>
+                        <div class="wheel-live-comment" id="hud-comment">Kliknij START, aby rozpocząć obrót koła</div>
                     </div>
 
                     <!-- Wheel Canvas Stage -->
@@ -1133,7 +1148,7 @@
         };
 
         let serverInfo = {
-            version: "1.6.0",
+            version: "1.6.1",
             has_global_key: false,
             allowed_channels: [
                 {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
@@ -1603,7 +1618,9 @@
         }
 
         function updateSliderLabel(val) {
-            document.getElementById("slider-val-label").innerText = val + "s";
+            if (!isSpinning) {
+                document.getElementById("slider-val-label").innerText = val + "s";
+            }
         }
 
         function drawWheel() {
@@ -1747,7 +1764,7 @@
             if (currentPowerLevel > 0) {
                 btnLabel.textContent = `⚡ MOC WSKAZANIA: ${currentPowerLevel} / 20`;
             } else {
-                btnLabel.textContent = `🎯 WYBIERZ CIEKAWY KOMENTARZ (PRZYTRZYMAJ START)`;
+                btnLabel.textContent = `🎯 WYBIERZ CIEKAWY KOMENTARZ`;
             }
         }
 
@@ -1778,6 +1795,10 @@
             if (isSpinning || wheelEntries.length === 0) return;
             isSpinning = true;
 
+            // Hide Start button, show Restart button
+            document.getElementById("btn-power-start").classList.add("hidden");
+            document.getElementById("btn-restart").classList.remove("hidden");
+
             const durationMs = durationSec * 1000;
             const startTime = performance.now();
             const startAngle = currentWheelAngle;
@@ -1795,6 +1816,11 @@
                 const progress = Math.min(elapsed / durationMs, 1);
                 const easedProgress = easeOutCubic(progress);
 
+                // Update countdown timer label
+                const elapsedSec = elapsed / 1000;
+                const remainingSec = Math.max(0, Math.ceil(durationSec - elapsedSec));
+                document.getElementById("slider-val-label").innerText = remainingSec + "s";
+
                 currentWheelAngle = startAngle + totalAngleToRotate * easedProgress;
                 drawWheel();
 
@@ -1802,11 +1828,35 @@
                     animationFrameId = requestAnimationFrame(animateSpin);
                 } else {
                     isSpinning = false;
+                    
+                    // Restore Start button & reset slider countdown label
+                    document.getElementById("btn-power-start").classList.remove("hidden");
+                    document.getElementById("btn-restart").classList.add("hidden");
+                    const sliderVal = document.getElementById("wheel-duration-slider").value;
+                    document.getElementById("slider-val-label").innerText = sliderVal + "s";
+
                     onWheelStopped();
                 }
             }
 
             animationFrameId = requestAnimationFrame(animateSpin);
+        }
+
+        function restartWheel() {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            isSpinning = false;
+            closeWinnerBanner();
+
+            document.getElementById("btn-power-start").classList.remove("hidden");
+            document.getElementById("btn-restart").classList.add("hidden");
+
+            const sliderVal = document.getElementById("wheel-duration-slider").value;
+            document.getElementById("slider-val-label").innerText = sliderVal + "s";
+
+            drawWheel();
         }
 
         function onWheelStopped() {
