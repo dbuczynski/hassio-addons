@@ -2,6 +2,13 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.7.2] - 2026-08-05
+
+### Naprawiono
+- **Naprawiono pobieranie komentarzy spod wybranego filmu (`get_all_comments_for_video`)**: Dodano brakujący alias dla nazwy funkcji w `youtube_service.py`, co całkowicie rozwiązało błąd `module 'youtube_service' has no attribute 'get_all_comments_for_video'` przy ładowaniu komentarzy filmu.
+
+---
+
 ## [1.7.1] - 2026-08-05
 
 ### Naprawiono

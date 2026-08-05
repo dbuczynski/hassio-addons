@@ -204,3 +204,7 @@ def get_video_comments(api_key, video_id, allowed_channel_handle_or_id=None):
         raise RuntimeError(f"Błąd YouTube API przy pobieraniu komentarzy: {e}")
 
     return comments
+
+
+# Alias dla kompatybilności wstecznej
+get_all_comments_for_video = get_video_comments
