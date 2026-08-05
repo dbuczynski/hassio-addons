@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Koło Fortuny by Weekendowy Detektorysta v1.7.5</title>
+    <title>Koło Fortuny by Weekendowy Detektorysta v1.8.0</title>
     <!-- Google Fonts Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -907,7 +907,7 @@
             <div>
                 <div class="brand-title">
                     Koło Fortuny by Weekendowy Detektorysta
-                    <span class="version-badge" id="app-version-badge">v1.7.5</span>
+                    <span class="version-badge" id="app-version-badge">v1.8.0</span>
                 </div>
                 <div class="brand-subtitle" id="channel-subtitle">Ładowanie ustawień...</div>
             </div>
@@ -1143,13 +1143,12 @@
                     </div>
                 </div>
 
-                <!-- Channel Selector / Input -->
+                <!-- Channel Selector -->
                 <div class="form-group">
                     <label class="form-label">Wybrany Kanał YouTube</label>
-                    <select id="select-channel" class="form-select" onchange="onChannelSelectChange(this.value)">
+                    <select id="select-channel" class="form-select">
                         <!-- Populated dynamically -->
                     </select>
-                    <input type="text" id="input-channel-handle" class="form-input hidden" style="margin-top:8px;" placeholder="np. @UncjuszPatyniusz">
                     <div class="help-text">Kanał, z którego będą pobierane najnowsze filmy.</div>
                 </div>
 
@@ -1207,7 +1206,7 @@
         };
 
         let serverInfo = {
-            version: "1.7.5",
+            version: "1.8.0",
             has_global_key: false,
             allowed_channels: [
                 {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
@@ -1316,27 +1315,8 @@
                 select.appendChild(opt);
             });
 
-            const optCustom = document.createElement("option");
-            optCustom.value = "__custom__";
-            optCustom.textContent = "Inny kanał (wpisz ręcznie)";
-            select.appendChild(optCustom);
-
-            if (!allowed.some(c => c.handle.toLowerCase() === (selectedHandle || "").toLowerCase()) && selectedHandle) {
-                select.value = "__custom__";
-                document.getElementById("input-channel-handle").classList.remove("hidden");
-                document.getElementById("input-channel-handle").value = selectedHandle;
-            } else {
-                document.getElementById("input-channel-handle").classList.add("hidden");
-            }
-        }
-
-        function onChannelSelectChange(val) {
-            const inputCustom = document.getElementById("input-channel-handle");
-            if (val === "__custom__") {
-                inputCustom.classList.remove("hidden");
-            } else {
-                inputCustom.classList.add("hidden");
-                inputCustom.value = val;
+            if (allowed.length > 0 && !allowed.some(c => c.handle.toLowerCase() === (selectedHandle || "").toLowerCase())) {
+                select.value = allowed[0].handle;
             }
         }
 
@@ -2107,9 +2087,7 @@
             const useGlobalKey = document.getElementById("key-mode-global").checked;
             const apiKey = document.getElementById("input-api-key").value.trim();
             
-            const selectVal = document.getElementById("select-channel").value;
-            const customVal = document.getElementById("input-channel-handle").value.trim();
-            const channelHandle = (selectVal === "__custom__") ? customVal : (selectVal || customVal);
+            const channelHandle = document.getElementById("select-channel").value;
 
             const targetUsersRaw = document.getElementById("input-target-users").value;
             const targetUsers = targetUsersRaw.split(",").map(u => u.trim()).filter(u => u);
