@@ -2,6 +2,16 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.7.3] - 2026-08-05
+
+### Dodano / Zmieniono (Optymalizacja UI i Układu)
+- **Przycisk Trybu Pełnoekranowego `⛶ Pełny ekran`**: Dodano w głównym menu nawigacji. Po kliknięciu uruchamia tryb `Fullscreen` przeglądarki (ukrywając pasek adresu URL, karty oraz boczne menu Home Assistant).
+- **Nagłówek w Jednej Linii**: Przycisk `← Powrót do listy filmów`, tytuł wybranego filmu oraz przycisk `📥 Pobierz plik CSV` umieszczono w **jednym poziomym rzędzie**, drastycznie zmniejszając zużycie miejsca na wysokość (zaznaczone na czerwono).
+- **Scalony Pasek Wyszukiwania i Checkboxów**: Pole wyszukiwania frazy przeniesiono do tego samego rzędu co checkbox-y filtrów i licznik wyników (zaznaczone na żółto).
+- **Poszerzony Kontener Aplikacji (`max-width: 1750px / 96%`)**: Zwiększono szerokość całego interfejsu (zaznaczone na zielono), dzięki czemu koło, tabele i lista użytkowników optymalnie wykorzystują szerokie ekrany monitorów.
+
+---
+
 ## [1.7.2] - 2026-08-05
 
 ### Naprawiono
@@ -13,21 +23,3 @@ Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
 ### Naprawiono
 - **Naprawiono błąd `get_channel_videos()`**: Zaktualizowano sygnaturę funkcji w `youtube_service.py`, eliminując błąd `unexpected keyword argument 'channel_handle'` przy pobieraniu listy filmów.
-
-### Dodano / Zmieniono
-- **Nowy Przycisk `🎬 Lista filmów`**: Dodano w prawym górnym rogu paska nawigacji (obok *Własna lista* i *Ustawienia*), pozwalający w dowolnym momencie przejść do widoku filmów.
-- **Strona Startowa (`LandingPage.html`)**:
-  - Dodano elegancką stronę startową ładowaną z pliku `LandingPage.html` z opisem funkcji i przyciskami szybkiego dostępu.
-  - W przypadku braku zdefiniowanego klucza API (globalnego lub własnego w sesji) aplikacja **automatycznie otwiera okno Ustawień**, pozwalając od razu podać klucz.
-
----
-
-## [1.7.0] - 2026-08-05
-
-### Dodano
-- **Własna Lista Użytkowników (Import CSV / TXT / Pole tekstowe)**:
-  - Dodano przycisk **`📋 Własna lista`** na pasku nawigacyjnym oraz na ekranie z listą filmów.
-  - Opcja wgrywania własnego pliku `.csv` lub `.txt` z listą użytkowników (jedna osoba na linijkę lub rozdzieleni przecinkami).
-  - Pole tekstowe do bezpośredniego wklejania własnych loginów.
-  - Wykorzystanie **istniejącego silnika Koła Fortuny** – przejście bezpośrednio do widoku z kołem, filtrami, listą autorów, pomiarem mocy startu i wskaźnikiem *Live HUD*.
-  - Gdy koło zakręci się dla własnej listy użytkowników, wyświetla czysto i czytelnie **samą nazwę wybranego użytkownika** (bez zbędnej sekcji komentarza).
