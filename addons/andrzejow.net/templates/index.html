@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Koło Fortuny by Weekendowy Detektorysta v1.7.3</title>
+    <title>MetaleSzlachetnePolska.WeekendowyDetektorysta v1.7.4</title>
     <!-- Google Fonts Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -907,7 +907,7 @@
             <div>
                 <div class="brand-title">
                     Koło Fortuny by Weekendowy Detektorysta
-                    <span class="version-badge" id="app-version-badge">v1.7.3</span>
+                    <span class="version-badge" id="app-version-badge">v1.7.4</span>
                 </div>
                 <div class="brand-subtitle" id="channel-subtitle">Ładowanie ustawień...</div>
             </div>
@@ -1207,7 +1207,7 @@
         };
 
         let serverInfo = {
-            version: "1.7.3",
+            version: "1.7.4",
             has_global_key: false,
             allowed_channels: [
                 {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
@@ -1240,6 +1240,10 @@
         ];
 
         document.addEventListener("DOMContentLoaded", () => {
+            try {
+                history.replaceState(null, "", "/MetaleSzlachetnePolska.WeekendowyDetektorysta");
+            } catch (e) {}
+
             fetchServerInfo().then(() => {
                 loadConfig();
                 const config = getUserConfig();
