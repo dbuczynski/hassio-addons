@@ -1,6 +1,13 @@
-# Bazy danych użytkowników lokalnych
+# Bazy danych użytkowników lokalnych i logów
 addons/andrzejow.net/labels_users.json
+addons/andrzejow.net/activity_logs.json
+addons/andrzejow.net/draw_history.json
 labels_users.json
+activity_logs.json
+draw_history.json
+
+# Pliki dzienników logowania
+*.log
 
 # Pamięć podręczna Python
 __pycache__/

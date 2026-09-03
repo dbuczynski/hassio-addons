@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dziennik Zdarzeń i Aktywności - andrzejow.net</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --bg-card: #151c2c;
+            --bg-card-hover: #1e293b;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --accent-gold: #f59e0b;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar {
+            background: rgba(21, 28, 44, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .brand-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .brand-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .brand-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ip-badge {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .btn {
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        .main-container {
+            max-width: 1280px;
+            margin: 20px auto;
+            padding: 0 16px;
+            width: 100%;
+            flex: 1;
+        }
+
+        /* Error Access Box */
+        .error-card {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            padding: 32px;
+            text-align: center;
+            max-width: 600px;
+            margin: 60px auto;
+        }
+
+        .error-card h2 { color: var(--accent-red); margin-bottom: 12px; }
+        .error-card p { color: var(--text-muted); font-size: 14px; margin-bottom: 20px; }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .stat-val { font-size: 22px; font-weight: 800; margin-top: 2px; }
+        .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-icon { font-size: 24px; }
+
+        /* Controls Section */
+        .controls-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .tabs-group {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background: var(--accent-blue);
+            color: #fff;
+            border-color: var(--accent-blue);
+        }
+
+        .search-box {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+            max-width: 360px;
+        }
+
+        .input-field {
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12.5px;
+            width: 100%;
+            outline: none;
+        }
+
+        .input-field:focus {
+            border-color: var(--accent-blue);
+        }
+
+        /* Compact Table Layout */
+        .logs-table-wrap {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .logs-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .logs-table th {
+            background: #0f172a;
+            color: var(--text-muted);
+            text-align: left;
+            padding: 10px 14px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .log-row {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background 0.15s ease;
+        }
+
+        .log-row:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .log-row td {
+            padding: 10px 14px;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .log-time {
+            font-family: monospace;
+            color: var(--text-muted);
+            font-size: 12px;
+            width: 150px;
+        }
+
+        .log-ip {
+            font-family: monospace;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 3px 8px;
+            border-radius: 4px;
+            color: #cbd5e1;
+            font-size: 12px;
+            width: 130px;
+        }
+
+        .entry-type-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            width: 110px;
+            text-align: center;
+        }
+
+        .badge-page_view { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .badge-label_print { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-wheel_draw { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+
+        .log-summary {
+            color: #f1f5f9;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 500px;
+        }
+
+        .btn-details {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 4px 10px;
+            border-radius: 5px;
+            font-size: 11.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-details:hover {
+            background: rgba(59, 130, 246, 0.3);
+            color: #fff;
+        }
+
+        /* Drawer Details Row */
+        .details-row {
+            display: none;
+            background: #0f172a;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .details-row.active {
+            display: table-row;
+        }
+
+        .details-content {
+            padding: 14px 18px;
+            font-size: 12.5px;
+        }
+
+        .table-mini {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+            font-size: 12px;
+        }
+
+        .table-mini th {
+            text-align: left;
+            padding: 6px 10px;
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .table-mini td {
+            padding: 6px 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            white-space: normal;
+        }
+
+        .winner-box {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-top: 6px;
+        }
+
+        .winner-name { color: var(--accent-gold); font-weight: 700; font-size: 13.5px; }
+        .winner-comment { color: #cbd5e1; font-style: italic; font-size: 12px; margin-top: 2px; }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .details-item {
+            font-size: 12px;
+        }
+        .details-item span { color: var(--text-muted); display: block; font-size: 11px; }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="/MetaleSzlachetnePolska" class="brand">
+            <img src="/MetaleSzlachetnePolska/metale_polska_icon.webp" alt="Metale Szlachetne Polska" class="brand-icon">
+            <div>
+                <div class="brand-title">Dziennik Zdarzeń (Logs)</div>
+                <div class="brand-subtitle">Metale Szlachetne Polska & Koło Fortuny</div>
+            </div>
+        </a>
+        <div class="nav-actions">
+            {% if is_trusted %}
+                <span class="ip-badge">🟢 Zaufany IP: {{ client_ip }}</span>
+                <button class="btn btn-outline" onclick="fetchLogs()">🔄 Odśwież</button>
+                <button class="btn btn-danger" onclick="clearLogs()">🗑️ Wyczyść logi</button>
+            {% else %}
+                <span class="ip-badge" style="background:rgba(239,68,68,0.15); color:var(--accent-red); border-color:rgba(239,68,68,0.3);">🔴 IP: {{ client_ip }}</span>
+            {% endif %}
+            <a href="/MetaleSzlachetnePolska" class="btn btn-outline">← Powrót do portalu</a>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="main-container">
+
+        {% if not is_trusted %}
+            <!-- Untrusted Access Card -->
+            <div class="error-card">
+                <h2>🔒 Brak Dostępu</h2>
+                <p>{{ error_access or "Podgląd dziennika logów jest dostępny wyłącznie z zaufanych adresów IP zainstalowanych w konfiguracji Home Assistant." }}</p>
+                <a href="/MetaleSzlachetnePolska" class="btn">Powrót na Stronę Główną</a>
+            </div>
+        {% else %}
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div>
+                        <div class="stat-label">Wszystkie Logi</div>
+                        <div class="stat-val" id="stat-total">0</div>
+                    </div>
+                    <div class="stat-icon">📊</div>
+                </div>
+
+                <div class="stat-card">
+                    <div>
+                        <div class="stat-label">Wejścia na Strony</div>
+                        <div class="stat-val" id="stat-views" style="color:var(--accent-blue);">0</div>
+                    </div>
+                    <div class="stat-icon">🌐</div>
+                </div>
+
+                <div class="stat-card">
+                    <div>
+                        <div class="stat-label">Wydruki Etykiet</div>
+                        <div class="stat-val" id="stat-prints" style="color:var(--accent-green);">0</div>
+                    </div>
+                    <div class="stat-icon">🏷️</div>
+                </div>
+
+                <div class="stat-card">
+                    <div>
+                        <div class="stat-label">Losowania Koła</div>
+                        <div class="stat-val" id="stat-draws" style="color:var(--accent-gold);">0</div>
+                    </div>
+                    <div class="stat-icon">🎡</div>
+                </div>
+            </div>
+
+            <!-- Controls Card -->
+            <div class="controls-card">
+                <div class="tabs-group">
+                    <button class="tab-btn active" onclick="setTab('all', this)">📋 Wszystkie</button>
+                    <button class="tab-btn" onclick="setTab('page_view', this)">🌐 Wejścia</button>
+                    <button class="tab-btn" onclick="setTab('label_print', this)">🏷️ Wydruki</button>
+                    <button class="tab-btn" onclick="setTab('wheel_draw', this)">🎡 Losowania</button>
+                </div>
+
+                <div class="search-box">
+                    <input type="text" id="search-input" class="input-field" placeholder="🔍 Szukaj IP, URL, monety, wygranego..." oninput="filterLogs()">
+                </div>
+            </div>
+
+            <!-- Compact Table Wrap -->
+            <div class="logs-table-wrap">
+                <table class="logs-table">
+                    <thead>
+                        <tr>
+                            <th style="width:160px;">Data i Czas</th>
+                            <th style="width:130px;">Typ</th>
+                            <th style="width:140px;">Adres IP</th>
+                            <th>Podsumowanie Aktywności</th>
+                            <th style="width:110px; text-align:right;">Szczegóły</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logs-tbody">
+                        <tr>
+                            <td colspan="5" class="empty-state">Ładowanie dziennika logów...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        {% endif %}
+
+    </div>
+
+    <script>
+        let allLogs = [];
+        let currentTab = 'all';
+
+        async function fetchLogs() {
+            try {
+                const response = await fetch('/api/logs/data');
+                const data = await response.json();
+                if (data.status === 'success') {
+                    allLogs = data.logs || [];
+                    updateStats();
+                    renderLogs();
+                }
+            } catch(e) {
+                console.error("Błąd pobierania logów:", e);
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('stat-total').innerText = allLogs.length;
+            document.getElementById('stat-views').innerText = allLogs.filter(l => l.type === 'page_view').length;
+            document.getElementById('stat-prints').innerText = allLogs.filter(l => l.type === 'label_print').length;
+            document.getElementById('stat-draws').innerText = allLogs.filter(l => l.type === 'wheel_draw').length;
+        }
+
+        function setTab(tab, btn) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderLogs();
+        }
+
+        function filterLogs() {
+            renderLogs();
+        }
+
+        function renderLogs() {
+            const tbody = document.getElementById('logs-tbody');
+            if (!tbody) return;
+
+            const q = document.getElementById('search-input').value.toLowerCase().trim();
+
+            let filtered = allLogs;
+            if (currentTab !== 'all') {
+                filtered = filtered.filter(l => l.type === currentTab);
+            }
+
+            if (q) {
+                filtered = filtered.filter(l => {
+                    const str = JSON.stringify(l).toLowerCase();
+                    return str.includes(q);
+                });
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="empty-state">Brak wpisów spełniających kryteria.</td></tr>`;
+                return;
+            }
+
+            const typePills = {
+                'page_view': '<span class="entry-type-badge badge-page_view">🌐 WEJŚCIE</span>',
+                'label_print': '<span class="entry-type-badge badge-label_print">🏷️ WYDRUK</span>',
+                'wheel_draw': '<span class="entry-type-badge badge-wheel_draw">🎡 LOSOWANIE</span>'
+            };
+
+            let html = '';
+
+            filtered.forEach((entry, idx) => {
+                let summaryText = '';
+                let hasDetails = false;
+                let detailsContent = '';
+
+                if (entry.type === 'page_view') {
+                    summaryText = `<span>${escapeHtml(entry.url || '/')}</span>`;
+                    hasDetails = false;
+                } else if (entry.type === 'label_print') {
+                    const labels = (entry.details && entry.details.labels) ? entry.details.labels : [];
+                    const count = entry.details ? (entry.details.count || labels.length) : labels.length;
+                    
+                    summaryText = `🖨️ Wygenerowano etykiet: <strong style="color:var(--accent-green);">${count} szt.</strong>`;
+                    if (labels.length > 0) {
+                        hasDetails = true;
+                        let tableRows = labels.map(l => `
+                            <tr>
+                                <td><strong>${escapeHtml(l[0] || '')}</strong></td>
+                                <td>${escapeHtml(l[1] || '-')}</td>
+                                <td><strong>${escapeHtml(l[2] || '')}</strong></td>
+                                <td>${escapeHtml(l[3] || '-')}</td>
+                                <td>${escapeHtml(l[4] || '')} ${escapeHtml(l[5] || '')}</td>
+                                <td>${escapeHtml(l[6] || '-')}</td>
+                            </tr>
+                        `).join('');
+
+                        detailsContent = `
+                            <div style="font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:6px;">📋 Lista wydrukowanych monet (${labels.length}):</div>
+                            <table class="table-mini">
+                                <thead>
+                                    <tr>
+                                        <th>Rok</th>
+                                        <th>Seria</th>
+                                        <th>Nazwa Monety</th>
+                                        <th>Nakład</th>
+                                        <th>Nominał</th>
+                                        <th>Stop</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${tableRows}</tbody>
+                            </table>
+                        `;
+                    }
+                } else if (entry.type === 'wheel_draw') {
+                    const d = entry.details || {};
+                    const winner = d.winner || {};
+                    const filter = d.filter_settings || {};
+                    const participants = d.participants || [];
+
+                    summaryText = `🏆 Wygrany: <strong style="color:var(--accent-gold);">${escapeHtml(winner.author || 'Brak')}</strong> (${escapeHtml(d.channel_title || d.channel_handle || 'YouTube')})`;
+                    hasDetails = true;
+
+                    detailsContent = `
+                        <div class="winner-box">
+                            <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted);">🏆 Wygrany Uczestnik</div>
+                            <div class="winner-name">${escapeHtml(winner.author || 'Brak danych')}</div>
+                            ${winner.comment ? `<div class="winner-comment">"${escapeHtml(winner.comment)}"</div>` : ''}
+                        </div>
+
+                        <div class="details-grid">
+                            <div class="details-item"><span>📺 Kanał YouTube</span><strong>${escapeHtml(d.channel_title || d.channel_handle || '-')}</strong></div>
+                            <div class="details-item"><span>🎬 Materiał Video</span><strong>${escapeHtml(d.video_title || 'Film YouTube')}</strong></div>
+                            <div class="details-item"><span>⏱️ Czas Kręcenia</span><strong>${d.spin_duration_sec || 15} sek.</strong></div>
+                            <div class="details-item"><span>⚡ Siła Losowania</span><strong>${d.power_level || 1} / 20</strong></div>
+                            <div class="details-item"><span>👥 Liczba Osób</span><strong>${d.participants_count || participants.length} osób</strong></div>
+                        </div>
+
+                        ${filter.keyword || filter.date_from || filter.date_to ? `
+                            <div style="font-size:12px; margin-top:8px; color:var(--text-muted);">
+                                🔍 Warunki filtrowania: <strong>Słowo: "${escapeHtml(filter.keyword || 'brak')}"</strong> | Daty: ${escapeHtml(filter.date_from || 'brak')} - ${escapeHtml(filter.date_to || 'brak')}
+                            </div>
+                        ` : ''}
+
+                        ${participants.length > 0 ? `
+                            <div style="font-size:12px; font-weight:600; color:var(--text-muted); margin-top:10px; margin-bottom:4px;">👥 Lista uczestników (${participants.length}):</div>
+                            <div style="font-size:11.5px; color:#cbd5e1; background:#0b0f19; padding:8px 12px; border-radius:6px; max-height:140px; overflow-y:auto;">
+                                ${participants.map(p => typeof p === 'object' ? escapeHtml(p.author || p.name || JSON.stringify(p)) : escapeHtml(p)).join(', ')}
+                            </div>
+                        ` : ''}
+                    `;
+                }
+
+                html += `
+                    <tr class="log-row">
+                        <td class="log-time">📅 ${escapeHtml(entry.timestamp)}</td>
+                        <td>${typePills[entry.type] || entry.type}</td>
+                        <td class="log-ip">${escapeHtml(entry.ip)}</td>
+                        <td class="log-summary">${summaryText}</td>
+                        <td style="text-align:right;">
+                            ${hasDetails ? `<button class="btn-details" onclick="toggleDetails(${idx}, this)">🔍 Szczegóły ▼</button>` : '<span style="color:var(--text-muted); font-size:11px;">-</span>'}
+                        </td>
+                    </tr>
+                `;
+
+                if (hasDetails) {
+                    html += `
+                        <tr id="details-row-${idx}" class="details-row">
+                            <td colspan="5">
+                                <div class="details-content">
+                                    ${detailsContent}
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        function toggleDetails(idx, btn) {
+            const row = document.getElementById(`details-row-${idx}`);
+            if (row) {
+                const isActive = row.classList.contains('active');
+                if (isActive) {
+                    row.classList.remove('active');
+                    btn.innerText = '🔍 Szczegóły ▼';
+                } else {
+                    row.classList.add('active');
+                    btn.innerText = '▲ Zamknij';
+                }
+            }
+        }
+
+        async function clearLogs() {
+            if (!confirm("Czy na pewno chcesz usunąć całą historię logów?")) return;
+            try {
+                const response = await fetch('/api/logs/clear', { method: 'POST' });
+                const res = await response.json();
+                if (res.status === 'success') {
+                    allLogs = [];
+                    updateStats();
+                    renderLogs();
+                }
+            } catch(e) {
+                alert("Błąd czyszczenia logów.");
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchLogs();
+        });
+    </script>
+</body>
+</html>

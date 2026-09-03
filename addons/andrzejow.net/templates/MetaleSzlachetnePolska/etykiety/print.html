@@ -275,6 +275,13 @@ try {
   const stored = sessionStorage.getItem('selected_labels_print') || localStorage.getItem('selected_labels_print');
   if (stored) {
     data = JSON.parse(stored);
+    if (data && data.length > 0) {
+      fetch('/MetaleSzlachetnePolska/etykiety/api/log-print', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ labels: data })
+      }).catch(err => console.error("Błąd zapisywania logu druku:", err));
+    }
   }
 } catch (e) {
   console.error("Błąd odczytu danych etykiet do druku:", e);

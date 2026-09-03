@@ -2,6 +2,21 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.10.6] - 2026-09-03
+
+### Dodano / Zmieniono
+- **Dziennik Zdarzeń i Aktywności (Logs)**:
+  - Trwały zapis logów aktywności w pliku `activity_logs.json` odporny na restarty kontenera.
+  - Rejestracja wejść na strony (`page_view`), wydruków etykiet z parametrami monet (`label_print`) oraz wyników losowań Koła Fortuny (`wheel_draw` z wygranym, filmem, filtrami i uczestnikami).
+  - Dedykowany podgląd human-friendly pod adresem `/logs` dostępny wyłącznie z zaufanych adresów IP (`admin_trusted_ips`).
+  - Zwięzły, jednolinijkowy układ tabeli z rozwijanymi szczegółami (Accordion Drawer) dla każdego zdarzenia.
+- **Aktualizacja Grafik Portalu**:
+  - Podmiana ikony Discorda na nową oficjalną ikonę `metale_polska_icon.webp` we wszystkich nagłówkach nawigacyjnych.
+  - Umieszczenie baneru portalu `metale_polska.webp` w sekcji nagłówkowej ekranu głównego.
+- **Poprawka Formatowania Uczestników**: Poprawiono bezpieczne formatowanie uczestników losowań w konsoli serwera.
+
+---
+
 ## [1.10.5] - 2026-09-03
 
 ### Dodano / Zmieniono

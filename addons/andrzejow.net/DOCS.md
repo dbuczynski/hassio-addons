@@ -3,6 +3,7 @@
 Web server andrzejow.net – dodatek do Home Assistant z aplikacjami wewnętrznymi:
 - **Metale Szlachetne Polska**: Generator etykiet na holdery monet (`/MetaleSzlachetnePolska/etykiety`).
 - **Koło Fortuny by Weekendowy Detektorysta**: Aplikacja do losowań z YouTube (`/MetaleSzlachetnePolska/youtube`).
+- **Dziennik Aktywności (Logs)**: Podgląd zdarzeń, wydruków i losowań z zaufanych IP (`/logs` lub `/MetaleSzlachetnePolska/logs`).
 
 ---
 

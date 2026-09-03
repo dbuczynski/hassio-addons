@@ -1,16 +1,18 @@
 import csv
+from datetime import datetime
 import hashlib
 import io
 import json
 import os
 import time
-from flask import Flask, jsonify, render_template, request, Response, redirect, session
+import uuid
+from flask import Flask, jsonify, render_template, request, Response, redirect, session, send_from_directory
 import youtube_service
 
 app = Flask(__name__)
 app.secret_key = "andrzejow_net_secret_key_metale_szlachetne"
 
-APP_VERSION = "1.10.5"
+APP_VERSION = "1.10.6"
 
 DEFAULT_ALLOWED_CHANNELS = [
     {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
@@ -24,6 +26,47 @@ GLOBAL_CONFIG_PATH = os.path.join(DATA_DIR, "global_config.json")
 LABELS_DB_PATH = os.path.join(DATA_DIR, "labels_db.json")
 DEFAULT_LABELS_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "labels_db.json")
 LABELS_USERS_PATH = os.path.join(DATA_DIR, "labels_users.json")
+ACTIVITY_LOGS_PATH = os.path.join(DATA_DIR, "activity_logs.json")
+
+def log_activity_entry(entry_type, details=None, req=None):
+    """
+    Trwale zapisuje zdarzenie do pliku activity_logs.json w pamięci trwałej (DATA_DIR).
+    entry_type: 'page_view', 'label_print', 'wheel_draw'
+    """
+    try:
+        ip = get_client_ip() if req else "127.0.0.1"
+        url_path = req.full_path if req else ""
+        if url_path.endswith('?'):
+            url_path = url_path[:-1]
+
+        entry = {
+            "id": str(uuid.uuid4())[:8],
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "type": entry_type,
+            "ip": ip,
+            "url": url_path,
+            "user_agent": req.headers.get("User-Agent", "") if req else "",
+            "details": details or {}
+        }
+
+        logs = []
+        if os.path.exists(ACTIVITY_LOGS_PATH):
+            try:
+                with open(ACTIVITY_LOGS_PATH, "r", encoding="utf-8") as f:
+                    logs = json.load(f)
+                    if not isinstance(logs, list):
+                        logs = []
+            except Exception:
+                logs = []
+
+        logs.insert(0, entry)
+        if len(logs) > 5000:
+            logs = logs[:5000]
+
+        with open(ACTIVITY_LOGS_PATH, "w", encoding="utf-8") as f:
+            json.dump(logs, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"Błąd zapisu pliku activity_logs.json: {e}", flush=True)
 
 def load_all_config_data():
     """Ładuje i łączy konfigurację z /data/options.json (zapisywanego przez Home Assistant) oraz global_config.json."""
@@ -114,8 +157,14 @@ def is_labels_authenticated(role_required=None):
 
 @app.before_request
 def check_session_inactivity():
-    if request.path.startswith('/MetaleSzlachetnePolska/etykiety'):
+    path = request.path
+    if path.startswith('/MetaleSzlachetnePolska/etykiety'):
         refresh_labels_session_activity()
+
+    # Automatyczne logowanie wejść na strony
+    if not path.endswith(('.css', '.js', '.png', '.jpg', '.jpeg', '.webp', '.ico', '.svg', '.woff', '.woff2', '.ttf')):
+        if path not in ['/api/info', '/MetaleSzlachetnePolska/youtube/api/info', '/MetaleSzlachetnePolska/youtube/api/channel-profile', '/api/logs/data']:
+            log_activity_entry('page_view', details={"method": request.method}, req=request)
 
 def load_labels_db():
     target_path = LABELS_DB_PATH
@@ -670,6 +719,64 @@ def delete_admin_label():
     except Exception as e:
         return jsonify({"error": f"Błąd usuwania etykiety: {str(e)}"}), 500
 
+@app.route('/MetaleSzlachetnePolska/metale_polska.webp')
+def serve_metale_polska_banner():
+    return send_from_directory(os.path.join(app.template_folder, 'MetaleSzlachetnePolska'), 'metale_polska.webp')
+
+@app.route('/MetaleSzlachetnePolska/metale_polska_icon.webp')
+def serve_metale_polska_icon():
+    return send_from_directory(os.path.join(app.template_folder, 'MetaleSzlachetnePolska'), 'metale_polska_icon.webp')
+
+@app.route('/logs')
+@app.route('/logs/')
+@app.route('/MetaleSzlachetnePolska/logs')
+@app.route('/MetaleSzlachetnePolska/logs/')
+def view_logs_page():
+    is_trusted = is_client_ip_trusted()
+    client_ip = get_client_ip()
+    if not is_trusted:
+        return render_template('logs.html', error_access="Brak uprawnień. Dostęp do dziennika logów jest dozwolony wyłącznie z zaufanych adresów IP.", is_trusted=False, client_ip=client_ip), 403
+    return render_template('logs.html', is_trusted=True, client_ip=client_ip, current_user=session.get('labels_user'))
+
+@app.route('/api/logs/data', methods=['GET'])
+def get_logs_data():
+    if not is_client_ip_trusted():
+        return jsonify({"error": "Brak uprawnień do przeglądania logów."}), 403
+    logs = []
+    if os.path.exists(ACTIVITY_LOGS_PATH):
+        try:
+            with open(ACTIVITY_LOGS_PATH, "r", encoding="utf-8") as f:
+                logs = json.load(f)
+                if not isinstance(logs, list):
+                    logs = []
+        except Exception:
+            logs = []
+    return jsonify({"status": "success", "logs": logs, "total": len(logs)})
+
+@app.route('/api/logs/clear', methods=['POST'])
+def clear_logs_data():
+    if not is_client_ip_trusted():
+        return jsonify({"error": "Brak uprawnień."}), 403
+    try:
+        with open(ACTIVITY_LOGS_PATH, "w", encoding="utf-8") as f:
+            json.dump([], f)
+        return jsonify({"status": "success", "message": "Logi zostały wyczyszczone."})
+    except Exception as e:
+        return jsonify({"error": f"Błąd czyszczenia logów: {str(e)}"}), 500
+
+@app.route('/MetaleSzlachetnePolska/etykiety/api/log-print', methods=['POST'])
+@app.route('/api/etykiety/log-print', methods=['POST'])
+def log_label_print():
+    data = request.get_json(force=True, silent=True) or {}
+    labels = data.get("labels", [])
+    count = len(labels)
+    details = {
+        "count": count,
+        "labels": labels
+    }
+    log_activity_entry('label_print', details=details, req=request)
+    return jsonify({"status": "success", "count": count})
+
 @app.route('/MetaleSzlachetnePolska/youtube')
 @app.route('/MetaleSzlachetnePolska/youtube/')
 def index():
@@ -940,13 +1047,18 @@ def record_draw_result():
         participants = data.get("participants", [])
         participants_count = len(participants)
 
+        filter_settings = data.get("filter_settings", {})
+        channel_title = data.get("channel_title") or channel_handle
+
         entry = {
             "timestamp": now_str,
             "client_ip": client_ip,
             "channel_handle": channel_handle,
+            "channel_title": channel_title,
             "video_id": video_id,
             "video_title": video_title,
             "video_url": video_url,
+            "filter_settings": filter_settings,
             "spin_duration_sec": spin_duration_sec,
             "power_level": power_level,
             "winner": {
@@ -957,11 +1069,18 @@ def record_draw_result():
             "participants": participants
         }
 
-        # Trwałe zapisanie do pliku JSON
+        # Trwałe zapisanie do historii losowań i do uniwersalnego dziennika aktywności
         save_draw_result_entry(entry)
+        log_activity_entry('wheel_draw', details=entry, req=request)
 
         # Wypisanie czytelnego loga do konsoli HA (stdout / sys.stderr)
-        sample_participants = ", ".join(participants[:30])
+        sample_names = []
+        for p in participants[:30]:
+            if isinstance(p, dict):
+                sample_names.append(str(p.get("author") or p.get("name") or p))
+            else:
+                sample_names.append(str(p))
+        sample_participants = ", ".join(sample_names)
         if participants_count > 30:
             sample_participants += f" ... (+{participants_count - 30} więcej)"
 
