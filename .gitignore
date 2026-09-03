@@ -1,0 +1,11 @@
+# Bazy danych użytkowników lokalnych
+addons/andrzejow.net/labels_users.json
+labels_users.json
+
+# Pamięć podręczna Python
+__pycache__/
+*.pyc
+
+# Pliki środowiskowe / lokalne
+.DS_Store
+Thumbs.db

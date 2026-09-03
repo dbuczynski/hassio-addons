@@ -10,7 +10,7 @@ import youtube_service
 app = Flask(__name__)
 app.secret_key = "andrzejow_net_secret_key_metale_szlachetne"
 
-APP_VERSION = "1.10.2"
+APP_VERSION = "1.10.3"
 
 DEFAULT_ALLOWED_CHANNELS = [
     {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
@@ -62,7 +62,7 @@ def get_trusted_ips():
                     return [str(ip) for ip in ips]
         except Exception:
             pass
-    return ["195.74.49.211", "192.168.12.223", "127.0.0.1"]
+    return ["127.0.0.1"]
 
 def get_client_ip():
     if request.headers.get("X-Forwarded-For"):
@@ -320,6 +320,9 @@ def admin_labels_login():
                     role = user_match.get('role', 'user')
         else:
             admin_pwd = get_admin_password()
+            if admin_pwd == 'admin' or password == 'admin':
+                return render_template('MetaleSzlachetnePolska/etykiety/admin_login.html', is_trusted_ip=trusted, client_ip=client_ip, error="Domyślne hasło 'admin' jest zablokowane dla połączeń spoza zaufanych IP. Zmień 'admin_password' w konfiguracji kontenera w Home Assistant.", next_url=next_url)
+
             if username == 'admin' and password == admin_pwd:
                 authenticated = True
                 role = 'admin'

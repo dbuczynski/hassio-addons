@@ -2,6 +2,16 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.10.3] - 2026-09-03
+
+### Dodano / Zmieniono
+- **Strukturyzacja Opcji w `config.yaml`**: Przejrzysty podział opcji na sekcje (`Metale Szlachetne Polska - Youtube` oraz `Metale Szlachetne Polska - Generator etykiet`).
+- **Zabezpieczenie Domyślnego Hasła `admin`**: Blokada możliwości logowania hasłem `admin` dla połączeń z niezaufanych adresów IP wraz z wymogiem zmiany hasła w konfiguracji Home Assistant.
+- **Domyślny Zaufany Adres IP**: W domyślnej konfiguracji dodatku pozostawiono wyłącznie pętlę zwrotną `127.0.0.1`.
+- **Wykluczenie Pliku Bazy Użytkowników z Gita**: Dodano plik `.gitignore` i wykluczono `labels_users.json` z repozytorium GitHub, aby chronić dane użytkowników lokalnych.
+
+---
+
 ## [1.10.2] - 2026-09-03
 
 ### Dodano / Zmieniono
