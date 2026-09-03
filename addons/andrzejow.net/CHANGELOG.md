@@ -1,6 +1,14 @@
-# Changelog - Koło Fortuny by Weekendowy Detektorysta (andrzejow.net)
+# Changelog - Web server andrzejow.net
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
+
+## [1.9.1] - 2026-09-03
+
+### Dodano / Zmieniono
+- **Przekierowania URL (Redirects)**: Dodano automatyczne przekierowania z adresów `/MSP`, `/msp`, `/metaleszlachetnePolska` oraz `/METALESZLACHETNEPOLSKA` na portal główny `/MetaleSzlachetnePolska`.
+- **Ogólna Nazwa Serwisu**: Zmiana nazwy dodatku w `config.yaml` na `Web server andrzejow.net` – aplikacja stanowi ogólny serwer WWW hostujący moduły wewnętrzne serwisu `andrzejow.net`.
+
+---
 
 ## [1.9.0] - 2026-09-03
 

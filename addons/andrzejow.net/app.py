@@ -7,7 +7,7 @@ import youtube_service
 
 app = Flask(__name__)
 
-APP_VERSION = "1.9.0"
+APP_VERSION = "1.9.1"
 
 DEFAULT_ALLOWED_CHANNELS = [
     {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
@@ -171,6 +171,17 @@ def resolve_channel_handle():
 @app.route('/')
 def home():
     return render_template('default.html')
+
+@app.route('/MSP')
+@app.route('/MSP/')
+@app.route('/msp')
+@app.route('/msp/')
+@app.route('/metaleszlachetnePolska')
+@app.route('/metaleszlachetnePolska/')
+@app.route('/METALESZLACHETNEPOLSKA')
+@app.route('/METALESZLACHETNEPOLSKA/')
+def redirect_msp():
+    return redirect('/MetaleSzlachetnePolska')
 
 @app.route('/MetaleSzlachetnePolska')
 @app.route('/MetaleSzlachetnePolska/')
