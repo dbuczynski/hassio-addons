@@ -1,0 +1,142 @@
+<!-- LandingPage.html - Profil Aktywnego Kanału YouTube -->
+<div class="landing-container">
+    <!-- YOUTUBE CHANNEL PROFILE CARD -->
+    <div class="landing-hero channel-profile-card">
+        <div class="channel-banner-wrap">
+            <img src="" alt="Baner Kanału" id="channel-banner-img" class="channel-banner-img" style="display:none;">
+        </div>
+        
+        <div class="channel-profile-body">
+            <div class="channel-avatar-wrap">
+                <img src="" alt="Avatar Kanału" id="channel-avatar-img" class="channel-avatar-img" style="display:none;">
+                <div id="channel-avatar-placeholder" class="channel-avatar-placeholder">📺</div>
+            </div>
+            
+            <div class="channel-meta">
+                <h2 class="channel-title" id="channel-profile-title">Ładowanie profilu kanału...</h2>
+                <div class="channel-sub-info">
+                    <span id="channel-profile-handle">@UncjuszPatyniusz</span>
+                    <span class="dot-separator">•</span>
+                    <span id="channel-profile-subs">8,67 tys. subskrybentów</span>
+                    <span class="dot-separator">•</span>
+                    <span id="channel-profile-videos">297 filmów</span>
+                </div>
+                <p class="channel-desc" id="channel-profile-desc">
+                    Jest to kanał który ma na celu popularyzację numizmatyki, poszerzanie wiedzy kolekcjonerskiej...
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .landing-container {
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+        padding: 10px 0 40px 0;
+    }
+
+    .landing-hero {
+        background: var(--bg-card);
+        backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 40px 32px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+    }
+
+    .channel-profile-card {
+        padding: 0 0 28px 0 !important;
+        overflow: hidden;
+        align-items: stretch !important;
+        text-align: left !important;
+    }
+
+    .channel-banner-wrap {
+        width: 100%;
+        height: 180px;
+        background: linear-gradient(135deg, #1e293b, #0f172a);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .channel-banner-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .channel-profile-body {
+        padding: 0 32px;
+        display: flex;
+        gap: 24px;
+        align-items: flex-start;
+        margin-top: -40px;
+        position: relative;
+        z-index: 2;
+    }
+
+    .channel-avatar-wrap {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        border: 4px solid #1e293b;
+        background: #0f172a;
+        overflow: hidden;
+        flex-shrink: 0;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .channel-avatar-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .channel-avatar-placeholder {
+        font-size: 40px;
+    }
+
+    .channel-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding-top: 48px;
+        flex-grow: 1;
+    }
+
+    .channel-title {
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--text-main);
+    }
+
+    .channel-sub-info {
+        font-size: 13.5px;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .dot-separator {
+        color: var(--accent-gold);
+    }
+
+    .channel-desc {
+        font-size: 13.5px;
+        color: var(--text-muted);
+        line-height: 1.5;
+        margin-top: 8px;
+        max-width: 900px;
+    }
+</style>

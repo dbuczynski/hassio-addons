@@ -2,12 +2,12 @@ import csv
 import io
 import json
 import os
-from flask import Flask, jsonify, render_template, request, Response
+from flask import Flask, jsonify, render_template, request, Response, redirect
 import youtube_service
 
 app = Flask(__name__)
 
-APP_VERSION = "1.8.3"
+APP_VERSION = "1.9.0"
 
 DEFAULT_ALLOWED_CHANNELS = [
     {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
@@ -17,6 +17,31 @@ DEFAULT_ALLOWED_CHANNELS = [
 
 DATA_DIR = "/data" if os.path.exists("/data") else os.path.dirname(os.path.abspath(__file__))
 GLOBAL_CONFIG_PATH = os.path.join(DATA_DIR, "global_config.json")
+LABELS_DB_PATH = os.path.join(DATA_DIR, "labels_db.json")
+DEFAULT_LABELS_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "labels_db.json")
+
+def load_labels_db():
+    target_path = LABELS_DB_PATH
+    if not os.path.exists(target_path) and os.path.exists(DEFAULT_LABELS_DB_PATH):
+        target_path = DEFAULT_LABELS_DB_PATH
+    if os.path.exists(target_path):
+        try:
+            with open(target_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return []
+
+def save_labels_db(labels):
+    target_path = LABELS_DB_PATH
+    with open(target_path, "w", encoding="utf-8") as f:
+        json.dump(labels, f, ensure_ascii=False, indent=2)
+    if os.path.exists(DEFAULT_LABELS_DB_PATH) and DEFAULT_LABELS_DB_PATH != target_path:
+        try:
+            with open(DEFAULT_LABELS_DB_PATH, "w", encoding="utf-8") as f:
+                json.dump(labels, f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
 
 def get_global_api_key():
     """Pobiera globalny klucz API z pliku global_config.json jeśli istnieje."""
@@ -144,12 +169,162 @@ def resolve_channel_handle():
     return "@UncjuszPatyniusz"
 
 @app.route('/')
-@app.route('/youtube')
+def home():
+    return render_template('default.html')
+
+@app.route('/MetaleSzlachetnePolska')
+@app.route('/MetaleSzlachetnePolska/')
+def portal_metale_szlachetne():
+    return render_template('MetaleSzlachetnePolska/index.html')
+
+@app.route('/MetaleSzlachetnePolska/etykiety')
+@app.route('/MetaleSzlachetnePolska/etykiety/')
+def etykiety():
+    return render_template('MetaleSzlachetnePolska/etykiety/index.html')
+
+@app.route('/MetaleSzlachetnePolska/etykiety/print')
+@app.route('/MetaleSzlachetnePolska/etykiety/print/')
+def etykiety_print():
+    return render_template('MetaleSzlachetnePolska/etykiety/print.html')
+
+@app.route('/MetaleSzlachetnePolska/etykiety/admin/add')
+@app.route('/MetaleSzlachetnePolska/etykiety/admin/add/')
+def admin_add_labels():
+    """Ukryta strona administracyjna do masowego dodawania monet z pliku CSV."""
+    return render_template('MetaleSzlachetnePolska/etykiety/admin_add.html')
+
+@app.route('/MetaleSzlachetnePolska/etykiety/admin/template-csv')
+def download_csv_template():
+    """Endpoint do pobrania wzorcowego pliku CSV do uzupełniania monet."""
+    csv_content = "\ufeffRok;Seria;Nazwa;Nakład;Nominał;WalutaPo;Stop;WalutaPrzed\n" \
+                  "2008;;Zbigniew Herbert (1924–1998);1510000;2;zł;NG;\n" \
+                  "2024;Britannia;King Charles III;50000;5;;Ag999;£\n" \
+                  "2026;seria cc;Nowa moneta;45000000;2;;Nordic Gold;$\n"
+    return Response(
+        csv_content,
+        mimetype="text/csv; charset=utf-8",
+        headers={"Content-disposition": "attachment; filename=wzor_etykiet.csv"}
+    )
+
+@app.route('/api/labels', methods=['GET'])
+@app.route('/MetaleSzlachetnePolska/etykiety/api/labels', methods=['GET'])
+def get_labels():
+    """Zwraca bazę etykiet z dynamicznym wyszukiwaniem wielosłowowym (AND) i limitem max 50 wyników (chyba że podano wyższy limit)."""
+    labels = load_labels_db()
+    query = request.args.get('q', '').strip().lower()
+    limit = request.args.get('limit', 50, type=int)
+
+    if not query:
+        if limit > 50:
+            return jsonify({
+                "status": "success",
+                "total_matches": len(labels),
+                "labels": labels[:limit]
+            })
+        return jsonify({
+            "status": "success",
+            "total_matches": 0,
+            "labels": []
+        })
+
+    tokens = [t for t in query.split() if t]
+    matching = []
+
+    for item in labels:
+        item_text = " ".join([str(x) for x in item]).lower()
+        if all(token in item_text for token in tokens):
+            matching.append(item)
+
+    return jsonify({
+        "status": "success",
+        "total_matches": len(matching),
+        "labels": matching[:limit]
+    })
+
+@app.route('/api/admin/labels', methods=['POST'])
+@app.route('/MetaleSzlachetnePolska/etykiety/api/admin/labels', methods=['POST'])
+def update_admin_labels():
+    """
+    Endpoint administracyjny do edycji bazy etykiet.
+    Można przekazać nową całą listę {"labels": [[...], [...]]} lub pojedynczy wpis.
+    """
+    try:
+        data = request.get_json(force=True, silent=True) or {}
+        labels = load_labels_db()
+
+        if "labels" in data and isinstance(data["labels"], list):
+            labels = data["labels"]
+        elif "label" in data and isinstance(data["label"], list):
+            labels.append(data["label"])
+        elif "name" in data or "year" in data:
+            item = [
+                str(data.get("year", "")),
+                str(data.get("series", "")),
+                str(data.get("name", "")),
+                str(data.get("mintage", "")),
+                str(data.get("nominal", "2")),
+                str(data.get("currency_after", data.get("currency", "zł"))),
+                str(data.get("stop", "")),
+                str(data.get("currency_before", ""))
+            ]
+            labels.append(item)
+        else:
+            return jsonify({"error": "Nieprawidłowy format danych. Przekaż 'labels' (tablica) lub dane etykiety."}), 400
+
+        save_labels_db(labels)
+        return jsonify({
+            "status": "success",
+            "message": "Baza etykiet została pomyślnie zaktualizowana na serwerze.",
+            "total": len(labels),
+            "labels": labels
+        })
+    except Exception as e:
+        return jsonify({"error": f"Błąd aktualizacji bazy etykiet: {str(e)}"}), 500
+
+@app.route('/api/admin/labels', methods=['DELETE'])
+@app.route('/MetaleSzlachetnePolska/etykiety/api/admin/labels', methods=['DELETE'])
+def delete_admin_label():
+    """Endpoint administracyjny do usuwania wpisu z bazy etykiet."""
+    try:
+        data = request.get_json(force=True, silent=True) or {}
+        index = data.get("index")
+        name = data.get("name")
+        labels = load_labels_db()
+
+        if index is not None and isinstance(index, int) and 0 <= index < len(labels):
+            labels.pop(index)
+        elif name:
+            initial = len(labels)
+            labels = [l for l in labels if len(l) > 2 and l[2].lower() != str(name).lower()]
+            if len(labels) == initial:
+                return jsonify({"error": f"Nie odnaleziono etykiety o nazwie '{name}'."}), 404
+        else:
+            return jsonify({"error": "Brak parametru 'index' lub 'name' do usunięcia."}), 400
+
+        save_labels_db(labels)
+        return jsonify({
+            "status": "success",
+            "message": "Etykieta została usunięta z bazy serwera.",
+            "total": len(labels),
+            "labels": labels
+        })
+    except Exception as e:
+        return jsonify({"error": f"Błąd usuwania etykiety: {str(e)}"}), 500
+
+@app.route('/MetaleSzlachetnePolska/youtube')
+@app.route('/MetaleSzlachetnePolska/youtube/')
 def index():
-    return render_template('index.html')
+    return render_template('MetaleSzlachetnePolska/youtube/index.html')
+
+@app.route('/youtube')
+@app.route('/youtube/')
+def redirect_old_youtube():
+    return redirect('/MetaleSzlachetnePolska/youtube', code=302)
 
 @app.route('/api/info')
 @app.route('/youtube/api/info')
+@app.route('/MetaleSzlachetnePolska/api/info')
+@app.route('/MetaleSzlachetnePolska/youtube/api/info')
 def api_info():
     """Zwraca wersję aplikacji, status kluczy i listę dozwolonych kanałów."""
     global_key = get_global_api_key()
@@ -164,6 +339,7 @@ def api_info():
 
 @app.route('/api/channel-profile')
 @app.route('/youtube/api/channel-profile')
+@app.route('/MetaleSzlachetnePolska/youtube/api/channel-profile')
 def channel_profile():
     """Zwraca baner, avatar, opis i statystyki aktualnie wybranego kanału."""
     api_key = resolve_api_key()
@@ -173,6 +349,7 @@ def channel_profile():
 
 @app.route('/api/admin/set-global-key', methods=['POST'])
 @app.route('/youtube/api/admin/set-global-key', methods=['POST'])
+@app.route('/MetaleSzlachetnePolska/youtube/api/admin/set-global-key', methods=['POST'])
 def set_global_key():
     """Endpoint administracyjny do ustawiania klucza globalnego przez POST JSON."""
     try:
@@ -192,6 +369,7 @@ def set_global_key():
 
 @app.route('/api/admin/set-discord-token', methods=['POST'])
 @app.route('/youtube/api/admin/set-discord-token', methods=['POST'])
+@app.route('/MetaleSzlachetnePolska/youtube/api/admin/set-discord-token', methods=['POST'])
 def set_discord_token():
     """Endpoint administracyjny do ustawiania tokenu bota Discord przez POST JSON."""
     try:
@@ -211,6 +389,7 @@ def set_discord_token():
 
 @app.route('/api/admin/channels', methods=['GET'])
 @app.route('/youtube/api/admin/channels', methods=['GET'])
+@app.route('/MetaleSzlachetnePolska/youtube/api/admin/channels', methods=['GET'])
 def get_admin_channels():
     """Zwraca aktualną listę dozwolonych kanałów."""
     return jsonify({
@@ -220,6 +399,7 @@ def get_admin_channels():
 
 @app.route('/api/admin/channels/add', methods=['POST'])
 @app.route('/youtube/api/admin/channels/add', methods=['POST'])
+@app.route('/MetaleSzlachetnePolska/youtube/api/admin/channels/add', methods=['POST'])
 def add_admin_channel():
     """Endpoint administracyjny do dodawania nowego kanału do listy dozwolonych."""
     try:
@@ -269,6 +449,7 @@ def add_admin_channel():
 
 @app.route('/api/admin/channels/remove', methods=['POST', 'DELETE'])
 @app.route('/youtube/api/admin/channels/remove', methods=['POST', 'DELETE'])
+@app.route('/MetaleSzlachetnePolska/youtube/api/admin/channels/remove', methods=['POST', 'DELETE'])
 def remove_admin_channel():
     """Endpoint administracyjny do usuwania kanału z listy dozwolonych."""
     try:
@@ -301,6 +482,7 @@ def remove_admin_channel():
 
 @app.route('/api/videos')
 @app.route('/youtube/api/videos')
+@app.route('/MetaleSzlachetnePolska/youtube/api/videos')
 def get_videos():
     api_key = resolve_api_key()
     if not api_key:
@@ -316,6 +498,7 @@ def get_videos():
 
 @app.route('/api/comments')
 @app.route('/youtube/api/comments')
+@app.route('/MetaleSzlachetnePolska/youtube/api/comments')
 def get_comments():
     api_key = resolve_api_key()
     if not api_key:
@@ -333,6 +516,7 @@ def get_comments():
 
 @app.route('/api/export-csv')
 @app.route('/youtube/api/export-csv')
+@app.route('/MetaleSzlachetnePolska/youtube/api/export-csv')
 def export_csv():
     api_key = resolve_api_key()
     if not api_key:
@@ -364,6 +548,7 @@ def export_csv():
 
 @app.route('/api/draw-result', methods=['POST'])
 @app.route('/youtube/api/draw-result', methods=['POST'])
+@app.route('/MetaleSzlachetnePolska/youtube/api/draw-result', methods=['POST'])
 def record_draw_result():
     """
     Rejestruje wynik przeprowadzonego losowania, wypisuje szczegółowy log do konsoli HA
@@ -446,6 +631,7 @@ def record_draw_result():
 
 @app.route('/api/admin/draw-history', methods=['GET'])
 @app.route('/youtube/api/admin/draw-history', methods=['GET'])
+@app.route('/MetaleSzlachetnePolska/youtube/api/admin/draw-history', methods=['GET'])
 def get_draw_history():
     """Zwraca archiwalną listę zrealizowanych losowań z pliku json."""
     history = load_draw_history()

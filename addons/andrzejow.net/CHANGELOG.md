@@ -2,6 +2,16 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.9.0] - 2026-09-03
+
+### Dodano / Zmieniono
+- **Generator Etykiet dla Metali Szlachetnych**: Nowy moduł `/MetaleSzlachetnePolska/etykiety` z wyszukiwarką bazy monet i tworzeniem etykiet w sesji.
+- **Obsługa Walut i Formatu**: Dodano pole waluty przed/po nominału (`$`, `£`, `zł`, `EUR`), bezspacyjną typografię i nakład z separatorem tysięcznym.
+- **Jednoliniowe Etykiety i Grupowanie**: Wyodrębnienie etykiet niższych (5.7mm) dla samej serii/nazwy (`Górna`) lub nominału (`Dolna`) z automatycznym grupowaniem i podglądem łączonym na 1 stronie A4.
+- **Ukryta Strona Wgrywania CSV**: Dostępny pod niepodlinkowanym adresem `/MetaleSzlachetnePolska/etykiety/admin/add` panel masowego wgrywania monet z CSV z weryfikacją duplikatów.
+
+---
+
 ## [1.8.3] - 2026-08-05
 
 ### Dodano / Zmieniono

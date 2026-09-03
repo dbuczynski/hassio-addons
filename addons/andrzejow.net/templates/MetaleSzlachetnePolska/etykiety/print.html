@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Etykiety na holdery - Druk</title>
+<style>
+  @page { size: A4 portrait; margin: 5mm 10mm; }
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; padding: 0; font-family: 'Times New Roman', 'DejaVu Serif', serif; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page { page-break-after: always; min-height: 10mm; max-height: 285mm; overflow: hidden; }
+  .page:last-child { page-break-after: auto; }
+  
+  /* Normal Grid (9.5mm rows) */
+  .grid-normal { display: grid; grid-template-columns: repeat(4, 47.5mm); grid-auto-rows: 9.5mm; width: 190mm; margin: 0 auto; }
+  /* Half-height Grid (5.7mm rows for perfect vertical fit) */
+  .grid-half { display: grid; grid-template-columns: repeat(4, 47.5mm); grid-auto-rows: 5.7mm; width: 190mm; margin: 0 auto; }
+  
+  .cell { width: 47.5mm; height: 100%; position: relative; padding: 0.4mm 0.6mm; }
+  .cell::before { content: ''; position: absolute; top: -1.2mm; left: 0; width: 0; height: 2.4mm; border-left: 0.25pt solid #bbb; z-index: 10; }
+  .cell::after { content: ''; position: absolute; top: 0; left: -1.2mm; width: 2.4mm; height: 0; border-top: 0.25pt solid #bbb; z-index: 10; }
+  
+  /* Right edge cutting ticks for column 4 (col 3) */
+  .cell-right-tick { position: absolute; top: -1.2mm; right: 0; width: 0; height: 2.4mm; border-right: 0.25pt solid #bbb; z-index: 10; pointer-events: none; }
+  .cell-closing-right-tick { position: absolute; top: 0; right: 0; width: 1.2mm; height: 0; border-top: 0.25pt solid #bbb; z-index: 10; pointer-events: none; }
+
+  .cell.cell-closing { padding: 0; }
+  
+  .inner-box { width: 100%; height: 100%; border: 0.85pt solid #1a625d; border-radius: 3.2mm; background: #fff; padding: 0.3mm 1.6mm 0.4mm 1.8mm; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
+  
+  /* Half-height Inner Box (5.7mm) with perfect vertical centering */
+  .inner-box-half {
+    width: 100%;
+    height: 100%;
+    border: 0.85pt solid #1a625d;
+    border-radius: 2.2mm;
+    background: #fff;
+    padding: 0 1.6mm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .inner-box-half .line-top {
+    width: 100%;
+    line-height: 1.1;
+    margin: 0;
+  }
+
+  .inner-box-half .line-bottom {
+    width: 100%;
+    align-items: center;
+    line-height: 1.1;
+    margin: 0;
+  }
+
+  /* Typography */
+  .line-top { font-size: 6.8pt; color: #1a1a1a; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .series-part { font-style: italic; }
+  .name-part { font-weight: bold; }
+  
+  .line-bottom { display: flex; justify-content: space-between; align-items: baseline; line-height: 1.0; white-space: nowrap; overflow: hidden; }
+  .nominal { font-size: 11pt; font-weight: bold; color: #0d0d0d; }
+  .currency-font { font-size: 6.8pt; font-weight: normal; color: #0d0d0d; }
+  .year-str { font-size: 8.8pt; font-weight: normal; color: #0d0d0d; margin-left: 2px; }
+  .alloy-stop { font-size: 6.8pt; font-weight: bold; color: #1a1a1a; text-align: center; margin: 0 2px; flex-shrink: 0; }
+  .mintage { font-size: 6.8pt; font-style: italic; color: #555; text-align: right; flex-shrink: 0; }
+
+  /* Control bar (hidden during printing) */
+  .no-print-bar {
+    background: #0f172a;
+    color: #fff;
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: sans-serif;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+
+  .btn-print {
+    background: #22c55e;
+    color: #fff;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .btn-print:hover { background: #16a34a; }
+  .btn-back {
+    background: #475569;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 13px;
+  }
+  .btn-back:hover { background: #334155; }
+
+  @media print {
+    .no-print-bar { display: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="no-print-bar">
+  <div>
+    <strong>🖨️ Podgląd wydruku etykiet</strong>
+    <span id="label-count-info" style="font-size: 13px; color: #94a3b8; margin-left: 10px;"></span>
+  </div>
+  <div style="display: flex; gap: 10px;">
+    <button class="btn-print" onclick="window.print()">🖨️ Drukuj teraz</button>
+    <a href="/MetaleSzlachetnePolska/etykiety" class="btn-back">← Wróć do edycji</a>
+  </div>
+</div>
+
+<div id="container"></div>
+
+<script>
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function formatMintage(val) {
+  if (!val) return '';
+  const clean = String(val).replace(/\s+/g, '').replace(',', '.');
+  const num = parseFloat(clean);
+  if (isNaN(num)) return String(val);
+  const intVal = Math.floor(num);
+  return intVal.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+function cleanLabelItem(item) {
+  if (!item || !Array.isArray(item)) return ["","","","","2","","",""];
+
+  let year = String(item[0] || "");
+  let series = String(item[1] || "");
+  let name = String(item[2] || "");
+  let mintage = String(item[3] || "");
+  let nominal = String(item[4] || "");
+  let currencyAfter = String(item[5] || "");
+  let stop = String(item[6] || "");
+  let currencyBefore = item[7];
+
+  if (typeof currencyBefore === 'boolean' || currencyBefore === 'true' || currencyBefore === 'false') {
+    currencyBefore = "";
+  } else {
+    currencyBefore = String(currencyBefore || "");
+  }
+
+  return [year, series, name, mintage, nominal, currencyAfter, stop, currencyBefore];
+}
+
+function isHalfHeight(rawItem) {
+  const item = cleanLabelItem(rawItem);
+  const year = item[0].trim();
+  const series = item[1].trim();
+  const name = item[2].trim();
+  const mintage = item[3].trim();
+  const nominal = item[4].trim();
+  const currencyAfter = item[5].trim();
+  const stop = item[6].trim();
+  const currencyBefore = item[7].trim();
+
+  const hasTop = Boolean(series || name);
+  const hasBottom = Boolean(nominal || year || stop || mintage || currencyBefore || currencyAfter);
+
+  return (!hasTop && hasBottom) || (hasTop && !hasBottom);
+}
+
+function renderHalfCellContent(rawItem) {
+  const item = cleanLabelItem(rawItem);
+  const year = item[0];
+  const series = item[1];
+  const name = item[2];
+  const mintage = item[3];
+  const nominal = item[4];
+  const currencyAfter = item[5];
+  const stop = item[6];
+  const currencyBefore = item[7];
+
+  const hasTop = Boolean(series || name);
+
+  if (hasTop) {
+    return `
+      <div class="inner-box-half">
+        <div class="line-top" style="text-align: center;">
+          ${series ? `<span class="series-part">${escapeHtml(series)}:</span> ` : ''}
+          ${name ? `<span class="name-part">${escapeHtml(name)}</span>` : ''}
+        </div>
+      </div>
+    `;
+  } else {
+    const formattedMintage = formatMintage(mintage);
+    const nominalYearStr = (currencyBefore + nominal + currencyAfter + year).trim();
+    const totalCharLen = nominalYearStr.length + stop.length + formattedMintage.length;
+    const showNakladWord = (totalCharLen <= 22);
+
+    let mintageDisplay = '';
+    if (formattedMintage) {
+      mintageDisplay = showNakladWord ? ('nakład: ' + formattedMintage) : formattedMintage;
+    }
+
+    return `
+      <div class="inner-box-half">
+        <div class="line-bottom">
+          <span>
+            <span class="currency-font">${escapeHtml(currencyBefore)}</span><span class="nominal">${escapeHtml(nominal)}</span><span class="currency-font">${escapeHtml(currencyAfter)}</span>
+            <span class="year-str">${escapeHtml(year)}</span>
+          </span>
+          <span class="alloy-stop">${escapeHtml(stop)}</span>
+          <span class="mintage">${escapeHtml(mintageDisplay)}</span>
+        </div>
+      </div>
+    `;
+  }
+}
+
+function renderNormalCellContent(rawItem) {
+  const item = cleanLabelItem(rawItem);
+  const year = item[0];
+  const series = item[1];
+  const name = item[2];
+  const mintage = item[3];
+  const nominal = item[4] || "2";
+  const currencyAfter = item[5];
+  const stop = item[6];
+  const currencyBefore = item[7];
+
+  const formattedMintage = formatMintage(mintage);
+  const nominalYearStr = (currencyBefore + nominal + currencyAfter + year).trim();
+  const totalCharLen = nominalYearStr.length + stop.length + formattedMintage.length;
+  const showNakladWord = (totalCharLen <= 22);
+
+  let mintageDisplay = '';
+  if (formattedMintage) {
+    mintageDisplay = showNakladWord ? ('nakład: ' + formattedMintage) : formattedMintage;
+  }
+
+  return `
+    <div class="inner-box">
+      <div class="line-top">
+        ${series ? `<span class="series-part">${escapeHtml(series)}:</span> ` : ''}
+        ${name ? `<span class="name-part">${escapeHtml(name)}</span>` : ''}
+      </div>
+      <div class="line-bottom">
+        <span>
+          <span class="currency-font">${escapeHtml(currencyBefore)}</span><span class="nominal">${escapeHtml(nominal)}</span><span class="currency-font">${escapeHtml(currencyAfter)}</span>
+          <span class="year-str">${escapeHtml(year)}</span>
+        </span>
+        <span class="alloy-stop">${escapeHtml(stop)}</span>
+        <span class="mintage">${escapeHtml(mintageDisplay)}</span>
+      </div>
+    </div>
+  `;
+}
+
+let data = [];
+try {
+  const stored = sessionStorage.getItem('selected_labels_print') || localStorage.getItem('selected_labels_print');
+  if (stored) {
+    data = JSON.parse(stored);
+  }
+} catch (e) {
+  console.error("Błąd odczytu danych etykiet do druku:", e);
+}
+
+const halfItems = data.filter(item => isHalfHeight(item));
+const normalItems = data.filter(item => !isHalfHeight(item));
+
+const container = document.getElementById('container');
+
+if (data.length === 0) {
+  container.innerHTML = '<div style="padding: 40px; text-align: center; font-family: sans-serif; color: #666;">Brak wyznaczonych etykiet do druku. Powróć do edytora i dodaj etykiety.</div>';
+} else {
+  
+  let pageDiv = document.createElement('div');
+  pageDiv.className = 'page';
+  let currentHeight = 0; // in mm
+
+  // 1. PROCESS HALF-HEIGHT ITEMS
+  let currentHalfIdx = 0;
+  while (currentHalfIdx < halfItems.length) {
+    const remainingPageHeight = 285.0 - currentHeight;
+    let maxRows = Math.floor(remainingPageHeight / 5.7);
+
+    if (maxRows <= 0) {
+      container.appendChild(pageDiv);
+      pageDiv = document.createElement('div');
+      pageDiv.className = 'page';
+      currentHeight = 0;
+      maxRows = Math.floor(285.0 / 5.7); // 50 rows
+    }
+
+    const itemsLeft = halfItems.length - currentHalfIdx;
+    const rowsNeeded = Math.ceil(itemsLeft / 4);
+    const rowsToRender = Math.min(rowsNeeded, maxRows);
+    const itemsToRender = Math.min(itemsLeft, rowsToRender * 4);
+
+    const gridHalf = document.createElement('div');
+    gridHalf.className = 'grid-half';
+
+    const lastFilledRow = Math.ceil(itemsToRender / 4) - 1;
+    const maxRowIndex = lastFilledRow + 1;
+    const totalCells = (maxRowIndex + 1) * 4;
+
+    for (let i = 0; i < totalCells; i++) {
+      const rowIndex = Math.floor(i / 4);
+      const colIndex = i % 4;
+      const itemIdx = currentHalfIdx + i;
+      const cell = document.createElement('div');
+
+      if (rowIndex === lastFilledRow + 1) {
+        cell.className = 'cell cell-closing';
+        if (colIndex === 3) cell.innerHTML = '<div class="cell-closing-right-tick"></div>';
+      } else {
+        cell.className = 'cell';
+        let rightTick = (colIndex === 3) ? '<div class="cell-right-tick"></div>' : '';
+
+        if (itemIdx < currentHalfIdx + itemsToRender) {
+          const item = halfItems[itemIdx];
+          cell.innerHTML = renderHalfCellContent(item) + rightTick;
+        } else {
+          cell.innerHTML = rightTick;
+        }
+      }
+      gridHalf.appendChild(cell);
+    }
+
+    pageDiv.appendChild(gridHalf);
+    currentHeight += (maxRowIndex + 1) * 5.7;
+    currentHalfIdx += itemsToRender;
+  }
+
+  // 2. PROCESS NORMAL FULL-HEIGHT ITEMS ON THE SAME PAGE (if space permits)!
+  let currentNormalIdx = 0;
+  while (currentNormalIdx < normalItems.length) {
+    const remainingPageHeight = 285.0 - currentHeight;
+    let maxRows = Math.floor(remainingPageHeight / 9.5);
+
+    if (maxRows <= 0) {
+      container.appendChild(pageDiv);
+      pageDiv = document.createElement('div');
+      pageDiv.className = 'page';
+      currentHeight = 0;
+      maxRows = Math.floor(285.0 / 9.5); // 30 rows
+    }
+
+    const itemsLeft = normalItems.length - currentNormalIdx;
+    const rowsNeeded = Math.ceil(itemsLeft / 4);
+    const rowsToRender = Math.min(rowsNeeded, maxRows);
+    const itemsToRender = Math.min(itemsLeft, rowsToRender * 4);
+
+    const gridNormal = document.createElement('div');
+    gridNormal.className = 'grid-normal';
+
+    const lastFilledRow = Math.ceil(itemsToRender / 4) - 1;
+    const maxRowIndex = lastFilledRow + 1;
+    const totalCells = (maxRowIndex + 1) * 4;
+
+    for (let i = 0; i < totalCells; i++) {
+      const rowIndex = Math.floor(i / 4);
+      const colIndex = i % 4;
+      const itemIdx = currentNormalIdx + i;
+      const cell = document.createElement('div');
+
+      if (rowIndex === lastFilledRow + 1) {
+        cell.className = 'cell cell-closing';
+        if (colIndex === 3) cell.innerHTML = '<div class="cell-closing-right-tick"></div>';
+      } else {
+        cell.className = 'cell';
+        let rightTick = (colIndex === 3) ? '<div class="cell-right-tick"></div>' : '';
+
+        if (itemIdx < currentNormalIdx + itemsToRender) {
+          const item = normalItems[itemIdx];
+          cell.innerHTML = renderNormalCellContent(item) + rightTick;
+        } else {
+          cell.innerHTML = rightTick;
+        }
+      }
+      gridNormal.appendChild(cell);
+    }
+
+    pageDiv.appendChild(gridNormal);
+    currentHeight += (maxRowIndex + 1) * 9.5;
+    currentNormalIdx += itemsToRender;
+  }
+
+  if (pageDiv.children.length > 0) {
+    container.appendChild(pageDiv);
+  }
+
+  const pageCount = container.querySelectorAll('.page').length;
+  document.getElementById('label-count-info').textContent = 
+    `Łącznie etykiet: ${data.length} (${halfItems.length} niższych, ${normalItems.length} normalnych) • ${pageCount} str. A4`;
+}
+</script>
+</body>
+</html>

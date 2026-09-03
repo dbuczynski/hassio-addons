@@ -43,6 +43,67 @@ curl -X GET https://andrzejow.net/youtube/api/admin/draw-history
 
 ---
 
+## 🏷️ Zarządzanie Bazą Etykiet (API Generatora Etykiet)
+
+Baza etykiet serwera jest zapisywana w pliku `labels_db.json`. Każda etykieta składa się z 8 elementów:
+`["Rok", "Seria", "Nazwa", "Nakład", "Nominał", "WalutaPo", "Stop", "WalutaPrzed"]`
+
+Przykład wpisu (złoty/dolar):
+- `["2008", "", "Zbigniew Herbert (1924–1998)", "1 510 000", "2", "zł", "NG", ""]`
+- `["2024", "Britannia", "King Charles III", "50 000", "5", "", "Ag999", "£"]`
+
+### 1. Pobranie całej bazy etykiet:
+```bash
+curl -X GET https://andrzejow.net/MetaleSzlachetnePolska/etykiety/api/labels
+```
+
+### 2. Dodanie pojedynczej nowej etykiety na serwerze:
+```bash
+curl -X POST https://andrzejow.net/MetaleSzlachetnePolska/etykiety/api/admin/labels \
+  -H "Content-Type: application/json" \
+  -d '{
+    "year": "2024",
+    "series": "Britannia",
+    "name": "King Charles III",
+    "mintage": "50 000",
+    "nominal": "5",
+    "currency_after": "",
+    "currency_before": "£",
+    "stop": "Ag999"
+  }'
+```
+
+### 3. Wypchnięcie gotowej całej nowej bazy etykiet (podmiana pliku `labels_db.json`):
+```bash
+curl -X POST https://andrzejow.net/MetaleSzlachetnePolska/etykiety/api/admin/labels \
+  -H "Content-Type: application/json" \
+  -d '{
+    "labels": [
+      ["2008", "", "Zbigniew Herbert (1924–1998)", "1 510 000", "2", "zł", "NG", ""],
+      ["2024", "Britannia", "King Charles III", "50 000", "5", "", "Ag999", "£"]
+    ]
+  }'
+```
+
+### 4. Usunięcie etykiety z bazy serwera (po nazwie):
+```bash
+curl -X DELETE https://andrzejow.net/MetaleSzlachetnePolska/etykiety/api/admin/labels \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Zbigniew Herbert (1924–1998)"}'
+```
+
+### 5. Ukryty panel masowego wgrywania monet z pliku CSV:
+Dostęp do ukrytego panelu zarządzania monetami znajduje się pod adresem:
+`https://andrzejow.net/MetaleSzlachetnePolska/etykiety/admin/add`
+*(Lokalnie: `http://127.0.0.1:8080/MetaleSzlachetnePolska/etykiety/admin/add`)*
+
+Panel oferuje:
+- Pobranie wzorca CSV (`wzor_etykiet.csv`).
+- Masowy import plików CSV / wklejanie danych w formularzu.
+- Automatyczną detekcję duplikatów i zapis nowych monet na serwerze.
+
+---
+
 ## 🔑 Wygenerowanie klucza YouTube Data API v3
 
 1. Wejdź na stronę [Google Cloud Console](https://console.cloud.google.com/) i zaloguj się swoim kontem Google.

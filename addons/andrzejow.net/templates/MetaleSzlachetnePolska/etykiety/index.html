@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generator etykiet - Metale Szlachetne Polska</title>
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: rgba(30, 41, 59, 0.75);
+            --bg-card-hover: rgba(30, 41, 59, 0.95);
+            --accent-primary: #6366f1;
+            --accent-primary-hover: #4f46e5;
+            --accent-gold: #f59e0b;
+            --accent-gold-hover: #d97706;
+            --accent-discord: #5865F2;
+            --accent-green: #10b981;
+            --accent-green-hover: #059669;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --glass-blur: blur(16px);
+            --radius-lg: 18px;
+            --radius-md: 10px;
+            --radius-sm: 6px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(88, 101, 242, 0.15) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: var(--glass-blur);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 14px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .discord-brand-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #5865F2, #7289da);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 14px rgba(88, 101, 242, 0.4);
+            flex-shrink: 0;
+        }
+
+        .discord-brand-icon svg {
+            width: 22px;
+            height: 22px;
+            fill: #ffffff;
+        }
+
+        .brand-title {
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-main);
+        }
+
+        .version-badge {
+            font-size: 11px;
+            font-weight: 700;
+            background: rgba(99, 102, 241, 0.2);
+            color: var(--accent-primary);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            padding: 2px 8px;
+            border-radius: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .brand-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn {
+            background: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px 14px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            user-select: none;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .btn-green {
+            background: linear-gradient(135deg, var(--accent-green), #059669);
+            color: #fff;
+            border: none;
+            box-shadow: 0 3px 10px rgba(16, 185, 129, 0.35);
+        }
+        .btn-green:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+        }
+
+        .btn-gold {
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-hover));
+            color: #fff;
+            border: none;
+            box-shadow: 0 3px 10px rgba(245, 158, 11, 0.35);
+        }
+        .btn-gold:hover {
+            background: linear-gradient(135deg, var(--accent-gold-hover), #b45309);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.35);
+            color: #fff;
+        }
+
+        .btn-xs {
+            padding: 2px 7px;
+            font-size: 11px;
+            height: 26px;
+            border-radius: 4px;
+        }
+
+        /* Layout Container */
+        .main-container {
+            max-width: 1650px;
+            width: 96%;
+            margin: 20px auto;
+            padding: 0 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            flex-grow: 1;
+        }
+
+        .page-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .page-title {
+            font-size: 20px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Two-Column Grid */
+        .two-column-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        @media (max-width: 1024px) {
+            .two-column-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Column Cards */
+        .column-card {
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            min-height: 680px;
+        }
+
+        .column-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .column-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--accent-gold);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge-count {
+            background: rgba(99, 102, 241, 0.25);
+            color: #a5b4fc;
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11.5px;
+            font-weight: 700;
+        }
+
+        /* Form for Adding New Session Label */
+        .add-form-card {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            flex: 1;
+            min-width: 65px;
+        }
+
+        .form-field label {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .form-field input {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 5px 8px;
+            color: var(--text-main);
+            font-size: 12.5px;
+            outline: none;
+            width: 100%;
+        }
+
+        .form-field input:focus {
+            border-color: var(--accent-primary);
+        }
+
+        /* Search input */
+        .search-input {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 8px 12px;
+            color: var(--text-main);
+            font-size: 13px;
+            outline: none;
+        }
+        .search-input:focus {
+            border-color: var(--accent-primary);
+        }
+
+        /* Compact Item Lists (38px height) */
+        .items-list {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            max-height: 520px;
+            overflow-y: auto;
+            padding-right: 2px;
+        }
+
+        .label-item-compact {
+            background: rgba(15, 23, 42, 0.65);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 4px 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+            height: 40px;
+            box-sizing: border-box;
+            transition: background 0.15s ease, border-color 0.15s ease;
+        }
+
+        .label-item-compact:hover {
+            background: rgba(30, 41, 59, 0.85);
+            border-color: rgba(99, 102, 241, 0.4);
+        }
+
+        .label-main-info-compact {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+            flex: 1;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .label-tag-compact {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent-gold);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .label-title-compact {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--text-main);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .label-mintage-compact {
+            color: var(--text-muted);
+            font-size: 11.5px;
+            flex-shrink: 0;
+        }
+
+        .label-session-tag {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-green);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-size: 10.5px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .item-controls-compact {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        /* Quantity Batch Input Box */
+        .input-qty {
+            width: 44px;
+            height: 26px;
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+            text-align: center;
+            outline: none;
+        }
+        .input-qty:focus {
+            border-color: var(--accent-primary);
+        }
+
+        .empty-placeholder {
+            text-align: center;
+            padding: 36px 20px;
+            color: var(--text-muted);
+            font-size: 13px;
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px dashed var(--border-color);
+            border-radius: var(--radius-md);
+            line-height: 1.5;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 12.5px;
+            border-top: 1px solid var(--border-color);
+            background: rgba(15, 23, 42, 0.6);
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="/MetaleSzlachetnePolska" class="brand">
+            <!-- Discord Icon -->
+            <div class="discord-brand-icon" title="Discord - Metale Szlachetne Polska">
+                <svg viewBox="0 0 127.14 96.36">
+                    <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,121.71,29.1,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,45.92,53.86,53,48.73,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,45.92,96.09,53,91,65.69,84.69,65.69Z"/>
+                </svg>
+            </div>
+            <div>
+                <div class="brand-title">
+                    Metale Szlachetne Polska
+                    <span class="version-badge" id="app-version-badge">v1.9.0</span>
+                </div>
+                <div class="brand-subtitle">apps by Weekendowy Detektorysta</div>
+            </div>
+        </a>
+
+        <div class="nav-actions">
+            <a href="/MetaleSzlachetnePolska" class="btn">← Powrót do portalu</a>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        
+        <div class="page-title-row">
+            <h1 class="page-title">🏷️ Generator etykiet na holdery</h1>
+        </div>
+
+        <!-- Two Column Grid -->
+        <div class="two-column-grid">
+
+            <!-- LEFT COLUMN: Available Labels -->
+            <div class="column-card">
+                <div class="column-header">
+                    <div class="column-title">📋 Dostępne etykiety</div>
+                    <span class="badge-count" id="count-available">0 wyników (max 50)</span>
+                </div>
+
+                <!-- Form to Add Custom Label in Session -->
+                <div class="add-form-card">
+                    <div style="font-size: 11.5px; font-weight: 700; color: var(--accent-gold); text-transform: uppercase;">
+                        ➕ Dodaj etykietę w sesji
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-field" style="min-width: 95px; flex: 1.2;">
+                            <label>Waluta przed</label>
+                            <input type="text" id="new-currency-before" placeholder="£ / $">
+                        </div>
+                        <div class="form-field" style="min-width: 65px; flex: 1;">
+                            <label>Nominał</label>
+                            <input type="text" id="new-nominal" value="2">
+                        </div>
+                        <div class="form-field" style="min-width: 80px; flex: 1;">
+                            <label>Waluta po</label>
+                            <input type="text" id="new-currency-after" value="zł">
+                        </div>
+                        <div class="form-field" style="min-width: 75px; flex: 1;">
+                            <label>Stop</label>
+                            <input type="text" id="new-stop" value="NG" placeholder="NG">
+                        </div>
+                        <div class="form-field" style="min-width: 65px; flex: 1;">
+                            <label>Rok</label>
+                            <input type="text" id="new-year" placeholder="np. 2024">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label>Seria</label>
+                            <input type="text" id="new-series" placeholder="np. Polscy Malarze">
+                        </div>
+                        <div class="form-field">
+                            <label>Nazwa / Tytuł</label>
+                            <input type="text" id="new-name" placeholder="np. Zbigniew Herbert">
+                        </div>
+                        <div class="form-field" style="max-width: 100px;">
+                            <label>Nakład</label>
+                            <input type="text" id="new-mintage" placeholder="1 500 000">
+                        </div>
+                    </div>
+
+                    <button class="btn btn-gold btn-xs" onclick="addCustomSessionLabel()" style="align-self: flex-end; margin-top: 2px;">
+                        ➕ Zapisz w sesji
+                    </button>
+                </div>
+
+                <!-- Multi-word Search Input -->
+                <input type="text" id="search-input" class="search-input" placeholder="🔍 Szukaj frazy (np. '2007 NG' lub 'Herbert 2008')..." oninput="onSearchInput()">
+
+                <!-- Available Items List -->
+                <div id="list-available" class="items-list">
+                    <div class="empty-placeholder">
+                        🔍 Wpisz co najmniej 1 znak w wyszukiwarce powyżej, aby wyszukać etykiety z bazy serwera...
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: Selected Labels -->
+            <div class="column-card">
+                <div class="column-header">
+                    <div class="column-title">
+                        🛒 Wybrane etykiety (do druku)
+                        <!-- Test Button: ADD ALL -->
+                        <button class="btn btn-gold btn-xs" onclick="addAllServerLabelsToSelected()" title="Dodaje 1 sztukę każdej etykiety (z sesji użytkownika oraz bazy serwera)" style="margin-left: 6px;">
+                            &lt;&lt;DODAJ WSZYSTKIE&gt;&gt;
+                        </button>
+                    </div>
+                    <span class="badge-count" id="count-selected">0 etykiet • 0 str. A4</span>
+                </div>
+
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: space-between; align-items: center;">
+                    <button class="btn btn-danger btn-xs" onclick="clearSelectedLabels()">
+                        🗑️ Wyczyść listę
+                    </button>
+
+                    <button class="btn btn-green" onclick="generateLabelsPrint()" style="font-size: 13.5px; padding: 8px 18px;">
+                        🖨️ GENERUJ ETYKIETY (DRUKUJ)
+                    </button>
+                </div>
+
+                <!-- Selected Items List -->
+                <div id="list-selected" class="items-list">
+                    <div class="empty-placeholder">Brak wybranych etykiet. Wybierz i dodaj etykiety z lewej strony.</div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        Metale Szlachetne Polska • apps by Weekendowy Detektorysta
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function formatMintage(val) {
+            if (!val) return '';
+            const clean = String(val).replace(/\s+/g, '').replace(',', '.');
+            const num = parseFloat(clean);
+            if (isNaN(num)) return String(val);
+            const intVal = Math.floor(num);
+            return intVal.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+        }
+
+        function cleanLabelItem(item) {
+            if (!item || !Array.isArray(item)) return ["","","","","2","","",""];
+
+            let year = String(item[0] || "");
+            let series = String(item[1] || "");
+            let name = String(item[2] || "");
+            let mintage = String(item[3] || "");
+            let nominal = String(item[4] || "");
+            let currencyAfter = String(item[5] || "");
+            let stop = String(item[6] || "");
+            let currencyBefore = item[7];
+
+            if (typeof currencyBefore === 'boolean' || currencyBefore === 'true' || currencyBefore === 'false') {
+                currencyBefore = "";
+            } else {
+                currencyBefore = String(currencyBefore || "");
+            }
+
+            return [year, series, name, mintage, nominal, currencyAfter, stop, currencyBefore];
+        }
+
+        function getLabelType(rawItem) {
+            const item = cleanLabelItem(rawItem);
+            const year = item[0].trim();
+            const series = item[1].trim();
+            const name = item[2].trim();
+            const mintage = item[3].trim();
+            const nominal = item[4].trim();
+            const currencyAfter = item[5].trim();
+            const stop = item[6].trim();
+            const currencyBefore = item[7].trim();
+
+            const hasTop = Boolean(series || name);
+            const hasBottom = Boolean(nominal || year || stop || mintage || currencyBefore || currencyAfter);
+
+            if (hasTop && !hasBottom) return 'gorna';  // "Górna"
+            if (!hasTop && hasBottom) return 'dolna';  // "Dolna"
+            return 'normal';                          // Standardowa dwuliniowa etykieta
+        }
+
+        function isHalfHeight(item) {
+            const type = getLabelType(item);
+            return type === 'gorna' || type === 'dolna';
+        }
+
+        let sessionLabels = [];
+        let selectedGroups = []; // Array of { item: [...], count: N }
+        let currentServerResults = [];
+        let currentCombinedResults = [];
+        let searchDebounceTimer = null;
+
+        // Resilient normalizer for selectedGroups
+        function normalizeGroups(raw) {
+            if (!Array.isArray(raw)) return [];
+            const result = [];
+            raw.forEach(entry => {
+                if (!entry) return;
+                let item = null;
+                let count = 1;
+                if (Array.isArray(entry)) {
+                    item = entry;
+                    count = 1;
+                } else if (typeof entry === 'object' && Array.isArray(entry.item)) {
+                    item = entry.item;
+                    count = parseInt(entry.count) || 1;
+                }
+                if (item && Array.isArray(item)) {
+                    const cleanItem = cleanLabelItem(item);
+                    if (result.length > 0) {
+                        const last = result[result.length - 1];
+                        if (JSON.stringify(last.item) === JSON.stringify(cleanItem)) {
+                            last.count += Math.max(1, count);
+                            return;
+                        }
+                    }
+                    result.push({ item: cleanItem, count: Math.max(1, count) });
+                }
+            });
+            return result;
+        }
+
+        function loadStorageData() {
+            try {
+                const storedSession = sessionStorage.getItem('custom_session_labels');
+                if (storedSession) {
+                    const parsed = JSON.parse(storedSession);
+                    if (Array.isArray(parsed)) {
+                        sessionLabels = parsed.map(cleanLabelItem);
+                    }
+                }
+            } catch(e) { sessionLabels = []; }
+
+            try {
+                const storedSelected = sessionStorage.getItem('selected_labels_list');
+                if (storedSelected) {
+                    const rawData = JSON.parse(storedSelected);
+                    selectedGroups = normalizeGroups(rawData);
+                } else {
+                    selectedGroups = [];
+                }
+            } catch(e) { selectedGroups = []; }
+        }
+
+        function saveStorageData() {
+            try {
+                sessionStorage.setItem('custom_session_labels', JSON.stringify(sessionLabels));
+            } catch(e) {}
+
+            try {
+                sessionStorage.setItem('selected_labels_list', JSON.stringify(selectedGroups));
+            } catch(e) {}
+        }
+
+        function flattenGroups(groups) {
+            const flat = [];
+            const normGroups = normalizeGroups(groups);
+            normGroups.forEach(g => {
+                const count = Math.max(1, parseInt(g.count) || 1);
+                for (let i = 0; i < count; i++) {
+                    flat.push([...g.item]);
+                }
+            });
+            return flat;
+        }
+
+        async function loadDynamicVersion() {
+            try {
+                const response = await fetch('/api/info');
+                const data = await response.json();
+                if (data && data.version) {
+                    document.getElementById('app-version-badge').textContent = 'v' + data.version;
+                }
+            } catch (e) {}
+        }
+
+        function addCustomSessionLabel() {
+            const year = document.getElementById('new-year').value.trim();
+            const series = document.getElementById('new-series').value.trim();
+            const name = document.getElementById('new-name').value.trim();
+            const mintage = document.getElementById('new-mintage').value.trim();
+            const nominal = document.getElementById('new-nominal').value.trim();
+            const currencyAfter = document.getElementById('new-currency-after').value.trim();
+            const stop = document.getElementById('new-stop').value.trim();
+            const currencyBefore = document.getElementById('new-currency-before').value.trim();
+
+            if (!name && !series && !nominal && !year) {
+                alert("Podaj nazwę, serię lub nominał etykiety.");
+                return;
+            }
+
+            const newLabel = [year, series, name, mintage, nominal, currencyAfter, stop, currencyBefore, true];
+            sessionLabels.unshift(cleanLabelItem(newLabel));
+            saveStorageData();
+
+            document.getElementById('new-name').value = '';
+            document.getElementById('new-series').value = '';
+            document.getElementById('new-mintage').value = '';
+            
+            performServerSearch();
+        }
+
+        function onSearchInput() {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+                performServerSearch();
+            }, 180);
+        }
+
+        async function performServerSearch() {
+            const queryRaw = document.getElementById('search-input').value.trim();
+            const query = queryRaw.toLowerCase();
+            const container = document.getElementById('list-available');
+
+            if (!query) {
+                currentServerResults = [];
+                currentCombinedResults = [];
+                document.getElementById('count-available').textContent = `0 wyników (max 50)`;
+                container.innerHTML = `<div class="empty-placeholder">🔍 Wpisz co najmniej 1 znak w wyszukiwarce powyżej, aby wyszukać etykiety z bazy serwera...</div>`;
+                return;
+            }
+
+            container.innerHTML = `<div class="empty-placeholder">⏳ Szukanie w bazie serwera...</div>`;
+
+            const tokens = query.split(/\s+/).filter(t => t.length > 0);
+            const matchingSession = sessionLabels.filter(item => {
+                const itemText = (item.join(' ') + " Moja sesja").toLowerCase();
+                return tokens.every(token => itemText.includes(token));
+            });
+
+            try {
+                const response = await fetch('/api/labels?q=' + encodeURIComponent(queryRaw) + '&limit=50');
+                const data = await response.json();
+                currentServerResults = (data && data.labels) ? data.labels : [];
+            } catch (e) {
+                console.error("Błąd wyszukiwania na serwerze:", e);
+                currentServerResults = [];
+            }
+
+            const combined = [...matchingSession, ...currentServerResults].slice(0, 50);
+            currentCombinedResults = combined.map(cleanLabelItem);
+
+            document.getElementById('count-available').textContent = `${combined.length} wyników (max 50)`;
+
+            if (combined.length === 0) {
+                container.innerHTML = `<div class="empty-placeholder">Brak etykiet pasujących do frazy "${escapeHtml(queryRaw)}".</div>`;
+                return;
+            }
+
+            container.innerHTML = currentCombinedResults.map((item, idx) => {
+                const year = item[0] || '';
+                const series = item[1] || '';
+                const name = item[2] || '';
+                const mintage = item[3] || '';
+                const nominal = item[4] || '';
+                const currencyAfter = item[5] || '';
+                const stop = item[6] || '';
+                const currencyBefore = item[7] || '';
+                const isSessionCustom = (idx < matchingSession.length);
+                const labelType = getLabelType(item);
+
+                const displayTitle = series ? `${series}: ${name}` : (name || '(Brak tytułu)');
+                const formattedMintage = formatMintage(mintage);
+                const tagText = `${currencyBefore}${nominal}${currencyAfter} ${year}${stop ? ' ' + stop : ''}`.trim() || '(Brak nominału)';
+
+                let typeBadge = '';
+                if (labelType === 'gorna') {
+                    typeBadge = `<span class="label-session-tag" style="background:rgba(245,158,11,0.2); color:var(--accent-gold); border-color:rgba(245,158,11,0.4);">Górna</span>`;
+                } else if (labelType === 'dolna') {
+                    typeBadge = `<span class="label-session-tag" style="background:rgba(99,102,241,0.2); color:var(--accent-primary); border-color:rgba(99,102,241,0.4);">Dolna</span>`;
+                }
+
+                return `
+                    <div class="label-item-compact">
+                        <div class="label-main-info-compact">
+                            ${tagText !== '(Brak nominału)' ? `<span class="label-tag-compact">${escapeHtml(tagText)}</span>` : ''}
+                            <span class="label-title-compact" title="${escapeHtml(displayTitle)}">${escapeHtml(displayTitle)}</span>
+                            ${formattedMintage ? `<span class="label-mintage-compact">(${escapeHtml(formattedMintage)})</span>` : ''}
+                            ${typeBadge}
+                            ${isSessionCustom ? `<span class="label-session-tag">Moja sesja</span>` : ''}
+                        </div>
+                        <div class="item-controls-compact">
+                            <input type="number" class="input-qty" value="1" min="1" max="500" id="qty-available-${idx}" title="Liczba etykiet do dodania">
+                            <button class="btn btn-green btn-xs" onclick="addLabelVariantByIndex(${idx}, 'full', 'qty-available-${idx}')" title="Dodaj pełną 2-liniową etykietę">➕ Dodaj</button>
+                            <button class="btn btn-gold btn-xs" onclick="addLabelVariantByIndex(${idx}, 'top', 'qty-available-${idx}')" title="Dodaj tylko część górną (seria + nazwa)">➕ Górna</button>
+                            <button class="btn btn-xs" onclick="addLabelVariantByIndex(${idx}, 'bottom', 'qty-available-${idx}')" style="background:#6366f1; color:#fff; border:none;" title="Dodaj tylko część dolną (nominał + rok + stop)">➕ Dolna</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Add Label Variant by index in combined results
+        function addLabelVariantByIndex(idx, mode, qtyInputId) {
+            if (idx < 0 || idx >= currentCombinedResults.length) return;
+            const rawItem = currentCombinedResults[idx];
+
+            const qtyInput = document.getElementById(qtyInputId);
+            let count = parseInt(qtyInput ? qtyInput.value : 1) || 1;
+            if (count < 1) count = 1;
+
+            let targetItem = [];
+            if (mode === 'top') {
+                targetItem = ["", rawItem[1] || "", rawItem[2] || "", "", "", "", "", ""];
+            } else if (mode === 'bottom') {
+                targetItem = [
+                    rawItem[0] || "", "", "", rawItem[3] || "",
+                    rawItem[4] || "2", rawItem[5] || "", rawItem[6] || "", rawItem[7] || ""
+                ];
+            } else {
+                targetItem = [
+                    rawItem[0] || "", rawItem[1] || "", rawItem[2] || "", rawItem[3] || "",
+                    rawItem[4] || "2", rawItem[5] || "", rawItem[6] || "", rawItem[7] || ""
+                ];
+            }
+
+            addGroupItem(targetItem, count);
+            saveStorageData();
+            renderSelectedLabels();
+        }
+
+        // Helper to add item or group if consecutive matches
+        function addGroupItem(item, count) {
+            if (!item || !Array.isArray(item)) return;
+            const cnt = Math.max(1, parseInt(count) || 1);
+            const cleanItem = cleanLabelItem(item);
+            if (selectedGroups.length > 0) {
+                const lastGroup = selectedGroups[selectedGroups.length - 1];
+                if (JSON.stringify(lastGroup.item) === JSON.stringify(cleanItem)) {
+                    lastGroup.count += cnt;
+                    return;
+                }
+            }
+            selectedGroups.push({ item: cleanItem, count: cnt });
+        }
+
+        // Add ALL Labels (User Session Labels + Server Database Labels)
+        async function addAllServerLabelsToSelected() {
+            try {
+                // 1. Add session labels
+                if (Array.isArray(sessionLabels)) {
+                    sessionLabels.forEach(item => {
+                        addGroupItem(item, 1);
+                    });
+                }
+
+                // 2. Fetch and add server labels
+                const response = await fetch('/api/labels?limit=10000');
+                const data = await response.json();
+                const allLabels = (data && data.labels) ? data.labels : [];
+
+                if (Array.isArray(allLabels)) {
+                    allLabels.forEach(item => {
+                        addGroupItem(item, 1);
+                    });
+                }
+
+                if (sessionLabels.length === 0 && allLabels.length === 0) {
+                    alert("Brak etykiet w sesji ani w bazie serwera.");
+                    return;
+                }
+
+                saveStorageData();
+                renderSelectedLabels();
+            } catch(e) {
+                console.error("Błąd dodawania wszystkich etykiet:", e);
+            }
+        }
+
+        function updateGroupCount(index, newCountVal) {
+            let count = parseInt(newCountVal) || 1;
+            if (count < 1) count = 1;
+            if (index >= 0 && index < selectedGroups.length) {
+                selectedGroups[index].count = count;
+                saveStorageData();
+                renderSelectedLabels();
+            }
+        }
+
+        function duplicateGroup(index) {
+            if (index >= 0 && index < selectedGroups.length) {
+                const orig = selectedGroups[index];
+                const newGroup = { item: [...orig.item], count: orig.count };
+                selectedGroups.splice(index + 1, 0, newGroup);
+                saveStorageData();
+                renderSelectedLabels();
+            }
+        }
+
+        function removeGroup(index) {
+            if (index >= 0 && index < selectedGroups.length) {
+                selectedGroups.splice(index, 1);
+                saveStorageData();
+                renderSelectedLabels();
+            }
+        }
+
+        function moveGroupUp(index) {
+            if (index > 0) {
+                const temp = selectedGroups[index];
+                selectedGroups[index] = selectedGroups[index - 1];
+                selectedGroups[index - 1] = temp;
+                saveStorageData();
+                renderSelectedLabels();
+            }
+        }
+
+        function moveGroupDown(index) {
+            if (index >= 0 && index < selectedGroups.length - 1) {
+                const temp = selectedGroups[index];
+                selectedGroups[index] = selectedGroups[index + 1];
+                selectedGroups[index + 1] = temp;
+                saveStorageData();
+                renderSelectedLabels();
+            }
+        }
+
+        function clearSelectedLabels() {
+            if (selectedGroups.length === 0) return;
+            if (confirm("Czy na pewno chcesz wyczyścić całą listę wybranych etykiet?")) {
+                selectedGroups = [];
+                saveStorageData();
+                renderSelectedLabels();
+            }
+        }
+
+        function renderSelectedLabels() {
+            selectedGroups = normalizeGroups(selectedGroups);
+            const flatLabels = flattenGroups(selectedGroups);
+            const totalCount = flatLabels.length;
+
+            const gornaItems = flatLabels.filter(item => getLabelType(item) === 'gorna');
+            const dolnaItems = flatLabels.filter(item => getLabelType(item) === 'dolna');
+            const normalItems = flatLabels.filter(item => getLabelType(item) === 'normal');
+
+            // Page height calculation
+            const halfCount = gornaItems.length + dolnaItems.length;
+            const halfPages = Math.ceil(halfCount / 200);
+            const normalPages = Math.ceil(normalItems.length / 120);
+            const totalPages = totalCount > 0 ? Math.max(1, halfPages + normalPages) : 0;
+
+            document.getElementById('count-selected').textContent = 
+                `${totalCount} etykiet (${gornaItems.length} górnych, ${dolnaItems.length} dolnych, ${normalItems.length} norm.) • ${totalPages} str. A4`;
+
+            const container = document.getElementById('list-selected');
+            if (selectedGroups.length === 0) {
+                container.innerHTML = `<div class="empty-placeholder">Brak wybranych etykiet. Wpisz frazę po lewej stronie i dodaj etykiety.</div>`;
+                return;
+            }
+
+            container.innerHTML = selectedGroups.map((group, index) => {
+                const item = cleanLabelItem(group.item);
+                const year = item[0] || '';
+                const series = item[1] || '';
+                const name = item[2] || '';
+                const mintage = item[3] || '';
+                const nominal = item[4] || '';
+                const currencyAfter = item[5] || '';
+                const stop = item[6] || '';
+                const currencyBefore = item[7] || '';
+                const labelType = getLabelType(item);
+
+                const displayTitle = series ? `${series}: ${name}` : (name || '(Brak tytułu)');
+                const tagText = `${currencyBefore}${nominal}${currencyAfter} ${year}${stop ? ' ' + stop : ''}`.trim() || '(Brak nominału)';
+
+                let typeBadge = '';
+                if (labelType === 'gorna') {
+                    typeBadge = `<span class="label-session-tag" style="background:rgba(245,158,11,0.2); color:var(--accent-gold); border-color:rgba(245,158,11,0.4);">Górna</span>`;
+                } else if (labelType === 'dolna') {
+                    typeBadge = `<span class="label-session-tag" style="background:rgba(99,102,241,0.2); color:var(--accent-primary); border-color:rgba(99,102,241,0.4);">Dolna</span>`;
+                }
+
+                return `
+                    <div class="label-item-compact" style="${labelType !== 'normal' ? 'border-left: 3px solid var(--accent-gold);' : ''}">
+                        <div style="font-weight:700; font-size:11.5px; color:var(--text-muted); min-width:22px; flex-shrink:0;">
+                            ${index + 1}.
+                        </div>
+                        <div class="label-main-info-compact">
+                            ${tagText !== '(Brak nominału)' ? `<span class="label-tag-compact">${escapeHtml(tagText)}</span>` : ''}
+                            <span class="label-title-compact" title="${escapeHtml(displayTitle)}">${escapeHtml(displayTitle)}</span>
+                            ${typeBadge}
+                        </div>
+                        <div class="item-controls-compact">
+                            <input type="number" class="input-qty" value="${group.count || 1}" min="1" max="1000" onchange="updateGroupCount(${index}, this.value)" title="Edytuj liczbę sztuk tej monety">
+                            <span style="font-size:11px; color:var(--text-muted); margin-right:4px;">szt.</span>
+                            <button class="btn btn-xs" onclick="moveGroupUp(${index})" title="Przesuń wyżej" ${index === 0 ? 'disabled style="opacity:0.3;"' : ''}>⬆️</button>
+                            <button class="btn btn-xs" onclick="moveGroupDown(${index})" title="Przesuń niżej" ${index === selectedGroups.length - 1 ? 'disabled style="opacity:0.3;"' : ''}>⬇️</button>
+                            <button class="btn btn-xs" onclick="duplicateGroup(${index})" title="Duplikuj wpis">📋</button>
+                            <button class="btn btn-danger btn-xs" onclick="removeGroup(${index})" title="Usuń wpis">✖</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function generateLabelsPrint() {
+            if (selectedGroups.length === 0) {
+                alert("Wybierz co najmniej jedną etykietę przed wygenerowaniem pliku druku.");
+                return;
+            }
+
+            const flatLabels = flattenGroups(selectedGroups);
+
+            try {
+                sessionStorage.setItem('selected_labels_print', JSON.stringify(flatLabels));
+                localStorage.setItem('selected_labels_print', JSON.stringify(flatLabels));
+            } catch(e) {}
+
+            window.location.href = '/MetaleSzlachetnePolska/etykiety/print';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStorageData();
+            loadDynamicVersion();
+            renderSelectedLabels();
+            performServerSearch();
+        });
+    </script>
+</body>
+</html>
