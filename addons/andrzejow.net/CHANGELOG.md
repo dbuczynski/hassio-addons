@@ -2,6 +2,16 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.10.0] - 2026-09-03
+
+### Dodano / Zmieniono
+- **System Logowania & Autoryzacja Zaufanych IP**: Zabezpieczono panel administracyjny `/MetaleSzlachetnePolska/etykiety/admin`. Zaufane adresy IP (`admin_trusted_ips`, domyślnie `195.74.49.211`, `192.168.12.223`) wymagają jedynie nazwy użytkownika. Pozostałe IP wymagają podania loginu i hasła.
+- **Zarządzanie Użytkownikami (`/admin/users`)**: Tworzenie, modyfikacja haseł oraz usuwanie użytkowników bazy aplikacji (dostęp wyłącznie dla konta z rolą `admin`).
+- **Wygasanie Sesji po 10 minutach bezczynności**: Automatyczne unieważnianie sesji po 10 minutach z odnawianiem ważności po otwarciu stron generatora etykiet.
+- **Panel Edycji Monet (`/admin/edit`)**: Przeglądanie monet z wyszukiwarką max 50 wyników, edycja pól wiersza na żywo, usuwanie pozycji oraz eksport całej bazy do pliku CSV (`/admin/export-csv`).
+
+---
+
 ## [1.9.2] - 2026-09-03
 
 ### Dodano / Zmieniono

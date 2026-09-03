@@ -1,13 +1,15 @@
 import csv
+import hashlib
 import io
 import json
 import os
-from flask import Flask, jsonify, render_template, request, Response, redirect
-import youtube_service
+import time
+from flask import Flask, jsonify, render_template, request, Response, redirect, session
 
 app = Flask(__name__)
+app.secret_key = "andrzejow_net_secret_key_metale_szlachetne"
 
-APP_VERSION = "1.9.2"
+APP_VERSION = "1.10.0"
 
 DEFAULT_ALLOWED_CHANNELS = [
     {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
@@ -19,6 +21,86 @@ DATA_DIR = "/data" if os.path.exists("/data") else os.path.dirname(os.path.abspa
 GLOBAL_CONFIG_PATH = os.path.join(DATA_DIR, "global_config.json")
 LABELS_DB_PATH = os.path.join(DATA_DIR, "labels_db.json")
 DEFAULT_LABELS_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "labels_db.json")
+LABELS_USERS_PATH = os.path.join(DATA_DIR, "labels_users.json")
+
+def load_labels_users():
+    if os.path.exists(LABELS_USERS_PATH):
+        try:
+            with open(LABELS_USERS_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return []
+
+def save_labels_users(users):
+    with open(LABELS_USERS_PATH, "w", encoding="utf-8") as f:
+        json.dump(users, f, ensure_ascii=False, indent=2)
+
+def hash_password(pwd):
+    return hashlib.sha256(pwd.encode('utf-8')).hexdigest()
+
+def get_admin_password():
+    if os.path.exists(GLOBAL_CONFIG_PATH):
+        try:
+            with open(GLOBAL_CONFIG_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                pwd = data.get("admin_password")
+                if pwd:
+                    return str(pwd)
+        except Exception:
+            pass
+    return "admin"
+
+def get_trusted_ips():
+    if os.path.exists(GLOBAL_CONFIG_PATH):
+        try:
+            with open(GLOBAL_CONFIG_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                ips = data.get("admin_trusted_ips")
+                if ips and isinstance(ips, list) and len(ips) > 0:
+                    return [str(ip) for ip in ips]
+        except Exception:
+            pass
+    return ["195.74.49.211", "192.168.12.223"]
+
+def get_client_ip():
+    if request.headers.get("X-Forwarded-For"):
+        return request.headers.get("X-Forwarded-For").split(",")[0].strip()
+    return request.remote_addr or "127.0.0.1"
+
+def is_client_ip_trusted():
+    ip = get_client_ip()
+    trusted = get_trusted_ips()
+    return (ip in trusted) or ("127.0.0.1" in trusted and ip == "127.0.0.1")
+
+def refresh_labels_session_activity():
+    if session.get('labels_scope') == "MetaleSzlachetnePolska/etykiety" and session.get('labels_user'):
+        last_act = session.get('labels_last_activity', 0)
+        now = time.time()
+        # 10 minut bezczynności (600 s)
+        if now - last_act > 600:
+            session.pop('labels_user', None)
+            session.pop('labels_role', None)
+            session.pop('labels_scope', None)
+            session.pop('labels_last_activity', None)
+            return False
+        session['labels_last_activity'] = now
+        return True
+    return False
+
+def is_labels_authenticated(role_required=None):
+    if not refresh_labels_session_activity():
+        return False
+    if session.get('labels_scope') != "MetaleSzlachetnePolska/etykiety":
+        return False
+    if role_required == 'admin' and session.get('labels_role') != 'admin':
+        return False
+    return True
+
+@app.before_request
+def check_session_inactivity():
+    if request.path.startswith('/MetaleSzlachetnePolska/etykiety'):
+        refresh_labels_session_activity()
 
 def load_labels_db():
     target_path = LABELS_DB_PATH
@@ -210,11 +292,200 @@ def etykiety():
 def etykiety_print():
     return render_template('MetaleSzlachetnePolska/etykiety/print.html')
 
+@app.route('/MetaleSzlachetnePolska/etykiety/admin/login', methods=['GET', 'POST'])
+def admin_labels_login():
+    client_ip = get_client_ip()
+    trusted = is_client_ip_trusted()
+    next_url = request.args.get('next') or request.form.get('next') or '/MetaleSzlachetnePolska/etykiety/admin/edit'
+
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+
+        if not username:
+            return render_template('MetaleSzlachetnePolska/etykiety/admin_login.html', is_trusted_ip=trusted, client_ip=client_ip, error="Podaj nazwę użytkownika.", next_url=next_url)
+
+        role = 'user'
+        authenticated = False
+
+        if trusted:
+            authenticated = True
+            if username == 'admin':
+                role = 'admin'
+            else:
+                users = load_labels_users()
+                user_match = next((u for u in users if u.get('username') == username), None)
+                if user_match:
+                    role = user_match.get('role', 'user')
+        else:
+            admin_pwd = get_admin_password()
+            if username == 'admin' and password == admin_pwd:
+                authenticated = True
+                role = 'admin'
+            else:
+                users = load_labels_users()
+                hashed = hash_password(password)
+                user_match = next((u for u in users if u.get('username') == username and u.get('password_hash') == hashed), None)
+                if user_match:
+                    authenticated = True
+                    role = user_match.get('role', 'user')
+
+        if authenticated:
+            session['labels_user'] = username
+            session['labels_role'] = role
+            session['labels_scope'] = "MetaleSzlachetnePolska/etykiety"
+            session['labels_last_activity'] = time.time()
+            return redirect(next_url)
+        else:
+            return render_template('MetaleSzlachetnePolska/etykiety/admin_login.html', is_trusted_ip=trusted, client_ip=client_ip, error="Nieprawidłowa nazwa użytkownika lub hasło.", next_url=next_url)
+
+    return render_template('MetaleSzlachetnePolska/etykiety/admin_login.html', is_trusted_ip=trusted, client_ip=client_ip, next_url=next_url)
+
+@app.route('/MetaleSzlachetnePolska/etykiety/admin/logout')
+def admin_labels_logout():
+    session.pop('labels_user', None)
+    session.pop('labels_role', None)
+    session.pop('labels_scope', None)
+    session.pop('labels_last_activity', None)
+    return redirect('/MetaleSzlachetnePolska/etykiety/admin/login')
+
+@app.route('/MetaleSzlachetnePolska/etykiety/admin')
+@app.route('/MetaleSzlachetnePolska/etykiety/admin/')
+def admin_labels_root():
+    if not is_labels_authenticated():
+        return redirect('/MetaleSzlachetnePolska/etykiety/admin/login?next=/MetaleSzlachetnePolska/etykiety/admin/edit')
+    return redirect('/MetaleSzlachetnePolska/etykiety/admin/edit')
+
 @app.route('/MetaleSzlachetnePolska/etykiety/admin/add')
 @app.route('/MetaleSzlachetnePolska/etykiety/admin/add/')
 def admin_add_labels():
     """Ukryta strona administracyjna do masowego dodawania monet z pliku CSV."""
+    if not is_labels_authenticated():
+        return redirect('/MetaleSzlachetnePolska/etykiety/admin/login?next=/MetaleSzlachetnePolska/etykiety/admin/add')
     return render_template('MetaleSzlachetnePolska/etykiety/admin_add.html')
+
+@app.route('/MetaleSzlachetnePolska/etykiety/admin/edit')
+@app.route('/MetaleSzlachetnePolska/etykiety/admin/edit/')
+def admin_edit_labels():
+    """Strona edycji bazy monet z wyszukiwarką 50 wyników, podglądem i modyfikacją wierszy."""
+    if not is_labels_authenticated():
+        return redirect('/MetaleSzlachetnePolska/etykiety/admin/login?next=/MetaleSzlachetnePolska/etykiety/admin/edit')
+    return render_template('MetaleSzlachetnePolska/etykiety/admin_edit.html', current_user=session.get('labels_user'), current_role=session.get('labels_role'))
+
+@app.route('/MetaleSzlachetnePolska/etykiety/admin/users', methods=['GET', 'POST'])
+def admin_labels_users():
+    """Strona zarządzania użytkownikami aplikacji etykiet (dla roli admin)."""
+    if not is_labels_authenticated('admin'):
+        if not is_labels_authenticated():
+            return redirect('/MetaleSzlachetnePolska/etykiety/admin/login?next=/MetaleSzlachetnePolska/etykiety/admin/users')
+        return "Brak uprawnień. Tylko administrator ma dostęp do zarządzania użytkownikami.", 403
+
+    msg = None
+    error = None
+
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+        role = request.form.get('role', 'user').strip()
+
+        if not username or not password:
+            error = "Wypełnij nazwę użytkownika oraz hasło."
+        elif username == 'admin':
+            error = "Wbudowany użytkownik 'admin' jest zarządzany w konfiguracji HA."
+        else:
+            users = load_labels_users()
+            existing = next((u for u in users if u.get('username') == username), None)
+            now_str = time.strftime("%Y-%m-%d %H:%M")
+            if existing:
+                existing['password_hash'] = hash_password(password)
+                existing['role'] = role
+                msg = f"Zaktualizowano hasło i rolę dla użytkownika {username}."
+            else:
+                users.append({
+                    "username": username,
+                    "password_hash": hash_password(password),
+                    "role": role,
+                    "created_at": now_str
+                })
+                msg = f"Dodano nowego użytkownika {username}."
+            save_labels_users(users)
+
+    users = load_labels_users()
+    return render_template('MetaleSzlachetnePolska/etykiety/admin_users.html', users=users, current_user=session.get('labels_user'), msg=msg, error=error)
+
+@app.route('/MetaleSzlachetnePolska/etykiety/admin/users/delete', methods=['POST'])
+def admin_labels_users_delete():
+    if not is_labels_authenticated('admin'):
+        return jsonify({"error": "Brak uprawnień administratora"}), 403
+    username = request.form.get('username', '').strip()
+    if username and username != 'admin':
+        users = load_labels_users()
+        users = [u for u in users if u.get('username') != username]
+        save_labels_users(users)
+    return redirect('/MetaleSzlachetnePolska/etykiety/admin/users')
+
+@app.route('/MetaleSzlachetnePolska/etykiety/admin/export-csv')
+def export_labels_csv():
+    if not is_labels_authenticated():
+        return redirect('/MetaleSzlachetnePolska/etykiety/admin/login?next=/MetaleSzlachetnePolska/etykiety/admin/export-csv')
+    labels = load_labels_db()
+    output = io.StringIO()
+    output.write("\ufeffRok;Seria;Nazwa;Nakład;Nominał;WalutaPo;Stop;WalutaPrzed\n")
+    for item in labels:
+        year = str(item[0] if len(item) > 0 else '')
+        series = str(item[1] if len(item) > 1 else '')
+        name = str(item[2] if len(item) > 2 else '')
+        mintage = str(item[3] if len(item) > 3 else '')
+        nominal = str(item[4] if len(item) > 4 else '')
+        currencyAfter = str(item[5] if len(item) > 5 else '')
+        stop = str(item[6] if len(item) > 6 else '')
+        currencyBefore = item[7] if len(item) > 7 else ''
+        if isinstance(currencyBefore, bool) or str(currencyBefore).lower() in ['true', 'false']:
+            currencyBefore = ''
+        else:
+            currencyBefore = str(currencyBefore)
+        
+        line = f"{year};{series};{name};{mintage};{nominal};{currencyAfter};{stop};{currencyBefore}\n"
+        output.write(line)
+    
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv; charset=utf-8",
+        headers={"Content-disposition": "attachment; filename=baza_etykiet.csv"}
+    )
+
+@app.route('/api/admin/labels/update', methods=['POST'])
+def update_single_label():
+    if not is_labels_authenticated():
+        return jsonify({"error": "Wymagane logowanie"}), 401
+    try:
+        data = request.get_json(force=True, silent=True) or {}
+        orig = data.get('original')
+        updated = data.get('updated')
+        if not orig or not updated or not isinstance(updated, list):
+            return jsonify({"error": "Brak wymaganych danych"}), 400
+        
+        labels = load_labels_db()
+        found = False
+        for i, item in enumerate(labels):
+            if item == orig:
+                labels[i] = updated
+                found = True
+                break
+        
+        if not found:
+            for i, item in enumerate(labels):
+                if len(item) >= 3 and len(orig) >= 3 and item[0] == orig[0] and item[1] == orig[1] and item[2] == orig[2]:
+                    labels[i] = updated
+                    found = True
+                    break
+        
+        if found:
+            save_labels_db(labels)
+            return jsonify({"success": True})
+        return jsonify({"error": "Nie odnaleziono oryginalnej monety w bazie"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/MetaleSzlachetnePolska/etykiety/admin/template-csv')
 def download_csv_template():

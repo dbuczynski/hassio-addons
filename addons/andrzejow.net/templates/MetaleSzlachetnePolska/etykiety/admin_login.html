@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logowanie Administracyjne - Generator Etykiet</title>
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: rgba(30, 41, 59, 0.85);
+            --accent-primary: #6366f1;
+            --accent-gold: #f59e0b;
+            --accent-green: #10b981;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --glass-blur: blur(16px);
+            --radius-lg: 18px;
+            --radius-md: 10px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.18) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 440px;
+            padding: 32px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .login-header {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brand-icon {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, var(--accent-gold), #d97706);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            box-shadow: 0 6px 18px rgba(245, 158, 11, 0.35);
+        }
+
+        .login-title {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .login-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .ip-badge {
+            font-size: 12px;
+            padding: 8px 12px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            line-height: 1.4;
+            text-align: center;
+        }
+
+        .ip-badge-trusted {
+            background: rgba(16, 185, 129, 0.15);
+            color: #6ee7b7;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .ip-badge-normal {
+            background: rgba(99, 102, 241, 0.15);
+            color: #a5b4fc;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            padding: 10px 14px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 10px 14px;
+            color: var(--text-main);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            border-color: var(--accent-primary);
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-primary-hover));
+            color: #fff;
+            border: none;
+            padding: 12px;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+            transition: transform 0.15s ease, background 0.2s ease;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-1px);
+            background: linear-gradient(135deg, #4f46e5, #4338ca);
+        }
+
+        .back-link {
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-muted);
+            text-decoration: none;
+            margin-top: 4px;
+        }
+        .back-link:hover { color: var(--text-main); }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <div class="login-header">
+        <div class="brand-icon">🔐</div>
+        <h1 class="login-title">Panel Administracyjny</h1>
+        <p class="login-subtitle">Generator Etykiet • Metale Szlachetne Polska</p>
+    </div>
+
+    {% if is_trusted_ip %}
+        <div class="ip-badge ip-badge-trusted">
+            🛡️ Zaufany IP: <strong>{{ client_ip }}</strong><br>
+            Wystarczy podać nazwę użytkownika (hasło pomijane).
+        </div>
+    {% else %}
+        <div class="ip-badge ip-badge-normal">
+            🌐 Adres IP: <strong>{{ client_ip }}</strong><br>
+            Podaj nazwę użytkownika oraz hasło.
+        </div>
+    {% endif %}
+
+    {% if error %}
+        <div class="error-message">⚠️ {{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="/MetaleSzlachetnePolska/etykiety/admin/login" style="display:flex; flex-direction:column; gap:16px;">
+        <input type="hidden" name="next" value="{{ next_url }}">
+        
+        <div class="form-group">
+            <label for="username">Nazwa Użytkownika</label>
+            <input type="text" id="username" name="username" placeholder="np. admin" required autofocus>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Hasło {% if is_trusted_ip %}(opcjonalne){% endif %}</label>
+            <input type="password" id="password" name="password" placeholder="••••••••" {% if not is_trusted_ip %}required{% endif %}>
+        </div>
+
+        <button type="submit" class="btn-submit">🔑 Zaloguj się</button>
+    </form>
+
+    <a href="/MetaleSzlachetnePolska/etykiety" class="back-link">← Wróć do generatora etykiet</a>
+</div>
+
+</body>
+</html>

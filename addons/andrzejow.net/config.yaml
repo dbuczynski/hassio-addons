@@ -1,5 +1,5 @@
 name: "Web server andrzejow.net"
-version: "1.9.2"
+version: "1.10.0"
 slug: "andrzejow_net"
 description: "Serwer WWW dla andrzejow.net"
 arch:
@@ -18,8 +18,15 @@ options:
   api_key: ""
   channel_handle: ""
   target_users: []
+  admin_trusted_ips:
+    - "195.74.49.211"
+    - "192.168.12.223"
+  admin_password: "admin"
 schema:
   api_key: "str?"
   channel_handle: "str?"
   target_users:
     - "str?"
+  admin_trusted_ips:
+    - "str?"
+  admin_password: "str?"

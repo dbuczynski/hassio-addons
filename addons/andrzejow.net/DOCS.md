@@ -1,45 +1,40 @@
 # 📚 Dokumentacja & API Administracyjne Add-onu
 
-Koło Fortuny by Weekendowy Detektorysta – dodatek do Home Assistant pozwalający na przeprowadzenie profesjonalnych losowań wśród komentarzy pod materiałami YouTube lub własnych list użytkowników.
+Web server andrzejow.net – dodatek do Home Assistant z aplikacjami wewnętrznymi:
+- **Metale Szlachetne Polska**: Generator etykiet na holdery monet (`/MetaleSzlachetnePolska/etykiety`).
+- **Koło Fortuny by Weekendowy Detektorysta**: Aplikacja do losowań z YouTube (`/MetaleSzlachetnePolska/youtube`).
 
 ---
 
-## 💻 Polecenia `curl` do zarządzania API
+## 🔐 System Logowania i Bezpieczeństwo Panelu Administracyjnego
 
-Możesz zdalnie i administracyjnie zarządzać konfiguracją dodatku poprzez zapytania HTTP `curl`:
+Wszystkie trasy administracyjne modułu etykiet (`/MetaleSzlachetnePolska/etykiety/admin/*`) są zabezpieczone autoryzacją sesyjną i regułami IP:
 
-### 1. Zmiana globalnego klucza API YouTube na serwerze:
-```bash
-curl -X POST https://andrzejow.net/youtube/api/admin/set-global-key \
-  -H "Content-Type: application/json" \
-  -d '{"global_api_key": "AIzaSy_TWOJ_KLUCZ_API"}'
-```
+### 1. Zaufane Adresy IP (`admin_trusted_ips`)
+W konfiguracji dodatku Home Assistant (`config.yaml`) można zdefiniować listę zaufanych adresów IP (domyślnie `195.74.49.211` oraz `192.168.12.223`).
+- W przypadku połączeń z tych adresów wystarczy podać **nazwę użytkownika** (hasło jest pomijane).
 
-### 2. Dodanie nowego obsługiwanego kanału do listy:
-```bash
-curl -X POST https://andrzejow.net/youtube/api/admin/channels/add \
-  -H "Content-Type: application/json" \
-  -d '{"handle": "@NowyKanal", "title": "Opcjonalna Nazwa Kanału"}'
-```
+### 2. Standardowe Logowanie (Pozostałe Adresy IP)
+W przypadku połączeń z innych adresów IP użytkownik musi podać poprawną nazwę użytkownika oraz hasło:
+- Domyślne konto administratora: **`admin`** z hasłem `admin_password` zdefiniowanym w konfiguracji HA.
+- Dodatkowi użytkownicy dodani przez administratora w panelu `/admin/users`.
 
-### 3. Usunięcie kanału z listy obsługiwanych:
-```bash
-curl -X POST https://andrzejow.net/youtube/api/admin/channels/remove \
-  -H "Content-Type: application/json" \
-  -d '{"handle": "@ArturK92"}'
-```
+### 3. Wygasanie Sesji (10 minut)
+- Sesja wygasa automatycznie po **10 minutach bezczynności**.
+- Każde wejście lub odświeżenie dowolnej strony w obszarze `/MetaleSzlachetnePolska/etykiety/*` przedłuża aktywność sesji o kolejne 10 minut.
 
-### 4. Dodanie / zmiana tokenu bota Discord:
-```bash
-curl -X POST https://andrzejow.net/youtube/api/admin/set-discord-token \
-  -H "Content-Type: application/json" \
-  -d '{"discord_bot_token": "MTEyMzQ1Njc4OTA...TOKEN_BOTA"}'
-```
+---
 
-### 5. Pobranie archiwalnej historii wygranych losowań:
-```bash
-curl -X GET https://andrzejow.net/youtube/api/admin/draw-history
-```
+## 🛠️ Trasy Administracyjne Generatora Etykiet
+
+- **Logowanie**: `/MetaleSzlachetnePolska/etykiety/admin/login`
+- **Edytor Bazy Monet**: `/MetaleSzlachetnePolska/etykiety/admin/edit`
+  *(Edycja wierszy na żywo, usuwanie pozycji, wyszukiwanie oraz przycisk pobierania pliku CSV)*
+- **Zarządzanie Użytkownikami**: `/MetaleSzlachetnePolska/etykiety/admin/users`
+  *(Dostępne wyłącznie dla konta z rolą `admin` – tworzenie, zmiana haseł i ról użytkowników)*
+- **Masowe Wgrywanie CSV**: `/MetaleSzlachetnePolska/etykiety/admin/add`
+  *(Formularz importu i wklejania danych z detekcją duplikatów)*
+- **Eksport Całej Bazy (CSV)**: `/MetaleSzlachetnePolska/etykiety/admin/export-csv`
 
 ---
 
@@ -48,7 +43,7 @@ curl -X GET https://andrzejow.net/youtube/api/admin/draw-history
 Baza etykiet serwera jest zapisywana w pliku `labels_db.json`. Każda etykieta składa się z 8 elementów:
 `["Rok", "Seria", "Nazwa", "Nakład", "Nominał", "WalutaPo", "Stop", "WalutaPrzed"]`
 
-Przykład wpisu (złoty/dolar):
+Przykład wpisu (złoty/dolar/funt):
 - `["2008", "", "Zbigniew Herbert (1924–1998)", "1 510 000", "2", "zł", "NG", ""]`
 - `["2024", "Britannia", "King Charles III", "50 000", "5", "", "Ag999", "£"]`
 
@@ -73,66 +68,34 @@ curl -X POST https://andrzejow.net/MetaleSzlachetnePolska/etykiety/api/admin/lab
   }'
 ```
 
-### 3. Wypchnięcie gotowej całej nowej bazy etykiet (podmiana pliku `labels_db.json`):
-```bash
-curl -X POST https://andrzejow.net/MetaleSzlachetnePolska/etykiety/api/admin/labels \
-  -H "Content-Type: application/json" \
-  -d '{
-    "labels": [
-      ["2008", "", "Zbigniew Herbert (1924–1998)", "1 510 000", "2", "zł", "NG", ""],
-      ["2024", "Britannia", "King Charles III", "50 000", "5", "", "Ag999", "£"]
-    ]
-  }'
-```
-
-### 4. Usunięcie etykiety z bazy serwera (po nazwie):
+### 3. Usunięcie etykiety z bazy serwera:
 ```bash
 curl -X DELETE https://andrzejow.net/MetaleSzlachetnePolska/etykiety/api/admin/labels \
   -H "Content-Type: application/json" \
   -d '{"name": "Zbigniew Herbert (1924–1998)"}'
 ```
 
-### 5. Ukryty panel masowego wgrywania monet z pliku CSV:
-Dostęp do ukrytego panelu zarządzania monetami znajduje się pod adresem:
-`https://andrzejow.net/MetaleSzlachetnePolska/etykiety/admin/add`
-*(Lokalnie: `http://127.0.0.1:8080/MetaleSzlachetnePolska/etykiety/admin/add`)*
-
-Panel oferuje:
-- Pobranie wzorca CSV (`wzor_etykiet.csv`).
-- Masowy import plików CSV / wklejanie danych w formularzu.
-- Automatyczną detekcję duplikatów i zapis nowych monet na serwerze.
-
 ---
 
-## 🔑 Wygenerowanie klucza YouTube Data API v3
+## 💻 Polecenia `curl` dla Koła Fortuny (YouTube)
 
-1. Wejdź na stronę [Google Cloud Console](https://console.cloud.google.com/) i zaloguj się swoim kontem Google.
-2. Stwórz nowy projekt lub wybierz istniejący w górnym menu.
-3. Przejdź do zakładki **APIs & Services ➔ Library**.
-4. Wyszukaj **YouTube Data API v3** i kliknij niebieski przycisk **Enable** (Włącz).
-5. Przejdź do **APIs & Services ➔ Credentials**.
-6. Kliknij **+ Create Credentials ➔ API key**.
-7. Skopiuj wygenerowany klucz API (zaczyna się od `AIzaSy...`) i wklej go w Ustawieniach aplikacji w dodatku lub ustaw serwerowo poleceniem `curl`.
+### 1. Zmiana globalnego klucza API YouTube na serwerze:
+```bash
+curl -X POST https://andrzejow.net/youtube/api/admin/set-global-key \
+  -H "Content-Type: application/json" \
+  -d '{"global_api_key": "AIzaSy_TWOJ_KLUCZ_API"}'
+```
 
----
+### 2. Dodanie nowego obsługiwanego kanału do listy:
+```bash
+curl -X POST https://andrzejow.net/youtube/api/admin/channels/add \
+  -H "Content-Type: application/json" \
+  -d '{"handle": "@NowyKanal", "title": "Opcjonalna Nazwa Kanału"}'
+```
 
-## 🤖 Wygenerowanie darmowego Bota i Tokenu Discord
-
-1. Otwórz portal [Discord Developer Portal](https://discord.com/developers/applications).
-2. Kliknij przycisk **New Application** w prawym górnym rogu i wpisz nazwę (np. `KoloFortunyBot`).
-3. Z menu po lewej stronie wybierz zakładkę **Bot**.
-4. Kliknij **Reset Token** (lub *Copy Token*), aby pobrać swój **Bot Token**. Przechowuj go w bezpiecznym miejscu!
-5. Przewiń stronę w dół do sekcji **Privileged Gateway Intents**.
-6. Zaznacz przełącznik przy **Message Content Intent** (umożliwia odczytanie treści wiadomości z kanału) i zapisz zmiany (**Save Changes**).
-
----
-
-## 📩 Zaproszenie Bota na swój serwer Discord
-
-1. W panelu [Discord Developer Portal](https://discord.com/developers/applications) wejdź w zakładkę **OAuth2 ➔ URL Generator**.
-2. W sekcji **Scopes** zaznacz kratkę przy: `bot`.
-3. W sekcji **Bot Permissions** zaznacz uprawnienia:
-   - `Read Messages / View Channels`
-   - `Read Message History`
-4. Na dole strony pojawi się wygenerowany link URL. Skopiuj go i otwórz w nowej karcie przeglądarki.
-5. Z listy wybierz swój serwer Discord i kliknij **Autoryzuj** (Authorize). Bot pojawi się na Twoim serwerze!
+### 3. Usunięcie kanału z listy obsługiwanych:
+```bash
+curl -X POST https://andrzejow.net/youtube/api/admin/channels/remove \
+  -H "Content-Type: application/json" \
+  -d '{"handle": "@ArturK92"}'
+```

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zarządzanie Użytkownikami - Etykiety</title>
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: rgba(30, 41, 59, 0.75);
+            --accent-primary: #6366f1;
+            --accent-gold: #f59e0b;
+            --accent-green: #10b981;
+            --accent-danger: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --glass-blur: blur(16px);
+            --radius-lg: 18px;
+            --radius-md: 10px;
+            --radius-sm: 6px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.15) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: var(--glass-blur);
+            border-bottom: 1px solid var(--border-color);
+            padding: 14px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .brand-title {
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .btn {
+            background: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px 14px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .btn:hover { background: rgba(255, 255, 255, 0.1); }
+
+        .btn-green {
+            background: linear-gradient(135deg, var(--accent-green), #059669);
+            color: #fff;
+            border: none;
+        }
+        .btn-green:hover { background: linear-gradient(135deg, #059669, #047857); }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+        .btn-danger:hover { background: rgba(239, 68, 68, 0.35); color: #fff; }
+
+        .main-container {
+            max-width: 1000px;
+            width: 94%;
+            margin: 24px auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--accent-gold);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+            min-width: 160px;
+        }
+
+        .form-group label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .form-group input, .form-group select {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 8px 12px;
+            color: var(--text-main);
+            font-size: 13px;
+            outline: none;
+        }
+
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13.5px;
+        }
+
+        .users-table th, .users-table td {
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .users-table th {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 700;
+        }
+
+        .badge-role {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .badge-admin {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--accent-gold);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+        }
+
+        .badge-user {
+            background: rgba(99, 102, 241, 0.2);
+            color: #a5b4fc;
+            border: 1px solid rgba(99, 102, 241, 0.4);
+        }
+
+        .msg-banner {
+            padding: 10px 16px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .msg-success { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); }
+        .msg-error { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="/MetaleSzlachetnePolska/etykiety" class="brand">
+            <span class="brand-title">👥 Zarządzanie Użytkownikami (Etykiety)</span>
+        </a>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <span style="font-size:13px; color:var(--text-muted);">Zalogowano: <strong>{{ current_user }}</strong></span>
+            <a href="/MetaleSzlachetnePolska/etykiety/admin/edit" class="btn">✏️ Edytor Monet</a>
+            <a href="/MetaleSzlachetnePolska/etykiety/admin/logout" class="btn btn-danger">🚪 Wyloguj</a>
+        </div>
+    </nav>
+
+    <div class="main-container">
+
+        {% if msg %}
+            <div class="msg-banner msg-success">✅ {{ msg }}</div>
+        {% endif %}
+        {% if error %}
+            <div class="msg-banner msg-error">⚠️ {{ error }}</div>
+        {% endif %}
+
+        <!-- Form: Add / Edit User -->
+        <div class="card">
+            <h2 class="card-title">➕ Dodaj lub zmień konto użytkownika</h2>
+            <form method="POST" action="/MetaleSzlachetnePolska/etykiety/admin/users">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="username">Nazwa Użytkownika</label>
+                        <input type="text" id="username" name="username" placeholder="np. jan_kowalski" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Hasło (nowe lub zmiana)</label>
+                        <input type="password" id="password" name="password" placeholder="••••••••" required>
+                    </div>
+                    <div class="form-group" style="max-width:140px;">
+                        <label for="role">Rola</label>
+                        <select id="role" name="role">
+                            <option value="user">Użytkownik</option>
+                            <option value="admin">Administrator</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-green" style="align-self:flex-end; height:38px;">💾 Zapisz Konto</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Table of Users -->
+        <div class="card">
+            <h2 class="card-title">📜 Lista Użytkowników Aplikacji</h2>
+            
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>Nazwa Użytkownika</th>
+                        <th>Rola</th>
+                        <th>Data Utworzenia</th>
+                        <th style="text-align:right;">Akcje</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>admin</strong> <span style="font-size:11px; color:var(--text-muted);">(Administrator Główny z HA)</span></td>
+                        <td><span class="badge-role badge-admin">admin</span></td>
+                        <td>Zdefiniowany w HA</td>
+                        <td style="text-align:right;"><span style="font-size:12px; color:var(--text-muted);">Konto wbudowane</span></td>
+                    </tr>
+                    {% for u in users %}
+                    <tr>
+                        <td><strong>{{ u.username }}</strong></td>
+                        <td>
+                            {% if u.role == 'admin' %}
+                                <span class="badge-role badge-admin">admin</span>
+                            {% else %}
+                                <span class="badge-role badge-user">user</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ u.created_at or '-' }}</td>
+                        <td style="text-align:right;">
+                            <form method="POST" action="/MetaleSzlachetnePolska/etykiety/admin/users/delete" style="display:inline;" onsubmit="return confirm('Czy na pewno chcesz usunąć użytkownika {{ u.username }}?');">
+                                <input type="hidden" name="username" value="{{ u.username }}">
+                                <button type="submit" class="btn btn-danger" style="padding:3px 8px; font-size:11.5px;">🗑️ Usuń</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</body>
+</html>
