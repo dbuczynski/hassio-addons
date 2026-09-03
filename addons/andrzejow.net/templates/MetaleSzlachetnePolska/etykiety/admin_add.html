@@ -4,383 +4,460 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zarządzanie Bazą Monet - Masowe Wgrywanie CSV</title>
+    <!-- Google Fonts Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-main: #0f172a;
-            --bg-card: rgba(30, 41, 59, 0.85);
+            --bg-card: rgba(30, 41, 59, 0.8);
             --accent-primary: #6366f1;
             --accent-gold: #f59e0b;
             --accent-green: #10b981;
+            --accent-danger: #ef4444;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --border-color: rgba(255, 255, 255, 0.12);
-            --radius-lg: 16px;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --glass-blur: blur(16px);
+            --radius-lg: 18px;
             --radius-md: 10px;
+            --radius-sm: 6px;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Inter', sans-serif;
-            background: var(--bg-main);
+            background-color: var(--bg-main);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.15) 0px, transparent 50%);
             color: var(--text-main);
             min-height: 100vh;
-            padding: 30px 20px;
-        }
-
-        .admin-container {
-            max-width: 1200px;
-            margin: 0 auto;
             display: flex;
             flex-direction: column;
-            gap: 24px;
         }
 
-        .admin-header {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg);
-            padding: 24px;
+        .navbar {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: var(--glass-blur);
+            border-bottom: 1px solid var(--border-color);
+            padding: 14px 28px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 16px;
         }
 
-        .admin-title {
-            font-size: 22px;
+        .brand-title {
+            font-size: 18px;
             font-weight: 800;
-            color: var(--accent-gold);
-            display: flex;
-            align-items: center;
-            gap: 10px;
         }
 
         .btn {
-            background: rgba(255, 255, 255, 0.08);
+            background: var(--bg-card);
             color: var(--text-main);
             border: 1px solid var(--border-color);
-            padding: 10px 18px;
+            padding: 8px 14px;
             border-radius: var(--radius-md);
             font-weight: 600;
-            font-size: 13.5px;
+            font-size: 13px;
             cursor: pointer;
+            text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            text-decoration: none;
-            transition: all 0.2s ease;
+            gap: 6px;
+            transition: all 0.2s;
         }
-        .btn:hover { background: rgba(255, 255, 255, 0.15); }
+        .btn:hover { background: rgba(255, 255, 255, 0.1); }
 
         .btn-green {
             background: linear-gradient(135deg, var(--accent-green), #059669);
-            color: #fff; border: none;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            color: #fff;
+            border: none;
         }
         .btn-green:hover { background: linear-gradient(135deg, #059669, #047857); }
 
         .btn-gold {
             background: linear-gradient(135deg, var(--accent-gold), #d97706);
-            color: #fff; border: none;
-            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+            color: #fff;
+            border: none;
+        }
+        .btn-gold:hover { background: linear-gradient(135deg, #d97706, #b45309); }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+        .btn-danger:hover { background: rgba(239, 68, 68, 0.35); color: #fff; }
+
+        .btn-xs {
+            padding: 4px 8px;
+            font-size: 11.5px;
+            border-radius: 4px;
         }
 
-        .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg);
-            padding: 24px;
+        .main-container {
+            max-width: 1700px;
+            width: 97%;
+            margin: 20px auto;
             display: flex;
             flex-direction: column;
             gap: 16px;
         }
 
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--accent-gold);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .two-col-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        @media (max-width: 900px) {
+            .two-col-grid { grid-template-columns: 1fr; }
+        }
+
         textarea {
             width: 100%;
-            height: 140px;
+            height: 220px;
             background: rgba(15, 23, 42, 0.8);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
             padding: 12px;
             color: var(--text-main);
             font-family: monospace;
-            font-size: 13px;
+            font-size: 12.5px;
             outline: none;
             resize: vertical;
         }
+        textarea:focus { border-color: var(--accent-primary); }
 
-        .file-dropzone {
-            border: 2px dashed var(--border-color);
+        .drop-zone {
+            border: 2px dashed rgba(99, 102, 241, 0.4);
             border-radius: var(--radius-md);
-            padding: 24px;
+            padding: 32px 20px;
             text-align: center;
-            background: rgba(15, 23, 42, 0.5);
+            background: rgba(15, 23, 42, 0.4);
             cursor: pointer;
-            transition: border-color 0.2s ease;
+            transition: all 0.2s ease;
         }
-        .file-dropzone:hover { border-color: var(--accent-primary); }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
 
-        table {
+        .labels-table-wrapper {
+            overflow-x: auto;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            max-height: 420px;
+        }
+
+        .labels-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 13px;
-            margin-top: 10px;
-        }
-        th, td {
-            padding: 10px 12px;
-            border-bottom: 1px solid var(--border-color);
-            text-align: left;
-        }
-        th {
-            background: rgba(15, 23, 42, 0.9);
-            color: var(--accent-gold);
-            font-weight: 700;
+            font-size: 12.5px;
         }
 
-        .status-badge {
-            padding: 2px 8px;
-            border-radius: 12px;
+        .labels-table th, .labels-table td {
+            padding: 8px 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        .labels-table th {
+            background: rgba(15, 23, 42, 0.9);
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 700;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .badge-status {
+            padding: 2px 7px;
+            border-radius: 4px;
             font-size: 11px;
             font-weight: 700;
         }
-        .status-new { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.4); }
-        .status-dup { background: rgba(245, 158, 11, 0.2); color: var(--accent-gold); border: 1px solid rgba(245, 158, 11, 0.4); }
-
-        .summary-box {
-            display: flex;
-            gap: 16px;
-            font-size: 14px;
-            font-weight: 700;
-        }
+        .badge-new { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); }
+        .badge-dup { background: rgba(245, 158, 11, 0.2); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.4); }
     </style>
 </head>
 <body>
 
-<div class="admin-container">
-
-    <div class="admin-header">
-        <div>
-            <h1 class="admin-title">🔒 Administracja Bazą Monet</h1>
-            <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
-                Masowe importowanie monet z pliku CSV z automatyczną weryfikacją duplikatów
-            </div>
+    <nav class="navbar">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <a href="/MetaleSzlachetnePolska/etykiety" class="btn">← Generator etykiet</a>
+            <span class="brand-title">➕ Dodawanie Monet (CSV)</span>
         </div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <span style="font-size:13px; color:var(--text-muted); margin-right:4px;">Zalogowano: <strong>{{ current_user }}</strong></span>
+            
+            <a href="/MetaleSzlachetnePolska/etykiety/admin/add" class="btn btn-green">
+                ➕ Dodaj Monety (CSV)
+            </a>
 
-        <a href="/MetaleSzlachetnePolska/etykiety/admin/template-csv" class="btn btn-gold">
-            📥 Pobierz Wzorcowy Plik CSV
-        </a>
-    </div>
+            <a href="/MetaleSzlachetnePolska/etykiety/admin/edit" class="btn">
+                ✏️ Edytor Monet
+            </a>
 
-    <!-- CSV Input Card -->
-    <div class="card">
-        <h2>1. Wybierz plik CSV lub wklej treść</h2>
+            <a href="/MetaleSzlachetnePolska/etykiety/admin/export-csv" class="btn" style="background:rgba(99,102,241,0.2); color:#a5b4fc; border-color:rgba(99,102,241,0.4);">
+                📥 Pobierz (CSV)
+            </a>
+
+            {% if current_role == 'admin' or session.get('labels_role') == 'admin' %}
+                <a href="/MetaleSzlachetnePolska/etykiety/admin/users" class="btn">
+                    👥 Użytkownicy
+                </a>
+            {% endif %}
+
+            <a href="/MetaleSzlachetnePolska/etykiety/admin/logout" class="btn btn-danger">
+                🚪 Wyloguj
+            </a>
+        </div>
+    </nav>
+
+    <div class="main-container">
         
-        <div class="file-dropzone" onclick="document.getElementById('csv-file-input').click()">
-            📁 Kliknij lub przeciągnij plik <strong>.csv</strong> tutaj
-            <input type="file" id="csv-file-input" accept=".csv,.txt" style="display:none;" onchange="handleFileUpload(event)">
-        </div>
-
-        <div style="text-align: center; font-size: 12px; color: var(--text-muted);">— LUB WKLEJ TREŚĆ CSV PONIŻEJ —</div>
-
-        <textarea id="csv-text-input" placeholder="Rok;Seria;Nazwa;Nakład;Nominał;WalutaPo;Stop;WalutaPrzed&#10;2026;seria cc;Nowa moneta;45000000;2;;Nordic Gold;$"></textarea>
-
-        <button class="btn btn-green" onclick="processCSVData()" style="align-self: flex-start;">
-            🔍 Weryfikuj i Podgląd Wpisów
-        </button>
-    </div>
-
-    <!-- Preview Results Card -->
-    <div class="card" id="preview-card" style="display: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h2>2. Wynik weryfikacji i podgląd monet</h2>
-            <div class="summary-box">
-                <span class="status-badge status-new" id="count-new-badge">0 nowych</span>
-                <span class="status-badge status-dup" id="count-dup-badge">0 duplikatów</span>
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                <div class="card-title">📥 1. Wybierz plik CSV lub wklej treść danych</div>
+                <a href="/MetaleSzlachetnePolska/etykiety/admin/template-csv" class="btn btn-gold btn-xs">
+                    📄 Pobierz Wzorcowy Plik CSV
+                </a>
             </div>
-        </div>
 
-        <div id="table-container" style="max-height: 450px; overflow-y: auto;">
-            <table id="preview-table">
-                <thead>
-                    <tr>
-                        <th>Status</th>
-                        <th>Rok</th>
-                        <th>Seria</th>
-                        <th>Nazwa</th>
-                        <th>Nakład</th>
-                        <th>Nominał</th>
-                        <th>Waluta Po</th>
-                        <th>Stop</th>
-                        <th>Waluta Przed</th>
-                    </tr>
-                </thead>
-                <tbody id="preview-tbody"></tbody>
-            </table>
-        </div>
+            <div class="two-col-grid">
+                <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+                    <div style="font-size: 32px; margin-bottom: 8px;">📂</div>
+                    <div style="font-weight: 700; font-size: 14px;">Kliknij lub przeciągnij plik CSV tutaj</div>
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Obsługiwany separator ';' lub ',' (kodowanie UTF-8)</div>
+                    <input type="file" id="file-input" accept=".csv, .txt" style="display:none" onchange="handleFileSelect(event)">
+                </div>
 
-        <div style="display: flex; gap: 12px; margin-top: 10px;">
-            <button class="btn btn-green" id="save-btn" onclick="saveNewLabelsToServer()">
-                💾 ZAPISZ NOWE MONETY DO BAZY SERWERA
+                <div>
+                    <textarea id="csv-textarea" placeholder="Wklej tutaj treść pliku CSV...&#10;Format: Rok;Seria;Nazwa;Nakład;Nominał;WalutaPo;Stop;WalutaPrzed&#10;Przykład:&#10;2008;;Zbigniew Herbert (1924–1998);1510000;2;zł;NG;"></textarea>
+                </div>
+            </div>
+
+            <button class="btn btn-green" onclick="parseAndVerifyCSV()" style="align-self: flex-start; margin-top: 4px;">
+                🔍 Parsuj i Weryfikuj Duplikaty
             </button>
         </div>
+
+        <div class="card" id="results-card" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                <div class="card-title">📊 2. Wynik Analizy i Podgląd Wprowadzanych Monet</div>
+                <span id="summary-stats" style="font-size: 13px; font-weight: 700;"></span>
+            </div>
+
+            <div class="labels-table-wrapper">
+                <table class="labels-table">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Waluta Przed</th>
+                            <th>Nominał</th>
+                            <th>Waluta Po</th>
+                            <th>Stop</th>
+                            <th>Rok</th>
+                            <th>Seria</th>
+                            <th>Nazwa / Tytuł</th>
+                            <th>Nakład</th>
+                        </tr>
+                    </thead>
+                    <tbody id="preview-tbody"></tbody>
+                </table>
+            </div>
+
+            <div style="display:flex; gap:12px; margin-top: 8px;">
+                <button class="btn btn-green" id="btn-save-all" onclick="saveParsedLabels(false)">
+                    💾 Zapisz Nowe Monety na Serwerze
+                </button>
+                <button class="btn btn-gold" id="btn-save-force" onclick="saveParsedLabels(true)" style="display:none;">
+                    ⚠️ Zapisz Wszystkie (Włącznie z Duplikatami)
+                </button>
+            </div>
+        </div>
+
     </div>
 
-</div>
-
 <script>
-let existingDb = [];
-let parsedNewItems = [];
+let currentParsedItems = [];
+let existingServerLabels = [];
 
-async function loadExistingDb() {
-    try {
-        const res = await fetch('/api/labels?limit=10000');
-        const data = await res.json();
-        existingDb = (data && data.labels) ? data.labels : [];
-    } catch(e) {
-        console.error("Błąd pobierania bazy:", e);
+const dropZone = document.getElementById('drop-zone');
+dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('dragover'); });
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    if (e.dataTransfer.files.length > 0) {
+        readFile(e.dataTransfer.files[0]);
+    }
+});
+
+function handleFileSelect(e) {
+    if (e.target.files.length > 0) {
+        readFile(e.target.files[0]);
     }
 }
 
-function makeKey(item) {
-    const year = (item[0] || '').trim().toLowerCase();
-    const series = (item[1] || '').trim().toLowerCase();
-    const name = (item[2] || '').trim().toLowerCase();
-    const nominal = (item[4] || '').trim().toLowerCase();
-    const currencyAfter = (item[5] || '').trim().toLowerCase();
-    const stop = (item[6] || '').trim().toLowerCase();
-    const currencyBefore = (item[7] || '').trim().toLowerCase();
-    return `${year}|${series}|${name}|${nominal}|${currencyAfter}|${stop}|${currencyBefore}`;
-}
-
-function handleFileUpload(evt) {
-    const file = evt.target.files[0];
-    if (!file) return;
+function readFile(file) {
     const reader = new FileReader();
-    reader.onload = function(e) {
-        document.getElementById('csv-text-input').value = e.target.result;
-        processCSVData();
+    reader.onload = function(evt) {
+        document.getElementById('csv-textarea').value = evt.target.result;
+        parseAndVerifyCSV();
     };
     reader.readAsText(file, 'UTF-8');
 }
 
-async function processCSVData() {
-    await loadExistingDb();
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
 
-    const text = document.getElementById('csv-text-input').value.trim();
+async function fetchServerLabels() {
+    try {
+        const res = await fetch('/api/labels?limit=10000');
+        const data = await res.json();
+        existingServerLabels = data.labels || [];
+    } catch(e) {
+        existingServerLabels = [];
+    }
+}
+
+async function parseAndVerifyCSV() {
+    const text = document.getElementById('csv-textarea').value.trim();
     if (!text) {
-        alert("Wklej treść CSV lub wczytaj plik.");
+        alert("Wklej treść pliku CSV lub wybierz plik z dysku.");
         return;
     }
 
-    const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
-    if (lines.length === 0) return;
+    await fetchServerLabels();
 
-    const existingKeys = new Set(existingDb.map(item => makeKey(item)));
-    
-    parsedNewItems = [];
-    let newCount = 0;
-    let dupCount = 0;
+    const lines = text.split(/\r?\n/);
+    currentParsedItems = [];
 
-    const tbody = document.getElementById('preview-tbody');
-    tbody.innerHTML = '';
-
-    // Check if line 0 is header
-    let startIndex = 0;
-    const firstLineLower = lines[0].toLowerCase();
-    if (firstLineLower.includes("rok") || firstLineLower.includes("seria") || firstLineLower.includes("nazwa")) {
-        startIndex = 1;
-    }
-
-    for (let i = startIndex; i < lines.length; i++) {
-        const line = lines[i];
-        // Determine delimiter (; or ,)
-        const delim = line.includes(';') ? ';' : ',';
-        const cols = line.split(delim).map(c => c.trim().replace(/^["']|["']$/g, ''));
-        
-        if (cols.length < 3) continue;
-
-        const year = cols[0] || "";
-        const series = cols[1] || "";
-        const name = cols[2] || "";
-        const mintage = cols[3] || "";
-        const nominal = cols[4] || "2";
-        const currencyAfter = cols[5] || "";
-        const stop = cols[6] || "";
-        const currencyBefore = cols[7] || "";
-
-        const item = [year, series, name, mintage, nominal, currencyAfter, stop, currencyBefore];
-        const key = makeKey(item);
-        const isDuplicate = existingKeys.has(key);
-
-        if (isDuplicate) {
-            dupCount++;
-        } else {
-            newCount++;
-            parsedNewItems.push(item);
-            existingKeys.add(key); // prevent duplicates within the uploaded CSV itself
+    lines.forEach((line, idx) => {
+        const trimmed = line.trim();
+        if (!trimmed) return;
+        if (idx === 0 && (trimmed.toLowerCase().includes('seria') || trimmed.toLowerCase().includes('nazwa') || trimmed.toLowerCase().includes('rok'))) {
+            return; // Pomijamy nagłówek
         }
 
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>
-                ${isDuplicate 
-                    ? `<span class="status-badge status-dup">⚠️ Duplikat</span>`
-                    : `<span class="status-badge status-new">🟢 Nowa</span>`}
-            </td>
-            <td>${escapeHtml(year)}</td>
-            <td>${escapeHtml(series)}</td>
-            <td>${escapeHtml(name)}</td>
-            <td>${escapeHtml(mintage)}</td>
-            <td>${escapeHtml(nominal)}</td>
-            <td>${escapeHtml(currencyAfter)}</td>
-            <td>${escapeHtml(stop)}</td>
-            <td>${escapeHtml(currencyBefore)}</td>
-        `;
-        tbody.appendChild(tr);
+        const sep = trimmed.includes(';') ? ';' : ',';
+        const parts = trimmed.split(sep).map(p => p.trim());
+
+        if (parts.length >= 3) {
+            const year = parts[0] || '';
+            const series = parts[1] || '';
+            const name = parts[2] || '';
+            const mintage = parts[3] || '';
+            const nominal = parts[4] || '2';
+            const currencyAfter = parts[5] || '';
+            const stop = parts[6] || '';
+            const currencyBefore = parts[7] || '';
+
+            const item = [year, series, name, mintage, nominal, currencyAfter, stop, currencyBefore];
+
+            // Detekcja duplikatu po kombinacji: Rok + Seria + Nazwa + Nominał
+            const isDup = existingServerLabels.some(srv => 
+                String(srv[0] || '').trim() === year &&
+                String(srv[1] || '').trim().toLowerCase() === series.toLowerCase() &&
+                String(srv[2] || '').trim().toLowerCase() === name.toLowerCase() &&
+                String(srv[4] || '').trim() === nominal
+            );
+
+            currentParsedItems.push({ item, isDup });
+        }
+    });
+
+    if (currentParsedItems.length === 0) {
+        alert("Nie udało się sparsować żadnych wierszy monet z podanego tekstu.");
+        return;
     }
 
-    document.getElementById('count-new-badge').textContent = `${newCount} nowych monet`;
-    document.getElementById('count-dup-badge').textContent = `${dupCount} duplikatów (pominięto)`;
+    const newCount = currentParsedItems.filter(x => !x.isDup).length;
+    const dupCount = currentParsedItems.filter(x => x.isDup).length;
 
-    document.getElementById('save-btn').disabled = (newCount === 0);
-    document.getElementById('preview-card').style.display = 'flex';
+    document.getElementById('summary-stats').textContent = 
+        `Rozpoznano łącznie: ${currentParsedItems.length} | Nowe: ${newCount} | Duplikaty: ${dupCount}`;
+
+    const tbody = document.getElementById('preview-tbody');
+    tbody.innerHTML = currentParsedItems.map(row => {
+        const item = row.item;
+        return `
+            <tr style="${row.isDup ? 'background: rgba(245, 158, 11, 0.08);' : ''}">
+                <td>
+                    ${row.isDup ? '<span class="badge-status badge-dup">Duplikat</span>' : '<span class="badge-status badge-new">Nowa</span>'}
+                </td>
+                <td>${escapeHtml(item[7])}</td>
+                <td><strong>${escapeHtml(item[4])}</strong></td>
+                <td>${escapeHtml(item[5])}</td>
+                <td>${escapeHtml(item[6])}</td>
+                <td>${escapeHtml(item[0])}</td>
+                <td><em>${escapeHtml(item[1])}</em></td>
+                <td><strong>${escapeHtml(item[2])}</strong></td>
+                <td>${escapeHtml(item[3])}</td>
+            </tr>
+        `;
+    }).join('');
+
+    document.getElementById('results-card').style.display = 'flex';
+    document.getElementById('btn-save-force').style.display = dupCount > 0 ? 'inline-flex' : 'none';
 }
 
-async function saveNewLabelsToServer() {
-    if (parsedNewItems.length === 0) {
+async function saveParsedLabels(includeDuplicates) {
+    const toSave = currentParsedItems
+        .filter(row => includeDuplicates || !row.isDup)
+        .map(row => row.item);
+
+    if (toSave.length === 0) {
         alert("Brak nowych monet do zapisania.");
         return;
     }
 
     try {
-        const fullLabels = [...existingDb, ...parsedNewItems];
-        const res = await fetch('/api/admin/labels', {
+        const response = await fetch('/api/admin/labels', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ labels: fullLabels })
+            body: JSON.stringify({ labels: [...existingServerLabels, ...toSave] })
         });
-        const result = await res.json();
-        
-        if (res.ok) {
-            alert(`Pomyślnie dodano ${parsedNewItems.length} nowych monet do bazy serwera! Total w bazie: ${result.total}`);
-            document.getElementById('csv-text-input').value = '';
-            document.getElementById('preview-card').style.display = 'none';
+        const data = await response.json();
+        if (data.status === 'success') {
+            alert(`Pomyślnie dodano ${toSave.length} monet do bazy serwera!`);
+            window.location.href = '/MetaleSzlachetnePolska/etykiety/admin/edit';
         } else {
-            alert("Błąd zapisu: " + (result.error || 'Nieznany błąd'));
+            alert("Błąd zapisu: " + (data.error || "Wystąpił błąd"));
         }
     } catch(e) {
-        alert("Błąd połączenia z serwerem: " + e.message);
+        alert("Błąd połączenia z serwerem.");
     }
-}
-
-function escapeHtml(str) {
-    if (!str) return '';
-    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 </script>
 

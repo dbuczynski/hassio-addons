@@ -200,16 +200,24 @@
             <a href="/MetaleSzlachetnePolska/etykiety" class="btn">← Generator etykiet</a>
             <span class="brand-title">✏️ Edytor Bazy Monet</span>
         </div>
-        <div style="display:flex; gap:10px; align-items:center;">
-            <span style="font-size:13px; color:var(--text-muted);">Zalogowano: <strong>{{ current_user }}</strong></span>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <span style="font-size:13px; color:var(--text-muted); margin-right:4px;">Zalogowano: <strong>{{ current_user }}</strong></span>
             
-            <a href="/MetaleSzlachetnePolska/etykiety/admin/export-csv" class="btn btn-green">
-                📥 Pobierz Całą Bazę (CSV)
+            <a href="/MetaleSzlachetnePolska/etykiety/admin/add" class="btn">
+                ➕ Dodaj Monety (CSV)
             </a>
 
-            {% if current_role == 'admin' %}
-                <a href="/MetaleSzlachetnePolska/etykiety/admin/users" class="btn btn-gold">
-                    👥 Zarządzaj Użytkownikami
+            <a href="/MetaleSzlachetnePolska/etykiety/admin/edit" class="btn btn-green">
+                ✏️ Edytor Monet
+            </a>
+
+            <a href="/MetaleSzlachetnePolska/etykiety/admin/export-csv" class="btn" style="background:rgba(99,102,241,0.2); color:#a5b4fc; border-color:rgba(99,102,241,0.4);">
+                📥 Pobierz (CSV)
+            </a>
+
+            {% if current_role == 'admin' or session.get('labels_role') == 'admin' %}
+                <a href="/MetaleSzlachetnePolska/etykiety/admin/users" class="btn">
+                    👥 Użytkownicy
                 </a>
             {% endif %}
 
@@ -222,12 +230,17 @@
     <div class="main-container">
         <div class="card">
             <div class="header-row">
-                <div style="font-size: 15px; font-weight: 800; color: var(--accent-gold);">
+                <div style="font-size: 15px; font-weight: 800; color: var(--accent-gold); display:flex; align-items:center; gap:12px;">
                     🔍 Wyszukiwarka Monet
                 </div>
-                <span id="results-count" style="font-size: 12.5px; color: var(--text-muted); font-weight: 600;">
-                    Wyświetlanie max 50 wyników
-                </span>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span id="results-count" style="font-size: 12.5px; color: var(--text-muted); font-weight: 600;">
+                        Wyświetlanie max 50 wyników
+                    </span>
+                    <button class="btn btn-green" onclick="saveAllRows()" style="padding: 6px 14px; font-size: 13px;">
+                        💾 Zapisz Wszystkie Zmiany
+                    </button>
+                </div>
             </div>
 
             <input type="text" id="search-input" class="search-input" placeholder="🔍 Szukaj frazy w bazie (np. '2008 Herbert' lub 'Malarze 2007')..." oninput="onSearchInput()">
@@ -367,6 +380,59 @@ async function saveRow(idx) {
             currentLabelsList[idx] = updatedItem;
         } else {
             showToast("Błąd zapisu: " + (res.error || "Wystąpił błąd"), true);
+        }
+    } catch(e) {
+        showToast("Błąd połączenia z serwerem", true);
+    }
+}
+
+async function saveAllRows() {
+    if (!currentLabelsList || currentLabelsList.length === 0) {
+        showToast("Brak wierszy do zapisania.", true);
+        return;
+    }
+
+    const updates = [];
+    currentLabelsList.forEach((origItem, idx) => {
+        const rowYear = document.getElementById(`year-${idx}`);
+        if (!rowYear) return;
+
+        const updatedItem = [
+            document.getElementById(`year-${idx}`).value.trim(),
+            document.getElementById(`series-${idx}`).value.trim(),
+            document.getElementById(`name-${idx}`).value.trim(),
+            document.getElementById(`mintage-${idx}`).value.trim(),
+            document.getElementById(`nominal-${idx}`).value.trim(),
+            document.getElementById(`cur-after-${idx}`).value.trim(),
+            document.getElementById(`stop-${idx}`).value.trim(),
+            document.getElementById(`cur-before-${idx}`).value.trim()
+        ];
+
+        updates.push({
+            original: origItem,
+            updated: updatedItem
+        });
+    });
+
+    if (updates.length === 0) {
+        showToast("Brak wierszy do zapisania.", true);
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/admin/labels/update-batch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ updates: updates })
+        });
+        const res = await response.json();
+        if (res.success) {
+            showToast(`Pomyślnie zapisano zmiany we wszystkich ${res.updated_count || updates.length} wierszach!`);
+            updates.forEach((u, i) => {
+                currentLabelsList[i] = u.updated;
+            });
+        } else {
+            showToast("Błąd zapisu zbiorczego: " + (res.error || "Wystąpił błąd"), true);
         }
     } catch(e) {
         showToast("Błąd połączenia z serwerem", true);

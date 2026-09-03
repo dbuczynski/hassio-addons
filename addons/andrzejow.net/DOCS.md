@@ -29,7 +29,7 @@ W przypadku połączeń z innych adresów IP użytkownik musi podać poprawną n
 
 - **Logowanie**: `/MetaleSzlachetnePolska/etykiety/admin/login`
 - **Edytor Bazy Monet**: `/MetaleSzlachetnePolska/etykiety/admin/edit`
-  *(Edycja wierszy na żywo, usuwanie pozycji, wyszukiwanie oraz przycisk pobierania pliku CSV)*
+  *(Edycja wierszy na żywo, przycisk `💾 Zapisz Wszystkie Zmiany`, usuwanie pozycji, wyszukiwanie oraz przycisk pobierania pliku CSV)*
 - **Zarządzanie Użytkownikami**: `/MetaleSzlachetnePolska/etykiety/admin/users`
   *(Dostępne wyłącznie dla konta z rolą `admin` – tworzenie, zmiana haseł i ról użytkowników)*
 - **Masowe Wgrywanie CSV**: `/MetaleSzlachetnePolska/etykiety/admin/add`
@@ -73,6 +73,20 @@ curl -X POST https://andrzejow.net/MetaleSzlachetnePolska/etykiety/api/admin/lab
 curl -X DELETE https://andrzejow.net/MetaleSzlachetnePolska/etykiety/api/admin/labels \
   -H "Content-Type: application/json" \
   -d '{"name": "Zbigniew Herbert (1924–1998)"}'
+```
+
+### 4. Zbiorcza aktualizacja modyfikacji wierszy monet:
+```bash
+curl -X POST https://andrzejow.net/MetaleSzlachetnePolska/etykiety/api/admin/labels/update-batch \
+  -H "Content-Type: application/json" \
+  -d '{
+    "updates": [
+      {
+        "original": ["2008", "", "Zbigniew Herbert (1924–1998)", "1 510 000", "2", "zł", "NG", ""],
+        "updated": ["2008", "", "Zbigniew Herbert (1924–1998)", "1 510 000", "2", "zł", "Ag", ""]
+      }
+    ]
+  }'
 ```
 
 ---

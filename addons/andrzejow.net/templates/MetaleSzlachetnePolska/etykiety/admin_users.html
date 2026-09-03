@@ -205,13 +205,34 @@
 <body>
 
     <nav class="navbar">
-        <a href="/MetaleSzlachetnePolska/etykiety" class="brand">
-            <span class="brand-title">👥 Zarządzanie Użytkownikami (Etykiety)</span>
-        </a>
-        <div style="display:flex; gap:10px; align-items:center;">
-            <span style="font-size:13px; color:var(--text-muted);">Zalogowano: <strong>{{ current_user }}</strong></span>
-            <a href="/MetaleSzlachetnePolska/etykiety/admin/edit" class="btn">✏️ Edytor Monet</a>
-            <a href="/MetaleSzlachetnePolska/etykiety/admin/logout" class="btn btn-danger">🚪 Wyloguj</a>
+        <div style="display:flex; align-items:center; gap:12px;">
+            <a href="/MetaleSzlachetnePolska/etykiety" class="btn">← Generator etykiet</a>
+            <span class="brand-title">👥 Zarządzanie Użytkownikami</span>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <span style="font-size:13px; color:var(--text-muted); margin-right:4px;">Zalogowano: <strong>{{ current_user }}</strong></span>
+            
+            <a href="/MetaleSzlachetnePolska/etykiety/admin/add" class="btn">
+                ➕ Dodaj Monety (CSV)
+            </a>
+
+            <a href="/MetaleSzlachetnePolska/etykiety/admin/edit" class="btn">
+                ✏️ Edytor Monet
+            </a>
+
+            <a href="/MetaleSzlachetnePolska/etykiety/admin/export-csv" class="btn" style="background:rgba(99,102,241,0.2); color:#a5b4fc; border-color:rgba(99,102,241,0.4);">
+                📥 Pobierz (CSV)
+            </a>
+
+            {% if current_role == 'admin' or session.get('labels_role') == 'admin' %}
+                <a href="/MetaleSzlachetnePolska/etykiety/admin/users" class="btn btn-green">
+                    👥 Użytkownicy
+                </a>
+            {% endif %}
+
+            <a href="/MetaleSzlachetnePolska/etykiety/admin/logout" class="btn btn-danger">
+                🚪 Wyloguj
+            </a>
         </div>
     </nav>
 

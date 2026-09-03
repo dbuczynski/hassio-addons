@@ -5,11 +5,12 @@ import json
 import os
 import time
 from flask import Flask, jsonify, render_template, request, Response, redirect, session
+import youtube_service
 
 app = Flask(__name__)
 app.secret_key = "andrzejow_net_secret_key_metale_szlachetne"
 
-APP_VERSION = "1.10.1"
+APP_VERSION = "1.10.2"
 
 DEFAULT_ALLOWED_CHANNELS = [
     {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
@@ -362,7 +363,7 @@ def admin_add_labels():
     """Ukryta strona administracyjna do masowego dodawania monet z pliku CSV."""
     if not is_labels_authenticated():
         return redirect('/MetaleSzlachetnePolska/etykiety/admin/login?next=/MetaleSzlachetnePolska/etykiety/admin/add')
-    return render_template('MetaleSzlachetnePolska/etykiety/admin_add.html')
+    return render_template('MetaleSzlachetnePolska/etykiety/admin_add.html', current_user=session.get('labels_user'), current_role=session.get('labels_role'))
 
 @app.route('/MetaleSzlachetnePolska/etykiety/admin/edit')
 @app.route('/MetaleSzlachetnePolska/etykiety/admin/edit/')
@@ -484,6 +485,46 @@ def update_single_label():
             save_labels_db(labels)
             return jsonify({"success": True})
         return jsonify({"error": "Nie odnaleziono oryginalnej monety w bazie"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/admin/labels/update-batch', methods=['POST'])
+def update_batch_labels():
+    if not is_labels_authenticated():
+        return jsonify({"error": "Wymagane logowanie"}), 401
+    try:
+        data = request.get_json(force=True, silent=True) or {}
+        updates = data.get('updates', [])
+        if not updates or not isinstance(updates, list):
+            return jsonify({"error": "Brak danych do aktualizacji"}), 400
+
+        labels = load_labels_db()
+        updated_count = 0
+
+        for u in updates:
+            orig = u.get('original')
+            upd = u.get('updated')
+            if not orig or not upd or not isinstance(upd, list):
+                continue
+
+            found = False
+            for i, item in enumerate(labels):
+                if item == orig:
+                    labels[i] = upd
+                    found = True
+                    updated_count += 1
+                    break
+            
+            if not found:
+                for i, item in enumerate(labels):
+                    if len(item) >= 3 and len(orig) >= 3 and item[0] == orig[0] and item[1] == orig[1] and item[2] == orig[2]:
+                        labels[i] = upd
+                        found = True
+                        updated_count += 1
+                        break
+
+        save_labels_db(labels)
+        return jsonify({"success": True, "updated_count": updated_count})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

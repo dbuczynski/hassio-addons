@@ -2,6 +2,19 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.10.2] - 2026-09-03
+
+### Dodano / Zmieniono
+- **Przycisk "Zapisz Wszystkie Zmiany" (`/admin/edit`)**: Dodano zielony przycisk `💾 Zapisz Wszystkie Zmiany` w panelu edycji monet wraz z dedykowanym endpointem `POST /api/admin/labels/update-batch`, umożliwiającym masowy zapis zmodyfikowanych wierszy.
+- **Jednolity Pasek Nawigacyjny w Panelu Administracyjnym**: Ujednolicono belkę nawigacyjną we wszystkich plikach panelu admina (`admin_add.html`, `admin_edit.html`, `admin_users.html`) wraz ze spójnymi linkami i wyróżnianiem wyłącznie aktywnej podstrony.
+- **Ujednolicenie Nagłówków & Ikony Social Media**: 
+  - Przeniesiono odznaki wersji do podtytułów (`v1.10.2 by @WeekendowyDetektorysta`) we wszystkich aplikacjach.
+  - Dodano klikalne ikony Facebooka i YouTube'a w nagłówkach.
+  - Naprawiono układ nagłówka (wyrównanie od lewej strony obok ikony Discorda) poprzez eliminację niepoprawnego zagnieżdżenia znaczników `<a>`.
+  - W aplikacji Koło Fortuny dodano dynamiczne wyświetlanie nazwy obecnie wybranego kanału w tytule: `Koło Fortuny (<nazwa_kanału>)`.
+
+---
+
 ## [1.10.1] - 2026-09-03
 
 ### Dodano / Zmieniono
