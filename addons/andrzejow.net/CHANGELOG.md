@@ -2,6 +2,13 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.10.1] - 2026-09-03
+
+### Dodano / Zmieniono
+- **Dodanie Adresu `127.0.0.1` do Zaufanych IP**: Dodano pętlę zwrotną `127.0.0.1` do domyślnej listy zaufanych adresów IP (`admin_trusted_ips`), umożliwiając bezpośrednie logowanie administracyjne samą nazwą użytkownika w środowisku lokalnym.
+
+---
+
 ## [1.10.0] - 2026-09-03
 
 ### Dodano / Zmieniono

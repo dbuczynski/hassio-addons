@@ -9,7 +9,7 @@ from flask import Flask, jsonify, render_template, request, Response, redirect, 
 app = Flask(__name__)
 app.secret_key = "andrzejow_net_secret_key_metale_szlachetne"
 
-APP_VERSION = "1.10.0"
+APP_VERSION = "1.10.1"
 
 DEFAULT_ALLOWED_CHANNELS = [
     {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
@@ -61,7 +61,7 @@ def get_trusted_ips():
                     return [str(ip) for ip in ips]
         except Exception:
             pass
-    return ["195.74.49.211", "192.168.12.223"]
+    return ["195.74.49.211", "192.168.12.223", "127.0.0.1"]
 
 def get_client_ip():
     if request.headers.get("X-Forwarded-For"):
