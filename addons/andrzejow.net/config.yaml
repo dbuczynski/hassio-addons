@@ -1,5 +1,5 @@
 name: "Web server andrzejow.net"
-version: "1.10.3"
+version: "1.10.4"
 slug: "andrzejow_net"
 description: "Serwer WWW dla andrzejow.net"
 arch:

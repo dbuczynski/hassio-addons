@@ -10,7 +10,7 @@ import youtube_service
 app = Flask(__name__)
 app.secret_key = "andrzejow_net_secret_key_metale_szlachetne"
 
-APP_VERSION = "1.10.3"
+APP_VERSION = "1.10.4"
 
 DEFAULT_ALLOWED_CHANNELS = [
     {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
@@ -19,10 +19,34 @@ DEFAULT_ALLOWED_CHANNELS = [
 ]
 
 DATA_DIR = "/data" if os.path.exists("/data") else os.path.dirname(os.path.abspath(__file__))
+OPTIONS_PATH = "/data/options.json" if os.path.exists("/data/options.json") else os.path.join(DATA_DIR, "options.json")
 GLOBAL_CONFIG_PATH = os.path.join(DATA_DIR, "global_config.json")
 LABELS_DB_PATH = os.path.join(DATA_DIR, "labels_db.json")
 DEFAULT_LABELS_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "labels_db.json")
 LABELS_USERS_PATH = os.path.join(DATA_DIR, "labels_users.json")
+
+def load_all_config_data():
+    """Ładuje i łączy konfigurację z /data/options.json (zapisywanego przez Home Assistant) oraz global_config.json."""
+    data = {}
+    if os.path.exists(GLOBAL_CONFIG_PATH):
+        try:
+            with open(GLOBAL_CONFIG_PATH, "r", encoding="utf-8") as f:
+                d = json.load(f)
+                if isinstance(d, dict):
+                    data.update(d)
+        except Exception:
+            pass
+
+    for p in [OPTIONS_PATH, "/data/options.json"]:
+        if os.path.exists(p):
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    d = json.load(f)
+                    if isinstance(d, dict):
+                        data.update(d)
+            except Exception:
+                pass
+    return data
 
 def load_labels_users():
     if os.path.exists(LABELS_USERS_PATH):
@@ -41,27 +65,17 @@ def hash_password(pwd):
     return hashlib.sha256(pwd.encode('utf-8')).hexdigest()
 
 def get_admin_password():
-    if os.path.exists(GLOBAL_CONFIG_PATH):
-        try:
-            with open(GLOBAL_CONFIG_PATH, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                pwd = data.get("admin_password")
-                if pwd:
-                    return str(pwd)
-        except Exception:
-            pass
+    cfg = load_all_config_data()
+    pwd = cfg.get("admin_password")
+    if pwd and str(pwd).strip():
+        return str(pwd).strip()
     return "admin"
 
 def get_trusted_ips():
-    if os.path.exists(GLOBAL_CONFIG_PATH):
-        try:
-            with open(GLOBAL_CONFIG_PATH, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                ips = data.get("admin_trusted_ips")
-                if ips and isinstance(ips, list) and len(ips) > 0:
-                    return [str(ip) for ip in ips]
-        except Exception:
-            pass
+    cfg = load_all_config_data()
+    ips = cfg.get("admin_trusted_ips")
+    if ips and isinstance(ips, list) and len(ips) > 0:
+        return [str(ip).strip() for ip in ips if str(ip).strip()]
     return ["127.0.0.1"]
 
 def get_client_ip():
@@ -139,14 +153,11 @@ def save_labels_db(labels):
             pass
 
 def get_global_api_key():
-    """Pobiera globalny klucz API z pliku global_config.json jeśli istnieje."""
-    if os.path.exists(GLOBAL_CONFIG_PATH):
-        try:
-            with open(GLOBAL_CONFIG_PATH, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                return data.get("global_api_key", "").strip()
-        except Exception:
-            pass
+    """Pobiera globalny klucz API z pliku options.json (HA) lub global_config.json."""
+    cfg = load_all_config_data()
+    key = cfg.get("api_key") or cfg.get("global_api_key")
+    if key:
+        return str(key).strip()
     return ""
 
 def save_global_api_key(key):
@@ -164,14 +175,9 @@ def save_global_api_key(key):
 
 def load_allowed_channels():
     """Pobiera listę dozwolonych kanałów z pliku konfiguracji lub domyślną."""
-    if os.path.exists(GLOBAL_CONFIG_PATH):
-        try:
-            with open(GLOBAL_CONFIG_PATH, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                if "allowed_channels" in data and isinstance(data["allowed_channels"], list):
-                    return data["allowed_channels"]
-        except Exception:
-            pass
+    cfg = load_all_config_data()
+    if "allowed_channels" in cfg and isinstance(cfg["allowed_channels"], list) and len(cfg["allowed_channels"]) > 0:
+        return cfg["allowed_channels"]
     return list(DEFAULT_ALLOWED_CHANNELS)
 
 def save_allowed_channels(channels):

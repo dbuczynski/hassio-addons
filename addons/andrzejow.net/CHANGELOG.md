@@ -2,6 +2,13 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.10.4] - 2026-09-03
+
+### Dodano / Zmieniono
+- **Obsługa `/data/options.json` w Home Assistant**: Dodano integrację funkcji `load_all_config_data()`, która automatycznie wczytuje i stosuje opcje zapisywane przez Home Assistant Supervisor w `/data/options.json` (w tym dodane zaufane adresy IP oraz zmodyfikowane hasło `admin_password`).
+
+---
+
 ## [1.10.3] - 2026-09-03
 
 ### Dodano / Zmieniono
