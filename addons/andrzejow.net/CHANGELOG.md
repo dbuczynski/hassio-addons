@@ -2,6 +2,13 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.9.2] - 2026-09-03
+
+### Dodano / Zmieniono
+- **Inicjalizacja Domyślnej Bazy Monet**: Poprawiono `load_labels_db()`, aby w sytuacji, gdy plik `/data/labels_db.json` w trwałej pamięci Home Assistant był pusty `[]` lub nie istniał, dodatek automatycznie załadował i zapisał domyślną bazę monet dołączoną do obrazu kontenera (`DEFAULT_LABELS_DB_PATH`).
+
+---
+
 ## [1.9.1] - 2026-09-03
 
 ### Dodano / Zmieniono

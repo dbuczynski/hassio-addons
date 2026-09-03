@@ -7,7 +7,7 @@ import youtube_service
 
 app = Flask(__name__)
 
-APP_VERSION = "1.9.1"
+APP_VERSION = "1.9.2"
 
 DEFAULT_ALLOWED_CHANNELS = [
     {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
@@ -22,15 +22,27 @@ DEFAULT_LABELS_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__))
 
 def load_labels_db():
     target_path = LABELS_DB_PATH
-    if not os.path.exists(target_path) and os.path.exists(DEFAULT_LABELS_DB_PATH):
-        target_path = DEFAULT_LABELS_DB_PATH
+    labels = []
+    
     if os.path.exists(target_path):
         try:
             with open(target_path, "r", encoding="utf-8") as f:
-                return json.load(f)
+                labels = json.load(f)
+        except Exception:
+            labels = []
+
+    # Jeśli baza w /data jest pusta lub nie istnieje, załaduj bazy domyślną z obrazu dodatku
+    if (not labels or not isinstance(labels, list) or len(labels) == 0) and os.path.exists(DEFAULT_LABELS_DB_PATH):
+        try:
+            with open(DEFAULT_LABELS_DB_PATH, "r", encoding="utf-8") as f:
+                default_labels = json.load(f)
+                if default_labels and isinstance(default_labels, list) and len(default_labels) > 0:
+                    labels = default_labels
+                    save_labels_db(labels)
         except Exception:
             pass
-    return []
+
+    return labels if isinstance(labels, list) else []
 
 def save_labels_db(labels):
     target_path = LABELS_DB_PATH
