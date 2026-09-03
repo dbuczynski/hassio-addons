@@ -10,7 +10,7 @@ import youtube_service
 app = Flask(__name__)
 app.secret_key = "andrzejow_net_secret_key_metale_szlachetne"
 
-APP_VERSION = "1.10.4"
+APP_VERSION = "1.10.5"
 
 DEFAULT_ALLOWED_CHANNELS = [
     {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
@@ -633,21 +633,36 @@ def delete_admin_label():
         data = request.get_json(force=True, silent=True) or {}
         index = data.get("index")
         name = data.get("name")
+        label = data.get("label")
         labels = load_labels_db()
+        deleted = False
 
         if index is not None and isinstance(index, int) and 0 <= index < len(labels):
             labels.pop(index)
-        elif name:
-            initial = len(labels)
-            labels = [l for l in labels if len(l) > 2 and l[2].lower() != str(name).lower()]
-            if len(labels) == initial:
+            deleted = True
+        elif label and isinstance(label, list):
+            initial_len = len(labels)
+            labels = [l for l in labels if l != label]
+            if len(labels) < initial_len:
+                deleted = True
+            elif len(label) > 2 and label[2]:
+                name = label[2]
+
+        if not deleted and name:
+            initial_len = len(labels)
+            labels = [l for l in labels if len(l) <= 2 or l[2].lower() != str(name).lower()]
+            if len(labels) < initial_len:
+                deleted = True
+            else:
                 return jsonify({"error": f"Nie odnaleziono etykiety o nazwie '{name}'."}), 404
-        else:
-            return jsonify({"error": "Brak parametru 'index' lub 'name' do usunięcia."}), 400
+
+        if not deleted:
+            return jsonify({"error": "Brak parametru 'index', 'name' lub 'label' do usunięcia."}), 400
 
         save_labels_db(labels)
         return jsonify({
             "status": "success",
+            "success": True,
             "message": "Etykieta została usunięta z bazy serwera.",
             "total": len(labels),
             "labels": labels

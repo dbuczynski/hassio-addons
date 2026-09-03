@@ -449,10 +449,10 @@ async function deleteRow(idx) {
         const response = await fetch('/api/admin/labels', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ label: item })
+            body: JSON.stringify({ name: item[2] || '', label: item })
         });
         const res = await response.json();
-        if (res.success) {
+        if (res.success || res.status === "success") {
             showToast("Usunięto wpis z bazy!");
             loadLabels();
         } else {

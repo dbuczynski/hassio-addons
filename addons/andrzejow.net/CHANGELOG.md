@@ -2,6 +2,13 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.10.5] - 2026-09-03
+
+### Dodano / Zmieniono
+- **Poprawka Usuwania Monet w Edytorze**: Zaktualizowano endpoint `DELETE /api/admin/labels` oraz funkcję `deleteRow` w edytorze monet (`admin_edit.html`) o pełną obsługę parametrów `label` i `name`, zapobiegając błędom walidacji.
+
+---
+
 ## [1.10.4] - 2026-09-03
 
 ### Dodano / Zmieniono
