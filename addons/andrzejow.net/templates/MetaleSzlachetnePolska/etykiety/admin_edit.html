@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edytor Bazy Monet - Etykiety</title>
+    <title>Edytor Monet - Generator Etykiet</title>
     <!-- Google Fonts Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
         :root {
             --bg-main: #0f172a;
-            --bg-card: rgba(30, 41, 59, 0.8);
+            --bg-card: rgba(30, 41, 59, 0.85);
             --accent-primary: #6366f1;
             --accent-gold: #f59e0b;
             --accent-green: #10b981;
-            --accent-danger: #ef4444;
+            --accent-red: #ef4444;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --border-color: rgba(255, 255, 255, 0.1);
@@ -47,11 +48,23 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .brand-title {
             font-size: 18px;
             font-weight: 800;
+            background: linear-gradient(135deg, #fff 30%, var(--text-muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .btn {
@@ -61,15 +74,18 @@
             padding: 8px 14px;
             border-radius: var(--radius-md);
             font-weight: 600;
-            font-size: 13px;
+            font-size: 12.5px;
             cursor: pointer;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
         }
-        .btn:hover { background: rgba(255, 255, 255, 0.1); }
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
 
         .btn-green {
             background: linear-gradient(135deg, var(--accent-green), #059669);
@@ -83,28 +99,31 @@
             color: #fff;
             border: none;
         }
-        .btn-gold:hover { background: linear-gradient(135deg, #d97706, #b45309); }
 
         .btn-danger {
             background: rgba(239, 68, 68, 0.2);
             color: #fca5a5;
             border: 1px solid rgba(239, 68, 68, 0.4);
         }
-        .btn-danger:hover { background: rgba(239, 68, 68, 0.35); color: #fff; }
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.35);
+            color: #fff;
+        }
 
         .btn-xs {
-            padding: 4px 8px;
-            font-size: 11.5px;
-            border-radius: 4px;
+            padding: 3px 8px;
+            font-size: 11px;
+            border-radius: var(--radius-sm);
         }
 
         .main-container {
-            max-width: 1700px;
-            width: 97%;
+            max-width: 1850px;
+            width: 98%;
             margin: 20px auto;
             display: flex;
             flex-direction: column;
             gap: 16px;
+            flex: 1;
         }
 
         .card {
@@ -115,21 +134,12 @@
             padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
-
-        .header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
+            gap: 14px;
         }
 
         .search-input {
             width: 100%;
-            background: rgba(15, 23, 42, 0.8);
+            background: rgba(15, 23, 42, 0.9);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
             padding: 10px 14px;
@@ -137,59 +147,95 @@
             font-size: 13.5px;
             outline: none;
         }
-        .search-input:focus { border-color: var(--accent-primary); }
+        .search-input:focus {
+            border-color: var(--accent-primary);
+        }
 
+        /* Table Styling */
         .labels-table-wrapper {
             overflow-x: auto;
-            border-radius: var(--radius-md);
+            max-height: 700px;
             border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: rgba(15, 23, 42, 0.6);
         }
 
         .labels-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 12.5px;
-        }
-
-        .labels-table th, .labels-table td {
-            padding: 8px 10px;
+            font-size: 12px;
             text-align: left;
-            border-bottom: 1px solid var(--border-color);
-            white-space: nowrap;
         }
 
         .labels-table th {
-            background: rgba(15, 23, 42, 0.9);
-            font-size: 11px;
-            text-transform: uppercase;
-            color: var(--text-muted);
+            position: sticky;
+            top: 0;
+            background: rgba(15, 23, 42, 0.95);
+            color: var(--accent-gold);
             font-weight: 700;
+            padding: 10px 8px;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+            z-index: 10;
         }
 
-        .labels-table input {
-            background: rgba(15, 23, 42, 0.7);
+        .labels-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            vertical-align: middle;
+        }
+
+        .labels-table tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .labels-table input[type="text"], .labels-table select {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.8);
             border: 1px solid var(--border-color);
             border-radius: 4px;
             padding: 4px 6px;
-            color: var(--text-main);
-            font-size: 12px;
-            width: 100%;
+            color: #fff;
+            font-size: 11.5px;
             outline: none;
         }
-        .labels-table input:focus { border-color: var(--accent-primary); }
+
+        .labels-table input[type="text"]:focus, .labels-table select:focus {
+            border-color: var(--accent-primary);
+            background: #0f172a;
+        }
+
+        .input-warning {
+            border-color: var(--accent-gold) !important;
+            background: rgba(245, 158, 11, 0.15) !important;
+            color: #fef08a !important;
+        }
+
+        .row-new {
+            background: rgba(16, 185, 129, 0.1) !important;
+            border-left: 3px solid var(--accent-green);
+        }
 
         .msg-toast {
             position: fixed;
             bottom: 20px;
             right: 20px;
+            background: var(--accent-green);
+            color: #fff;
             padding: 12px 20px;
             border-radius: var(--radius-md);
-            background: #10b981;
-            color: #fff;
             font-weight: 700;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
             display: none;
             z-index: 1000;
+        }
+
+        .actions-cell {
+            display: flex;
+            gap: 4px;
+            justify-content: flex-end;
+            align-items: center;
+            white-space: nowrap;
         }
     </style>
 </head>
@@ -197,12 +243,16 @@
 
     <nav class="navbar">
         <div style="display:flex; align-items:center; gap:12px;">
-            <a href="/MetaleSzlachetnePolska/etykiety" class="btn">← Generator etykiet</a>
-            <span class="brand-title">✏️ Edytor Bazy Monet</span>
+            <a href="/MetaleSzlachetnePolska/etykiety" style="text-decoration:none;">
+                <img src="/MetaleSzlachetnePolska/metale_polska_icon.webp" alt="Logo" style="width:36px; height:36px; border-radius:50%;">
+            </a>
+            <div>
+                <div class="brand-title">✏️ Edytor Monet (Bazy Danych)</div>
+                <div style="font-size: 11.5px; color: var(--text-muted);">Zarządzanie wpisami, parametryzacja i duplikowanie</div>
+            </div>
         </div>
-        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-            <span style="font-size:13px; color:var(--text-muted); margin-right:4px;">Zalogowano: <strong>{{ current_user }}</strong></span>
-            
+
+        <div class="nav-actions">
             <a href="/MetaleSzlachetnePolska/etykiety/admin/add" class="btn">
                 ➕ Dodaj Monety (CSV)
             </a>
@@ -228,18 +278,36 @@
     </nav>
 
     <div class="main-container">
+        
         <div class="card">
-            <div class="header-row">
-                <div style="font-size: 15px; font-weight: 800; color: var(--accent-gold); display:flex; align-items:center; gap:12px;">
-                    🔍 Wyszukiwarka Monet
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <span style="font-weight:700; font-size:15px; color:var(--text-main);" id="results-count">Ładowanie monet...</span>
+                    <span style="font-size:12px; color:var(--text-muted);" id="long-labels-count"></span>
+
+                    <div style="display:inline-flex; align-items:center; gap:4px; margin-left:8px; background:rgba(15,23,42,0.6); padding:3px 8px; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+                        <span style="font-size:11.5px; color:var(--text-muted); margin-right:4px;">Limit:</span>
+                        <button class="btn btn-xs btn-limit" data-limit="100" onclick="setLimit(100)" style="background:linear-gradient(135deg, var(--accent-primary), #4f46e5); font-weight:700;">100</button>
+                        <button class="btn btn-xs btn-limit" data-limit="200" onclick="setLimit(200)">200</button>
+                        <button class="btn btn-xs btn-limit" data-limit="500" onclick="setLimit(500)">500</button>
+                        <button class="btn btn-xs btn-limit" data-limit="1000" onclick="setLimit(1000)">1000</button>
+                    </div>
                 </div>
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <span id="results-count" style="font-size: 12.5px; color: var(--text-muted); font-weight: 600;">
-                        Wyświetlanie max 50 wyników
-                    </span>
-                    <button class="btn btn-green" onclick="saveAllRows()" style="padding: 6px 14px; font-size: 13px;">
+
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <button id="btn-filter-long" class="btn btn-gold" onclick="toggleLongLabelsFilter()" style="padding: 6px 14px; font-size: 12.5px;">
+                        📏 Długie etykiety
+                    </button>
+
+                    <button class="btn btn-green" onclick="saveAllRows()" style="padding: 6px 14px; font-size: 12.5px;">
                         💾 Zapisz Wszystkie Zmiany
                     </button>
+
+                    {% if current_role == 'admin' or session.get('labels_role') == 'admin' %}
+                    <button class="btn btn-danger" onclick="clearDatabaseWithBackup()" style="padding: 6px 14px; font-size: 12.5px;">
+                        🗑️ Wyczyść całą bazę
+                    </button>
+                    {% endif %}
                 </div>
             </div>
 
@@ -249,20 +317,26 @@
                 <table class="labels-table">
                     <thead>
                         <tr>
-                            <th style="width: 45px;">#</th>
-                            <th style="width: 80px;">Waluta Przed</th>
-                            <th style="width: 80px;">Nominał</th>
-                            <th style="width: 80px;">Waluta Po</th>
-                            <th style="width: 90px;">Stop</th>
-                            <th style="width: 80px;">Rok</th>
-                            <th style="width: 220px;">Seria</th>
+                            <th style="width: 35px;">#</th>
+                            <th style="width: 65px;">Przed</th>
+                            <th style="width: 55px;">Nominał</th>
+                            <th style="width: 60px;">Po</th>
+                            <th style="width: 65px;">Stop</th>
+                            <th style="width: 60px;">Rok</th>
+                            <th style="width: 50px;">Kraj</th>
+                            <th style="width: 140px;">Seria</th>
                             <th>Nazwa / Tytuł</th>
-                            <th style="width: 120px;">Nakład</th>
-                            <th style="width: 150px; text-align: right;">Akcje</th>
+                            <th style="width: 90px;">Nakład</th>
+                            <th style="width: 80px;">Rant</th>
+                            <th style="width: 85px;">Typ</th>
+                            <th style="width: 65px;">Waga</th>
+                            <th style="width: 65px;">Średnica</th>
+                            <th style="width: 50px;">Trial</th>
+                            <th style="width: 160px; text-align: right;">Akcje</th>
                         </tr>
                     </thead>
                     <tbody id="labels-tbody">
-                        <tr><td colspan="10" style="text-align:center; padding:30px; color:var(--text-muted);">Ładowanie danych z bazy...</td></tr>
+                        <tr><td colspan="16" style="text-align:center; padding:30px; color:var(--text-muted);">Ładowanie danych z bazy...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -273,7 +347,9 @@
 
 <script>
 let searchDebounceTimer = null;
-let currentLabelsList = [];
+let currentLabelsList = []; // Tablica obiektów { original_fp, is_new, item }
+let isFilterLongActive = false;
+let currentLimit = 100;
 
 function showToast(msg, isError = false) {
     const toast = document.getElementById('toast');
@@ -288,6 +364,111 @@ function escapeHtml(str) {
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
+function parseFlexibleNumber(val) {
+    if (val === undefined || val === null) return "";
+    let s = String(val).trim();
+    if (!s) return "";
+
+    let lastDot = s.lastIndexOf('.');
+    let lastComma = s.lastIndexOf(',');
+
+    if (lastDot === -1 && lastComma === -1) {
+        return s.replace(/\s+/g, '');
+    }
+
+    if (lastDot !== -1 && lastComma !== -1) {
+        if (lastDot > lastComma) {
+            let integerPart = s.substring(0, lastDot).replace(/[.,\s]/g, '');
+            let decimalPart = s.substring(lastDot + 1);
+            return integerPart + '.' + decimalPart;
+        } else {
+            let integerPart = s.substring(0, lastComma).replace(/[.,\s]/g, '');
+            let decimalPart = s.substring(lastComma + 1);
+            return integerPart + '.' + decimalPart;
+        }
+    }
+
+    let sepChar = lastDot !== -1 ? '.' : ',';
+    let count = (s.split(sepChar).length - 1);
+    
+    if (count === 1) {
+        let parts = s.split(sepChar);
+        let intP = parts[0].replace(/\s+/g, '');
+        let decP = parts[1];
+        return intP + '.' + decP;
+    } else {
+        return s.replace(/[.,\s]/g, '');
+    }
+}
+
+function cleanLabelItem(item) {
+    if (!item || !Array.isArray(item)) return ["","","","","2","","","","","","","",false,"pl"];
+
+    let year = String(item[0] || "");
+    let series = String(item[1] || "");
+    let name = String(item[2] || "");
+    let mintage = parseFlexibleNumber(item[3] || "");
+    let nominal = String(item[4] || "");
+    let currencyAfter = String(item[5] || "");
+    let stop = String(item[6] || "");
+    let currencyBefore = item[7];
+
+    if (typeof currencyBefore === 'boolean' || currencyBefore === 'true' || currencyBefore === 'false') {
+        currencyBefore = "";
+    } else {
+        currencyBefore = String(currencyBefore || "");
+    }
+
+    let rant = String(item[8] || "");
+    let typ = String(item[9] || "");
+    let weight = item[10] !== undefined && item[10] !== null ? parseFlexibleNumber(item[10]) : "";
+    let diameter = item[11] !== undefined && item[11] !== null ? parseFlexibleNumber(item[11]) : "";
+    let trial = Boolean(item[12] === true || String(item[12]).toLowerCase() === 'true' || String(item[12]).toLowerCase() === '1' || String(item[12]).toLowerCase() === 'próba');
+    let country = String(item[13] || "pl").toLowerCase().trim() || "pl";
+
+    return [year, series, name, mintage, nominal, currencyAfter, stop, currencyBefore, rant, typ, weight, diameter, trial, country];
+}
+
+function makeFingerprint(item) {
+    if (!item || !Array.isArray(item)) return "";
+    const clean = cleanLabelItem(item);
+    const year = String(clean[0]).trim();
+    const series = String(clean[1]).trim().toLowerCase();
+    const name = String(clean[2]).trim().toLowerCase();
+    const nominal = String(clean[4]).trim().toLowerCase();
+    const cur_after = String(clean[5]).trim().toLowerCase();
+    const stop = String(clean[6]).trim().toLowerCase();
+    const cur_before = String(clean[7]).trim().toLowerCase();
+    const rant = String(clean[8]).trim().toLowerCase();
+    const typ = String(clean[9]).trim().toLowerCase();
+    const weight = String(clean[10]).trim();
+    const diameter = String(clean[11]).trim();
+    const trial = clean[12] ? '1' : '0';
+    const country = String(clean[13] || 'pl').trim().toLowerCase() || 'pl';
+
+    return `${country}|${year}|${series}|${name}|${nominal}|${cur_before}|${cur_after}|${stop}|${rant}|${typ}|${weight}|${diameter}|${trial}`;
+}
+
+function getFullTitleLength(series, name) {
+    const s = String(series || '').trim();
+    const n = String(name || '').trim();
+    const full = s ? `${s}: ${n}` : n;
+    return full.length;
+}
+
+function toggleLongLabelsFilter() {
+    isFilterLongActive = !isFilterLongActive;
+    const btn = document.getElementById('btn-filter-long');
+    if (isFilterLongActive) {
+        btn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+        btn.textContent = '❌ Anuluj filtr długich etykiet';
+    } else {
+        btn.style.background = 'linear-gradient(135deg, var(--accent-gold), #d97706)';
+        btn.textContent = '📏 Długie etykiety';
+    }
+    renderTable();
+}
+
 function onSearchInput() {
     clearTimeout(searchDebounceTimer);
     searchDebounceTimer = setTimeout(() => {
@@ -295,95 +476,198 @@ function onSearchInput() {
     }, 180);
 }
 
+function setLimit(newLimit) {
+    currentLimit = newLimit;
+    document.querySelectorAll('.btn-limit').forEach(btn => {
+        const lim = parseInt(btn.dataset.limit);
+        if (lim === currentLimit) {
+            btn.style.background = 'linear-gradient(135deg, var(--accent-primary), #4f46e5)';
+            btn.style.fontWeight = '700';
+        } else {
+            btn.style.background = 'var(--bg-card)';
+            btn.style.fontWeight = '400';
+        }
+    });
+    loadLabels();
+}
+
 async function loadLabels() {
     const query = document.getElementById('search-input').value.trim();
     const tbody = document.getElementById('labels-tbody');
-    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:20px; color:var(--text-muted);">⏳ Ładowanie wyników...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="16" style="text-align:center; padding:20px; color:var(--text-muted);">⏳ Ładowanie wyników...</td></tr>';
 
     try {
-        const response = await fetch('/api/labels?q=' + encodeURIComponent(query) + '&limit=50');
+        const response = await fetch('/api/labels?q=' + encodeURIComponent(query) + '&limit=' + currentLimit);
         const data = await response.json();
-        currentLabelsList = data.labels || [];
+        const rawLabels = data.labels || [];
         
-        document.getElementById('results-count').textContent = `Wyświetlono ${currentLabelsList.length} pozycji (max 50)`;
+        currentLabelsList = rawLabels.map(item => {
+            const clean = cleanLabelItem(item);
+            return {
+                original_fp: makeFingerprint(clean),
+                is_new: false,
+                item: clean
+            };
+        });
 
-        if (currentLabelsList.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:var(--text-muted);">Brak pozycji spełniających kryteria.</td></tr>';
-            return;
+        renderTable();
+    } catch(e) {
+        tbody.innerHTML = '<tr><td colspan="16" style="text-align:center; color:#fca5a5;">⚠️ Błąd pobierania danych.</td></tr>';
+    }
+}
+
+function renderTable() {
+    const tbody = document.getElementById('labels-tbody');
+    const longCount = currentLabelsList.filter(rowObj => getFullTitleLength(rowObj.item[1], rowObj.item[2]) > 40).length;
+
+    document.getElementById('long-labels-count').textContent = `(Za długich >40 zn: ${longCount})`;
+    document.getElementById('results-count').textContent = `Wyświetlono ${currentLabelsList.length} pozycji (max ${currentLimit})`;
+
+    let displayList = currentLabelsList.map((rowObj, idx) => ({ rowObj, idx }));
+    if (isFilterLongActive) {
+        displayList = displayList.filter(entry => getFullTitleLength(entry.rowObj.item[1], entry.rowObj.item[2]) > 40);
+    }
+
+    if (displayList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="16" style="text-align:center; padding:30px; color:var(--text-muted);">Brak pozycji spełniających kryteria.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = displayList.map(entry => {
+        const idx = entry.idx;
+        const rowObj = entry.rowObj;
+        const item = rowObj.item;
+
+        const year = item[0] || '';
+        const series = item[1] || '';
+        const name = item[2] || '';
+        const mintage = item[3] || '';
+        const nominal = item[4] || '';
+        const currencyAfter = item[5] || '';
+        const stop = item[6] || '';
+        let currencyBefore = item[7];
+        if (typeof currencyBefore === 'boolean' || currencyBefore === 'true' || currencyBefore === 'false') {
+            currencyBefore = "";
+        } else {
+            currencyBefore = String(currencyBefore || "");
         }
 
-        tbody.innerHTML = currentLabelsList.map((item, idx) => {
-            const year = item[0] || '';
-            const series = item[1] || '';
-            const name = item[2] || '';
-            const mintage = item[3] || '';
-            const nominal = item[4] || '';
-            const currencyAfter = item[5] || '';
-            const stop = item[6] || '';
-            let currencyBefore = item[7];
-            if (typeof currencyBefore === 'boolean' || currencyBefore === 'true' || currencyBefore === 'false') {
-                currencyBefore = "";
-            } else {
-                currencyBefore = String(currencyBefore || "");
-            }
+        const rant = item[8] || '';
+        const typ = item[9] || '';
+        const weight = item[10] || '';
+        const diameter = item[11] || '';
+        const trial = Boolean(item[12] === true);
+        const country = (item[13] || 'pl').toLowerCase().trim();
 
-            return `
-                <tr id="row-${idx}">
-                    <td style="font-weight:700; color:var(--text-muted);">${idx + 1}</td>
-                    <td><input type="text" id="cur-before-${idx}" value="${escapeHtml(currencyBefore)}" placeholder="£ / $"></td>
-                    <td><input type="text" id="nominal-${idx}" value="${escapeHtml(nominal)}"></td>
-                    <td><input type="text" id="cur-after-${idx}" value="${escapeHtml(currencyAfter)}"></td>
-                    <td><input type="text" id="stop-${idx}" value="${escapeHtml(stop)}"></td>
-                    <td><input type="text" id="year-${idx}" value="${escapeHtml(year)}"></td>
-                    <td><input type="text" id="series-${idx}" value="${escapeHtml(series)}"></td>
-                    <td><input type="text" id="name-${idx}" value="${escapeHtml(name)}"></td>
-                    <td><input type="text" id="mintage-${idx}" value="${escapeHtml(mintage)}"></td>
-                    <td style="text-align:right;">
-                        <button class="btn btn-green btn-xs" onclick="saveRow(${idx})">💾 Zapisz</button>
-                        <button class="btn btn-danger btn-xs" onclick="deleteRow(${idx})">🗑️ Usuń</button>
-                    </td>
-                </tr>
-            `;
-        }).join('');
-    } catch(e) {
-        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:#fca5a5;">⚠️ Błąd pobierania danych.</td></tr>';
-    }
+        const titleLength = getFullTitleLength(series, name);
+        const isLong = titleLength > 40;
+
+        let trStyle = '';
+        if (rowObj.is_new) {
+            trStyle = 'background: rgba(16, 185, 129, 0.1); border-left: 3px solid var(--accent-green);';
+        } else if (isLong) {
+            trStyle = 'background: rgba(245, 158, 11, 0.05);';
+        }
+
+        return `
+            <tr id="row-${idx}" style="${trStyle}">
+                <td style="font-weight:700; color:var(--text-muted);">${idx + 1}</td>
+                <td><input type="text" id="cur-before-${idx}" value="${escapeHtml(currencyBefore)}" placeholder="£/$"></td>
+                <td><input type="text" id="nominal-${idx}" value="${escapeHtml(nominal)}"></td>
+                <td><input type="text" id="cur-after-${idx}" value="${escapeHtml(currencyAfter)}"></td>
+                <td><input type="text" id="stop-${idx}" value="${escapeHtml(stop)}"></td>
+                <td><input type="text" id="year-${idx}" value="${escapeHtml(year)}"></td>
+                <td><input type="text" id="country-${idx}" value="${escapeHtml(country)}" placeholder="pl/us/uk"></td>
+                <td><input type="text" id="series-${idx}" value="${escapeHtml(series)}" class="${isLong ? 'input-warning' : ''}"></td>
+                <td>
+                    <input type="text" id="name-${idx}" value="${escapeHtml(name)}" class="${isLong ? 'input-warning' : ''}" title="Długość pełnej nazwy: ${titleLength} zn.">
+                </td>
+                <td><input type="text" id="mintage-${idx}" value="${escapeHtml(mintage)}"></td>
+                <td><input type="text" id="rant-${idx}" value="${escapeHtml(rant)}" placeholder="gładki/ząbkowany"></td>
+                <td><input type="text" id="typ-${idx}" value="${escapeHtml(typ)}" placeholder="stempel zwykły"></td>
+                <td><input type="text" id="weight-${idx}" value="${escapeHtml(weight)}" placeholder="np. 14.14"></td>
+                <td><input type="text" id="diameter-${idx}" value="${escapeHtml(diameter)}" placeholder="np. 27.00"></td>
+                <td style="text-align:center;">
+                    <input type="checkbox" id="trial-${idx}" ${trial ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer;">
+                </td>
+                <td class="actions-cell">
+                    <button class="btn btn-green btn-xs" onclick="saveRow(${idx})" title="Zapisz ten wiersz w bazie">💾</button>
+                    <button class="btn btn-gold btn-xs" onclick="duplicateRow(${idx})" title="Duplikuj ten wiersz (nowy wariant)">📋 Duplikuj</button>
+                    <button class="btn btn-danger btn-xs" onclick="deleteRow(${idx})" title="Usuń z bazy">🗑️</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function extractRowFromDOM(idx) {
+    const year = document.getElementById(`year-${idx}`).value.trim();
+    const series = document.getElementById(`series-${idx}`).value.trim();
+    const name = document.getElementById(`name-${idx}`).value.trim();
+    const mintage = parseFlexibleNumber(document.getElementById(`mintage-${idx}`).value);
+    const nominal = document.getElementById(`nominal-${idx}`).value.trim();
+    const currencyAfter = document.getElementById(`cur-after-${idx}`).value.trim();
+    const stop = document.getElementById(`stop-${idx}`).value.trim();
+    const currencyBefore = document.getElementById(`cur-before-${idx}`).value.trim();
+    const country = (document.getElementById(`country-${idx}`).value || 'pl').toLowerCase().trim();
+    const rant = document.getElementById(`rant-${idx}`).value.trim();
+    const typ = document.getElementById(`typ-${idx}`).value.trim();
+    const weight = parseFlexibleNumber(document.getElementById(`weight-${idx}`).value);
+    const diameter = parseFlexibleNumber(document.getElementById(`diameter-${idx}`).value);
+    const trial = document.getElementById(`trial-${idx}`).checked;
+
+    return [year, series, name, mintage, nominal, currencyAfter, stop, currencyBefore, rant, typ, weight, diameter, trial, country];
 }
 
 async function saveRow(idx) {
     if (idx < 0 || idx >= currentLabelsList.length) return;
-    const origItem = currentLabelsList[idx];
-
-    const updatedItem = [
-        document.getElementById(`year-${idx}`).value.trim(),
-        document.getElementById(`series-${idx}`).value.trim(),
-        document.getElementById(`name-${idx}`).value.trim(),
-        document.getElementById(`mintage-${idx}`).value.trim(),
-        document.getElementById(`nominal-${idx}`).value.trim(),
-        document.getElementById(`cur-after-${idx}`).value.trim(),
-        document.getElementById(`stop-${idx}`).value.trim(),
-        document.getElementById(`cur-before-${idx}`).value.trim()
-    ];
+    const rowObj = currentLabelsList[idx];
+    const updatedItem = extractRowFromDOM(idx);
 
     try {
         const response = await fetch('/api/admin/labels/update', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                original: origItem,
+                original_fp: rowObj.original_fp,
+                is_new: rowObj.is_new,
+                original: rowObj.item,
                 updated: updatedItem
             })
         });
         const res = await response.json();
         if (res.success) {
-            showToast("Zapisano zmiany w bazie monet!");
-            currentLabelsList[idx] = updatedItem;
+            showToast("Zapisano zmianę w bazie monet!");
+            rowObj.original_fp = makeFingerprint(updatedItem);
+            rowObj.is_new = false;
+            rowObj.item = updatedItem;
+            renderTable();
         } else {
             showToast("Błąd zapisu: " + (res.error || "Wystąpił błąd"), true);
         }
     } catch(e) {
         showToast("Błąd połączenia z serwerem", true);
     }
+}
+
+function duplicateRow(idx) {
+    if (idx < 0 || idx >= currentLabelsList.length) return;
+    
+    // Odczytujemy aktualny stan z DOM
+    const currentDOMItem = extractRowFromDOM(idx);
+    
+    // Tworzymy nową pozycję oznaczoną jako is_new = true
+    const newEntry = {
+        original_fp: null,
+        is_new: true,
+        item: cleanLabelItem(currentDOMItem)
+    };
+    
+    // Wstawiamy nowy wiersz tuż pod oryginalnym wierszem
+    currentLabelsList.splice(idx + 1, 0, newEntry);
+    
+    showToast("Zduplikowano wiersz! Zmodyfikuj różniące się parametry (np. Rok, Typ, Trial) i kliknij 💾 Zapisz.");
+    renderTable();
 }
 
 async function saveAllRows() {
@@ -393,23 +677,15 @@ async function saveAllRows() {
     }
 
     const updates = [];
-    currentLabelsList.forEach((origItem, idx) => {
+    currentLabelsList.forEach((rowObj, idx) => {
         const rowYear = document.getElementById(`year-${idx}`);
         if (!rowYear) return;
 
-        const updatedItem = [
-            document.getElementById(`year-${idx}`).value.trim(),
-            document.getElementById(`series-${idx}`).value.trim(),
-            document.getElementById(`name-${idx}`).value.trim(),
-            document.getElementById(`mintage-${idx}`).value.trim(),
-            document.getElementById(`nominal-${idx}`).value.trim(),
-            document.getElementById(`cur-after-${idx}`).value.trim(),
-            document.getElementById(`stop-${idx}`).value.trim(),
-            document.getElementById(`cur-before-${idx}`).value.trim()
-        ];
-
+        const updatedItem = extractRowFromDOM(idx);
         updates.push({
-            original: origItem,
+            original_fp: rowObj.original_fp,
+            is_new: rowObj.is_new,
+            original: rowObj.item,
             updated: updatedItem
         });
     });
@@ -427,10 +703,8 @@ async function saveAllRows() {
         });
         const res = await response.json();
         if (res.success) {
-            showToast(`Pomyślnie zapisano zmiany we wszystkich ${res.updated_count || updates.length} wierszach!`);
-            updates.forEach((u, i) => {
-                currentLabelsList[i] = u.updated;
-            });
+            showToast(`Pomyślnie zapisano zmiany we wszystkich ${updates.length} wierszach!`);
+            loadLabels();
         } else {
             showToast("Błąd zapisu zbiorczego: " + (res.error || "Wystąpił błąd"), true);
         }
@@ -441,7 +715,14 @@ async function saveAllRows() {
 
 async function deleteRow(idx) {
     if (idx < 0 || idx >= currentLabelsList.length) return;
-    const item = currentLabelsList[idx];
+    const rowObj = currentLabelsList[idx];
+
+    if (rowObj.is_new) {
+        currentLabelsList.splice(idx, 1);
+        showToast("Usunięto niezapisany zduplikowany wiersz.");
+        renderTable();
+        return;
+    }
 
     if (!confirm("Czy na pewno chcesz usunąć tę monetę z bazy danych?")) return;
 
@@ -449,7 +730,7 @@ async function deleteRow(idx) {
         const response = await fetch('/api/admin/labels', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: item[2] || '', label: item })
+            body: JSON.stringify({ label: rowObj.item })
         });
         const res = await response.json();
         if (res.success || res.status === "success") {
@@ -460,6 +741,49 @@ async function deleteRow(idx) {
         }
     } catch(e) {
         showToast("Błąd połączenia z serwerem", true);
+    }
+}
+
+async function clearDatabaseWithBackup() {
+    showToast("⬇️ Generowanie i pobieranie kopii zapasowej CSV...");
+    
+    // Auto-trigger CSV download
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = '/MetaleSzlachetnePolska/etykiety/admin/export-csv';
+    document.body.appendChild(iframe);
+
+    await new Promise(r => setTimeout(r, 1200));
+
+    const confirmed = confirm(
+        "Kopia zapasowa CSV została wyeksportowana i pobrana do przeglądarki.\n\n" +
+        "⚠️ OSTRZEŻENIE: Czy na pewno chcesz WYCZYŚCIĆ CAŁĄ BAZĘ monet?\n\n" +
+        "Wszystkie pozycje zostaną bezpowrotnie usunięte z serwera!"
+    );
+
+    if (!confirmed) {
+        showToast("Czyszczenie bazy zostało anulowane.");
+        setTimeout(() => { if (iframe.parentNode) iframe.parentNode.removeChild(iframe); }, 2000);
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/admin/labels/clear', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+        if (data.success || data.status === 'success') {
+            showToast("✅ Cała baza etykiet została pomyślnie wyczyszczona.");
+            currentLabelsList = [];
+            renderTable();
+        } else {
+            showToast("⚠️ " + (data.error || "Nie udało się wyczyścić bazy."), true);
+        }
+    } catch(e) {
+        showToast("⚠️ Błąd połączenia z serwerem podczas czyszczenia bazy.", true);
+    } finally {
+        setTimeout(() => { if (iframe.parentNode) iframe.parentNode.removeChild(iframe); }, 2000);
     }
 }
 

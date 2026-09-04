@@ -3,23 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generator etykiet - Metale Szlachetne Polska</title>
+    <title>Generator etykiet na holdery - Metale Szlachetne Polska</title>
     <!-- Google Fonts Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
         :root {
             --bg-main: #0f172a;
-            --bg-card: rgba(30, 41, 59, 0.75);
-            --bg-card-hover: rgba(30, 41, 59, 0.95);
+            --bg-card: rgba(30, 41, 59, 0.8);
+            --bg-card-hover: rgba(51, 65, 85, 0.8);
             --accent-primary: #6366f1;
-            --accent-primary-hover: #4f46e5;
             --accent-gold: #f59e0b;
-            --accent-gold-hover: #d97706;
-            --accent-discord: #5865F2;
             --accent-green: #10b981;
-            --accent-green-hover: #059669;
+            --accent-red: #ef4444;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --border-color: rgba(255, 255, 255, 0.1);
@@ -29,112 +27,99 @@
             --radius-sm: 6px;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-main);
             background-image: 
                 radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.12) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(88, 101, 242, 0.15) 0px, transparent 50%);
+                radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.15) 0px, transparent 50%);
             color: var(--text-main);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
 
-        /* Navbar */
+        /* Top Navbar */
         .navbar {
             background: rgba(15, 23, 42, 0.85);
             backdrop-filter: var(--glass-blur);
             border-bottom: 1px solid var(--border-color);
-            position: sticky;
-            top: 0;
-            z-index: 100;
             padding: 14px 28px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .brand {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 12px;
             text-decoration: none;
             color: inherit;
         }
 
         .discord-brand-icon {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, #5865F2, #7289da);
-            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 14px rgba(88, 101, 242, 0.4);
-            flex-shrink: 0;
+            text-decoration: none;
         }
 
-        .discord-brand-icon svg {
-            width: 22px;
-            height: 22px;
-            fill: #ffffff;
+        .discord-brand-icon img {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            object-fit: cover;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .discord-brand-icon:hover img {
+            transform: scale(1.08);
+            box-shadow: 0 0 12px rgba(245, 158, 11, 0.6);
         }
 
         .brand-title {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 800;
-            letter-spacing: -0.5px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--text-main);
-        }
-
-        .version-badge {
-            font-size: 11px;
-            font-weight: 700;
-            background: rgba(99, 102, 241, 0.2);
-            color: var(--accent-primary);
-            border: 1px solid rgba(99, 102, 241, 0.4);
-            padding: 2px 8px;
-            border-radius: 12px;
-            letter-spacing: 0.5px;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #fff 30%, var(--text-muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .brand-subtitle {
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-muted);
-            font-weight: 400;
+            font-weight: 500;
         }
 
         .nav-actions {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
+        /* Buttons */
         .btn {
             background: var(--bg-card);
             color: var(--text-main);
             border: 1px solid var(--border-color);
-            padding: 8px 14px;
+            padding: 8px 16px;
             border-radius: var(--radius-md);
             font-weight: 600;
             font-size: 13px;
             cursor: pointer;
+            text-decoration: none;
             display: inline-flex;
             align-items: center;
             gap: 6px;
             transition: all 0.2s ease;
-            text-decoration: none;
-            user-select: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         .btn:hover {
@@ -146,20 +131,20 @@
             background: linear-gradient(135deg, var(--accent-green), #059669);
             color: #fff;
             border: none;
-            box-shadow: 0 3px 10px rgba(16, 185, 129, 0.35);
         }
         .btn-green:hover {
             background: linear-gradient(135deg, #059669, #047857);
+            box-shadow: 0 0 14px rgba(16, 185, 129, 0.4);
         }
 
         .btn-gold {
-            background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-hover));
+            background: linear-gradient(135deg, var(--accent-gold), #d97706);
             color: #fff;
             border: none;
-            box-shadow: 0 3px 10px rgba(245, 158, 11, 0.35);
         }
         .btn-gold:hover {
-            background: linear-gradient(135deg, var(--accent-gold-hover), #b45309);
+            background: linear-gradient(135deg, #d97706, #b45309);
+            box-shadow: 0 0 14px rgba(245, 158, 11, 0.4);
         }
 
         .btn-danger {
@@ -173,66 +158,46 @@
         }
 
         .btn-xs {
-            padding: 2px 7px;
-            font-size: 11px;
-            height: 26px;
-            border-radius: 4px;
+            padding: 4px 10px;
+            font-size: 11.5px;
+            border-radius: var(--radius-sm);
         }
 
-        /* Layout Container */
+        /* Layout Grid */
         .main-container {
-            max-width: 1650px;
-            width: 96%;
+            max-width: 1700px;
+            width: 97%;
             margin: 20px auto;
-            padding: 0 16px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
-            flex-grow: 1;
+            gap: 20px;
+            flex: 1;
         }
 
-        .page-title-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        .page-title {
-            font-size: 20px;
-            font-weight: 800;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        /* Two-Column Grid */
-        .two-column-grid {
+        .two-columns {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
-            align-items: flex-start;
         }
 
-        @media (max-width: 1024px) {
-            .two-column-grid {
+        @media (max-width: 1100px) {
+            .two-columns {
                 grid-template-columns: 1fr;
             }
         }
 
-        /* Column Cards */
+        /* Card Container */
         .column-card {
             background: var(--bg-card);
             backdrop-filter: var(--glass-blur);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-lg);
-            padding: 16px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 16px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            min-height: 680px;
+
         }
 
         .column-header {
@@ -240,36 +205,34 @@
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
-            flex-wrap: wrap;
-            gap: 8px;
+            padding-bottom: 12px;
         }
 
         .column-title {
-            font-size: 15px;
+            font-size: 16px;
             font-weight: 700;
             color: var(--accent-gold);
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .badge-count {
-            background: rgba(99, 102, 241, 0.25);
+            background: rgba(99, 102, 241, 0.15);
             color: #a5b4fc;
-            border: 1px solid rgba(99, 102, 241, 0.4);
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 11.5px;
-            font-weight: 700;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
         }
 
-        /* Form for Adding New Session Label */
+        /* Forms & Inputs */
         .add-form-card {
-            background: rgba(15, 23, 42, 0.7);
-            border: 1px solid var(--border-color);
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px dashed var(--border-color);
             border-radius: var(--radius-md);
-            padding: 12px;
+            padding: 12px 14px;
             display: flex;
             flex-direction: column;
             gap: 8px;
@@ -286,179 +249,229 @@
             flex-direction: column;
             gap: 3px;
             flex: 1;
-            min-width: 65px;
+            min-width: 90px;
         }
 
         .form-field label {
-            font-size: 10px;
-            font-weight: 700;
+            font-size: 10.5px;
             color: var(--text-muted);
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            white-space: nowrap;
         }
 
-        .form-field input {
-            background: rgba(30, 41, 59, 0.8);
+        .form-field input, .form-field select {
+            background: rgba(15, 23, 42, 0.8);
             border: 1px solid var(--border-color);
-            border-radius: 4px;
-            padding: 5px 8px;
+            border-radius: var(--radius-sm);
+            padding: 6px 8px;
             color: var(--text-main);
-            font-size: 12.5px;
+            font-size: 12px;
             outline: none;
-            width: 100%;
         }
-
-        .form-field input:focus {
+        .form-field input:focus, .form-field select:focus {
             border-color: var(--accent-primary);
         }
 
-        /* Search input */
         .search-input {
             width: 100%;
-            background: rgba(15, 23, 42, 0.8);
+            background: rgba(15, 23, 42, 0.9);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
-            padding: 8px 12px;
+            padding: 10px 14px;
             color: var(--text-main);
-            font-size: 13px;
+            font-size: 13.5px;
             outline: none;
+            transition: all 0.2s;
         }
         .search-input:focus {
             border-color: var(--accent-primary);
+            box-shadow: 0 0 12px rgba(99, 102, 241, 0.25);
         }
 
-        /* Compact Item Lists (38px height) */
+        /* Items List */
         .items-list {
             display: flex;
             flex-direction: column;
-            gap: 5px;
-            max-height: 520px;
-            overflow-y: auto;
-            padding-right: 2px;
-        }
-
-        .label-item-compact {
-            background: rgba(15, 23, 42, 0.65);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-sm);
-            padding: 4px 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             gap: 6px;
-            height: 40px;
-            box-sizing: border-box;
-            transition: background 0.15s ease, border-color 0.15s ease;
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 4px;
         }
 
+        .items-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        .items-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+        }
+
+        /* Compact Item Line */
+        .label-item-compact {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 6px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            transition: all 0.15s ease;
+        }
         .label-item-compact:hover {
-            background: rgba(30, 41, 59, 0.85);
-            border-color: rgba(99, 102, 241, 0.4);
+            background: var(--bg-card-hover);
+            border-color: rgba(255, 255, 255, 0.2);
         }
 
         .label-main-info-compact {
             display: flex;
             align-items: center;
-            gap: 6px;
-            min-width: 0;
+            gap: 8px;
             flex: 1;
-            overflow: hidden;
-            white-space: nowrap;
+            min-width: 0;
+            flex-wrap: wrap;
+        }
+
+        .country-flag-badge {
+            font-size: 18px;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2px 4px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
         }
 
         .label-tag-compact {
-            background: rgba(245, 158, 11, 0.15);
+            background: rgba(245, 158, 11, 0.12);
             color: var(--accent-gold);
             border: 1px solid rgba(245, 158, 11, 0.3);
-            padding: 1px 6px;
+            padding: 2px 6px;
             border-radius: 4px;
-            font-size: 11px;
+            font-size: 11.5px;
             font-weight: 700;
+            white-space: nowrap;
             flex-shrink: 0;
         }
 
         .label-title-compact {
-            font-size: 12.5px;
+            font-size: 13px;
             font-weight: 600;
-            color: var(--text-main);
+            color: #f1f5f9;
+            white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            white-space: nowrap;
+            transition: color 0.15s ease;
         }
-
-        .label-mintage-compact {
-            color: var(--text-muted);
-            font-size: 11.5px;
-            flex-shrink: 0;
+        .label-title-compact:hover {
+            color: var(--accent-gold);
         }
 
         .label-session-tag {
-            background: rgba(16, 185, 129, 0.2);
-            color: var(--accent-green);
-            border: 1px solid rgba(16, 185, 129, 0.4);
-            padding: 1px 5px;
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 1px 6px;
             border-radius: 4px;
-            font-size: 10.5px;
+            font-size: 10px;
             font-weight: 700;
-            flex-shrink: 0;
+            text-transform: uppercase;
         }
 
+        /* Controls */
         .item-controls-compact {
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
             flex-shrink: 0;
         }
 
-        /* Quantity Batch Input Box */
         .input-qty {
             width: 44px;
-            height: 26px;
-            background: rgba(30, 41, 59, 0.9);
+            background: rgba(15, 23, 42, 0.9);
             border: 1px solid var(--border-color);
             border-radius: 4px;
+            padding: 3px 4px;
             color: #fff;
-            font-size: 12px;
             font-weight: 700;
+            font-size: 12px;
             text-align: center;
-            outline: none;
         }
-        .input-qty:focus {
-            border-color: var(--accent-primary);
+
+        /* Stacked Buttons Container */
+        .btn-stacked-group {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            justify-content: center;
+            align-self: center;
+        }
+
+        .btn-mini-stacked {
+            padding: 1px 6px;
+            font-size: 10px;
+            line-height: 1.1;
+            height: 15px;
+            border-radius: 3px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+        }
+
+        .btn-mini-top {
+            background: var(--accent-gold);
+            color: #fff;
+        }
+        .btn-mini-top:hover {
+            background: #d97706;
+        }
+
+        .btn-mini-bottom {
+            background: #6366f1;
+            color: #fff;
+        }
+        .btn-mini-bottom:hover {
+            background: #4f46e5;
         }
 
         .empty-placeholder {
             text-align: center;
-            padding: 36px 20px;
+            padding: 40px 20px;
             color: var(--text-muted);
             font-size: 13px;
-            background: rgba(15, 23, 42, 0.4);
-            border: 1px dashed var(--border-color);
+            background: rgba(15, 23, 42, 0.3);
             border-radius: var(--radius-md);
-            line-height: 1.5;
+            border: 1px dashed var(--border-color);
         }
 
-        /* Footer */
         .footer {
             text-align: center;
-            padding: 20px;
+            padding: 16px;
+            font-size: 12px;
             color: var(--text-muted);
-            font-size: 12.5px;
             border-top: 1px solid var(--border-color);
-            background: rgba(15, 23, 42, 0.6);
             margin-top: auto;
         }
     </style>
 </head>
 <body>
 
+    <!-- Floating Global Tooltip -->
+    <div id="coin-global-tooltip" style="display:none; position:fixed; z-index:10000; background:#0f172a; border:1px solid #f59e0b; box-shadow:0 10px 30px rgba(0,0,0,0.9); border-radius:8px; padding:10px 14px; min-width:220px; font-size:12px; color:#f8fafc; pointer-events:none;"></div>
+
     <!-- Navbar -->
     <nav class="navbar">
         <div class="brand">
             <!-- Logo Icon -->
             <a href="/MetaleSzlachetnePolska" class="discord-brand-icon" title="Metale Szlachetne Polska">
-                <img src="/MetaleSzlachetnePolska/metale_polska_icon.webp" alt="Metale Szlachetne Polska" style="width:38px; height:38px; border-radius:50%; object-fit:cover; display:block;">
+                <img src="/MetaleSzlachetnePolska/metale_polska_icon.webp" alt="Metale Szlachetne Polska">
             </a>
             <div>
                 <div class="brand-title">
@@ -479,22 +492,28 @@
                 </div>
             </div>
         </div>
+
+        <div class="nav-actions">
+            <a href="/MetaleSzlachetnePolska/etykiety/admin/login" class="btn btn-gold" title="Panel zarządzania bazą monet">
+                ⚙️ Panel Admina
+            </a>
+            <a href="/MetaleSzlachetnePolska" class="btn" title="Powrót na portal">
+                ← Powrót do portalu
+            </a>
+        </div>
     </nav>
 
-    <!-- Main Container -->
+    <!-- Main Content -->
     <div class="main-container">
         
-        <div class="page-title-row">
-            <h1 class="page-title">🏷️ Generator etykiet na holdery</h1>
-        </div>
-
-        <!-- Two Column Grid -->
-        <div class="two-column-grid">
-
-            <!-- LEFT COLUMN: Available Labels -->
+        <div class="two-columns">
+            
+            <!-- LEFT COLUMN: Search & Database Items -->
             <div class="column-card">
                 <div class="column-header">
-                    <div class="column-title">📋 Dostępne etykiety</div>
+                    <div class="column-title">
+                        🔍 Baza Monet i Szukanie
+                    </div>
                     <span class="badge-count" id="count-available">0 wyników (max 50)</span>
                 </div>
 
@@ -536,9 +555,13 @@
                             <label>Nazwa / Tytuł</label>
                             <input type="text" id="new-name" placeholder="np. Zbigniew Herbert">
                         </div>
-                        <div class="form-field" style="max-width: 100px;">
+                        <div class="form-field" style="max-width: 90px;">
                             <label>Nakład</label>
                             <input type="text" id="new-mintage" placeholder="1 500 000">
+                        </div>
+                        <div class="form-field" style="max-width: 80px;">
+                            <label>Kraj</label>
+                            <input type="text" id="new-country" value="pl" placeholder="pl / us / uk">
                         </div>
                     </div>
 
@@ -547,13 +570,25 @@
                     </button>
                 </div>
 
-                <!-- Multi-word Search Input -->
-                <input type="text" id="search-input" class="search-input" placeholder="🔍 Szukaj frazy (np. '2007 NG' lub 'Herbert 2008')..." oninput="onSearchInput()">
+                <!-- Unified Single Line Search Controls: Rocznik + Kraj + Szukaj Frazy -->
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <div style="width: 125px; flex-shrink: 0;">
+                        <input type="text" id="filter-year" class="search-input" style="height: 42px; font-size: 13px;" placeholder="📅 Rocznik..." oninput="onSearchInput()">
+                    </div>
+                    <div style="width: 175px; flex-shrink: 0;">
+                        <select id="filter-country" class="search-input" style="height: 42px; font-size: 13px; cursor: pointer; background: #0f172a; color: #fff;" onchange="onSearchInput()">
+                            <option value="">🌐 Wszystkie kraje</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1; min-width: 0;">
+                        <input type="text" id="search-input" class="search-input" style="height: 42px; font-size: 13.5px;" placeholder="🔍 Szukaj frazy (np. '2007 NG' lub 'Herbert 2008')..." oninput="onSearchInput()">
+                    </div>
+                </div>
 
                 <!-- Available Items List -->
                 <div id="list-available" class="items-list">
                     <div class="empty-placeholder">
-                        🔍 Wpisz co najmniej 1 znak w wyszukiwarce powyżej, aby wyszukać etykiety z bazy serwera...
+                        🔍 Wpisz frazę lub wybierz rocznik/kraj, aby wyszukać etykiety z bazy serwera...
                     </div>
                 </div>
             </div>
@@ -563,8 +598,7 @@
                 <div class="column-header">
                     <div class="column-title">
                         🛒 Wybrane etykiety (do druku)
-                        <!-- Test Button: ADD ALL -->
-                        <button class="btn btn-gold btn-xs" onclick="addAllServerLabelsToSelected()" title="Dodaje 1 sztukę każdej etykiety (z sesji użytkownika oraz bazy serwera)" style="margin-left: 6px;">
+                        <button class="btn btn-gold btn-xs" onclick="addAllServerLabelsToSelected()" title="Dodaje 1 sztukę każdej etykiety" style="margin-left: 6px;">
                             &lt;&lt;DODAJ WSZYSTKIE&gt;&gt;
                         </button>
                     </div>
@@ -598,6 +632,35 @@
 
     <!-- JavaScript Application Logic -->
     <script>
+        const COUNTRY_MAP = {
+            'pl': { flag: '🇵🇱', name: 'Polska (PL)' },
+            'us': { flag: '🇺🇸', name: 'USA (US)' },
+            'uk': { flag: '🇬🇧', name: 'Wielka Brytania (UK)' },
+            'gb': { flag: '🇬🇧', name: 'Wielka Brytania (GB)' },
+            'de': { flag: '🇩🇪', name: 'Niemcy (DE)' },
+            'ca': { flag: '🇨🇦', name: 'Kanada (CA)' },
+            'au': { flag: '🇦🇺', name: 'Australia (AU)' },
+            'at': { flag: '🇦🇹', name: 'Austria (AT)' },
+            'ch': { flag: '🇨🇭', name: 'Szwajcaria (CH)' },
+            'fr': { flag: '🇫🇷', name: 'Francja (FR)' },
+            'it': { flag: '🇮🇹', name: 'Włochy (IT)' },
+            'es': { flag: '🇪🇸', name: 'Hiszpania (ES)' },
+            'cz': { flag: '🇨🇿', name: 'Czechy (CZ)' },
+            'sk': { flag: '🇸🇰', name: 'Słowacja (SK)' },
+            'ua': { flag: '🇺🇦', name: 'Ukraina (UA)' },
+            'cn': { flag: '🇨🇳', name: 'Chiny (CN)' },
+            'jp': { flag: '🇯🇵', name: 'Japonia (JP)' }
+        };
+
+        function getCountryInfo(code) {
+            if (!code) return { flag: '🇵🇱', name: 'Polska', code: 'pl' };
+            const c = String(code).toLowerCase().trim();
+            if (COUNTRY_MAP[c]) {
+                return { flag: COUNTRY_MAP[c].flag, name: COUNTRY_MAP[c].name, code: c };
+            }
+            return { flag: '🌐', name: c.toUpperCase(), code: c };
+        }
+
         function escapeHtml(str) {
             if (!str) return '';
             return String(str)
@@ -608,22 +671,59 @@
                 .replace(/'/g, "&#039;");
         }
 
+        function parseFlexibleNumber(val) {
+            if (val === undefined || val === null) return "";
+            let s = String(val).trim();
+            if (!s) return "";
+
+            let lastDot = s.lastIndexOf('.');
+            let lastComma = s.lastIndexOf(',');
+
+            if (lastDot === -1 && lastComma === -1) {
+                return s.replace(/\s+/g, '');
+            }
+
+            if (lastDot !== -1 && lastComma !== -1) {
+                if (lastDot > lastComma) {
+                    let integerPart = s.substring(0, lastDot).replace(/[.,\s]/g, '');
+                    let decimalPart = s.substring(lastDot + 1);
+                    return integerPart + '.' + decimalPart;
+                } else {
+                    let integerPart = s.substring(0, lastComma).replace(/[.,\s]/g, '');
+                    let decimalPart = s.substring(lastComma + 1);
+                    return integerPart + '.' + decimalPart;
+                }
+            }
+
+            let sepChar = lastDot !== -1 ? '.' : ',';
+            let count = (s.split(sepChar).length - 1);
+            
+            if (count === 1) {
+                let parts = s.split(sepChar);
+                let intP = parts[0].replace(/\s+/g, '');
+                let decP = parts[1];
+                return intP + '.' + decP;
+            } else {
+                return s.replace(/[.,\s]/g, '');
+            }
+        }
+
         function formatMintage(val) {
             if (!val) return '';
-            const clean = String(val).replace(/\s+/g, '').replace(',', '.');
-            const num = parseFloat(clean);
+            const parsed = parseFlexibleNumber(val);
+            const num = parseFloat(parsed);
             if (isNaN(num)) return String(val);
             const intVal = Math.floor(num);
             return intVal.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
         }
 
         function cleanLabelItem(item) {
-            if (!item || !Array.isArray(item)) return ["","","","","2","","",""];
+            if (!item || !Array.isArray(item)) return ["","","","","2","","","","","","","",false,"pl"];
 
             let year = String(item[0] || "");
             let series = String(item[1] || "");
             let name = String(item[2] || "");
-            let mintage = String(item[3] || "");
+            let mintage = parseFlexibleNumber(item[3] || "");
             let nominal = String(item[4] || "");
             let currencyAfter = String(item[5] || "");
             let stop = String(item[6] || "");
@@ -635,7 +735,14 @@
                 currencyBefore = String(currencyBefore || "");
             }
 
-            return [year, series, name, mintage, nominal, currencyAfter, stop, currencyBefore];
+            let rant = String(item[8] || "");
+            let typ = String(item[9] || "");
+            let weight = item[10] !== undefined && item[10] !== null ? parseFlexibleNumber(item[10]) : "";
+            let diameter = item[11] !== undefined && item[11] !== null ? parseFlexibleNumber(item[11]) : "";
+            let trial = Boolean(item[12] === true || String(item[12]).toLowerCase() === 'true' || String(item[12]).toLowerCase() === '1' || String(item[12]).toLowerCase() === 'próba');
+            let country = String(item[13] || "pl").toLowerCase().trim() || "pl";
+
+            return [year, series, name, mintage, nominal, currencyAfter, stop, currencyBefore, rant, typ, weight, diameter, trial, country];
         }
 
         function getLabelType(rawItem) {
@@ -652,9 +759,9 @@
             const hasTop = Boolean(series || name);
             const hasBottom = Boolean(nominal || year || stop || mintage || currencyBefore || currencyAfter);
 
-            if (hasTop && !hasBottom) return 'gorna';  // "Górna"
-            if (!hasTop && hasBottom) return 'dolna';  // "Dolna"
-            return 'normal';                          // Standardowa dwuliniowa etykieta
+            if (hasTop && !hasBottom) return 'gorna';  
+            if (!hasTop && hasBottom) return 'dolna';  
+            return 'normal';                          
         }
 
         function isHalfHeight(item) {
@@ -663,12 +770,11 @@
         }
 
         let sessionLabels = [];
-        let selectedGroups = []; // Array of { item: [...], count: N }
+        let selectedGroups = []; 
         let currentServerResults = [];
         let currentCombinedResults = [];
         let searchDebounceTimer = null;
 
-        // Resilient normalizer for selectedGroups
         function normalizeGroups(raw) {
             if (!Array.isArray(raw)) return [];
             const result = [];
@@ -742,7 +848,7 @@
             return flat;
         }
 
-        async function loadDynamicVersion() {
+        async function loadDynamicVersionAndCountries() {
             try {
                 const response = await fetch('/api/info');
                 const data = await response.json();
@@ -750,24 +856,95 @@
                     document.getElementById('app-version-badge').textContent = 'v' + data.version;
                 }
             } catch (e) {}
+
+            try {
+                const res = await fetch('/api/labels?limit=1');
+                const data = await res.json();
+                if (data && data.countries) {
+                    updateCountryDropdown(data.countries);
+                }
+            } catch (e) {}
+        }
+
+        function updateCountryDropdown(countriesList) {
+            const select = document.getElementById('filter-country');
+            if (!select) return;
+            const currentVal = select.value;
+            
+            let html = `<option value="">🌐 Wszystkie kraje</option>`;
+            countriesList.forEach(c => {
+                const info = getCountryInfo(c);
+                html += `<option value="${escapeHtml(c)}">${info.flag} ${escapeHtml(info.name)}</option>`;
+            });
+            
+            select.innerHTML = html;
+            select.value = currentVal;
+        }
+
+        function showCoinTooltip(e, idx) {
+            if (e) e.stopPropagation();
+            const item = currentCombinedResults[idx];
+            if (!item) return;
+
+            const mintage = item[3] || '';
+            const rant = item[8] || '';
+            const typ = item[9] || '';
+            const weight = item[10] || '';
+            const diameter = item[11] || '';
+            const trial = item[12] === true;
+
+            const tooltip = document.getElementById('coin-global-tooltip');
+            if (!tooltip) return;
+
+            tooltip.innerHTML = `
+                <div style="font-weight:700; color:#f59e0b; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:4px; margin-bottom:6px; font-size:11px; text-transform:uppercase;">ℹ️ Szczegóły Monety</div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:3px; gap:12px;"><span style="color:#94a3b8;">Nakład:</span> <strong>${escapeHtml(formatMintage(mintage) || '-')}</strong></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:3px; gap:12px;"><span style="color:#94a3b8;">Średnica:</span> <strong>${escapeHtml(diameter ? parseFlexibleNumber(diameter) + ' mm' : '-')}</strong></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:3px; gap:12px;"><span style="color:#94a3b8;">Rant:</span> <strong>${escapeHtml(rant || '-')}</strong></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:3px; gap:12px;"><span style="color:#94a3b8;">Typ:</span> <strong>${escapeHtml(typ || '-')}</strong></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:3px; gap:12px;"><span style="color:#94a3b8;">Waga:</span> <strong>${escapeHtml(weight ? parseFlexibleNumber(weight) + ' g' : '-')}</strong></div>
+                <div style="display:flex; justify-content:space-between; gap:12px;"><span style="color:#94a3b8;">Trial:</span> <strong>${trial ? 'TAK' : 'NIE'}</strong></div>
+            `;
+
+            const rect = e.currentTarget.getBoundingClientRect();
+            tooltip.style.display = 'block';
+            
+            let leftPos = rect.left;
+            let topPos = rect.bottom + 6;
+
+            if (leftPos + 240 > window.innerWidth) {
+                leftPos = window.innerWidth - 250;
+            }
+            if (topPos + 180 > window.innerHeight) {
+                topPos = rect.top - 170;
+            }
+
+            tooltip.style.left = leftPos + 'px';
+            tooltip.style.top = topPos + 'px';
+        }
+
+        function hideCoinTooltip() {
+            const tooltip = document.getElementById('coin-global-tooltip');
+            if (tooltip) tooltip.style.display = 'none';
         }
 
         function addCustomSessionLabel() {
             const year = document.getElementById('new-year').value.trim();
             const series = document.getElementById('new-series').value.trim();
             const name = document.getElementById('new-name').value.trim();
-            const mintage = document.getElementById('new-mintage').value.trim();
+            const mintage = parseFlexibleNumber(document.getElementById('new-mintage').value);
             const nominal = document.getElementById('new-nominal').value.trim();
             const currencyAfter = document.getElementById('new-currency-after').value.trim();
             const stop = document.getElementById('new-stop').value.trim();
             const currencyBefore = document.getElementById('new-currency-before').value.trim();
+            const country = document.getElementById('new-country').value.trim() || 'pl';
 
             if (!name && !series && !nominal && !year) {
                 alert("Podaj nazwę, serię lub nominał etykiety.");
                 return;
             }
 
-            const newLabel = [year, series, name, mintage, nominal, currencyAfter, stop, currencyBefore, true];
+            const newLabel = [year, series, name, mintage, nominal, currencyAfter, stop, currencyBefore, "", "", "", "", false, country];
             sessionLabels.unshift(cleanLabelItem(newLabel));
             saveStorageData();
 
@@ -787,14 +964,16 @@
 
         async function performServerSearch() {
             const queryRaw = document.getElementById('search-input').value.trim();
+            const yearFilter = document.getElementById('filter-year').value.trim();
+            const countryFilter = document.getElementById('filter-country').value.trim();
             const query = queryRaw.toLowerCase();
             const container = document.getElementById('list-available');
 
-            if (!query) {
+            if (!query && !yearFilter && !countryFilter) {
                 currentServerResults = [];
                 currentCombinedResults = [];
                 document.getElementById('count-available').textContent = `0 wyników (max 50)`;
-                container.innerHTML = `<div class="empty-placeholder">🔍 Wpisz co najmniej 1 znak w wyszukiwarce powyżej, aby wyszukać etykiety z bazy serwera...</div>`;
+                container.innerHTML = `<div class="empty-placeholder">🔍 Wpisz frazę lub wybierz rocznik/kraj, aby wyszukać etykiety z bazy serwera...</div>`;
                 return;
             }
 
@@ -802,14 +981,31 @@
 
             const tokens = query.split(/\s+/).filter(t => t.length > 0);
             const matchingSession = sessionLabels.filter(item => {
-                const itemText = (item.join(' ') + " Moja sesja").toLowerCase();
-                return tokens.every(token => itemText.includes(token));
+                const itemYear = item[0] || '';
+                const itemCountry = (item[13] || 'pl').toLowerCase();
+                
+                if (yearFilter && itemYear !== yearFilter) return false;
+                if (countryFilter && itemCountry !== countryFilter) return false;
+
+                if (tokens.length > 0) {
+                    const itemText = (item.join(' ') + " Moja sesja").toLowerCase();
+                    return tokens.every(token => itemText.includes(token));
+                }
+                return true;
             });
 
             try {
-                const response = await fetch('/api/labels?q=' + encodeURIComponent(queryRaw) + '&limit=50');
+                let url = '/api/labels?limit=50';
+                if (queryRaw) url += '&q=' + encodeURIComponent(queryRaw);
+                if (yearFilter) url += '&year=' + encodeURIComponent(yearFilter);
+                if (countryFilter) url += '&country=' + encodeURIComponent(countryFilter);
+
+                const response = await fetch(url);
                 const data = await response.json();
                 currentServerResults = (data && data.labels) ? data.labels : [];
+                if (data && data.countries) {
+                    updateCountryDropdown(data.countries);
+                }
             } catch (e) {
                 console.error("Błąd wyszukiwania na serwerze:", e);
                 currentServerResults = [];
@@ -821,7 +1017,7 @@
             document.getElementById('count-available').textContent = `${combined.length} wyników (max 50)`;
 
             if (combined.length === 0) {
-                container.innerHTML = `<div class="empty-placeholder">Brak etykiet pasujących do frazy "${escapeHtml(queryRaw)}".</div>`;
+                container.innerHTML = `<div class="empty-placeholder">Brak etykiet pasujących do ustawionych kryteriów.</div>`;
                 return;
             }
 
@@ -829,16 +1025,17 @@
                 const year = item[0] || '';
                 const series = item[1] || '';
                 const name = item[2] || '';
-                const mintage = item[3] || '';
                 const nominal = item[4] || '';
                 const currencyAfter = item[5] || '';
                 const stop = item[6] || '';
                 const currencyBefore = item[7] || '';
+                const country = item[13] || 'pl';
+
+                const countryInfo = getCountryInfo(country);
                 const isSessionCustom = (idx < matchingSession.length);
                 const labelType = getLabelType(item);
 
                 const displayTitle = series ? `${series}: ${name}` : (name || '(Brak tytułu)');
-                const formattedMintage = formatMintage(mintage);
                 const tagText = `${currencyBefore}${nominal}${currencyAfter} ${year}${stop ? ' ' + stop : ''}`.trim() || '(Brak nominału)';
 
                 let typeBadge = '';
@@ -851,24 +1048,37 @@
                 return `
                     <div class="label-item-compact">
                         <div class="label-main-info-compact">
+                            <!-- Small Country Flag Badge -->
+                            <span class="country-flag-badge" title="${escapeHtml(countryInfo.name)}">
+                                ${countryInfo.flag}
+                            </span>
+
                             ${tagText !== '(Brak nominału)' ? `<span class="label-tag-compact">${escapeHtml(tagText)}</span>` : ''}
-                            <span class="label-title-compact" title="${escapeHtml(displayTitle)}">${escapeHtml(displayTitle)}</span>
-                            ${formattedMintage ? `<span class="label-mintage-compact">(${escapeHtml(formattedMintage)})</span>` : ''}
+
+                            <!-- Coin Title with Hover/Click Global Tooltip -->
+                            <span class="label-title-compact" onmouseover="showCoinTooltip(event, ${idx})" onmouseout="hideCoinTooltip()" onclick="showCoinTooltip(event, ${idx})" style="cursor:help;">
+                                ${escapeHtml(displayTitle)}
+                            </span>
+
                             ${typeBadge}
                             ${isSessionCustom ? `<span class="label-session-tag">Moja sesja</span>` : ''}
                         </div>
-                        <div class="item-controls-compact">
+
+                        <!-- Item Controls with "+" Button and Stacked Górna/Dolna -->
+                        <div class="item-controls-compact" style="gap:4px;">
                             <input type="number" class="input-qty" value="1" min="1" max="500" id="qty-available-${idx}" title="Liczba etykiet do dodania">
-                            <button class="btn btn-green btn-xs" onclick="addLabelVariantByIndex(${idx}, 'full', 'qty-available-${idx}')" title="Dodaj pełną 2-liniową etykietę">➕ Dodaj</button>
-                            <button class="btn btn-gold btn-xs" onclick="addLabelVariantByIndex(${idx}, 'top', 'qty-available-${idx}')" title="Dodaj tylko część górną (seria + nazwa)">➕ Górna</button>
-                            <button class="btn btn-xs" onclick="addLabelVariantByIndex(${idx}, 'bottom', 'qty-available-${idx}')" style="background:#6366f1; color:#fff; border:none;" title="Dodaj tylko część dolną (nominał + rok + stop)">➕ Dolna</button>
+                            <button class="btn btn-green btn-xs" onclick="addLabelVariantByIndex(${idx}, 'full', 'qty-available-${idx}')" title="Dodaj pełną etykietę" style="height: 32px; font-size:15px; font-weight:800; padding:0 12px;">➕</button>
+                            
+                            <div class="btn-stacked-group">
+                                <button class="btn-mini-stacked btn-mini-top" onclick="addLabelVariantByIndex(${idx}, 'top', 'qty-available-${idx}')" title="Dodaj tylko część górną (seria + nazwa)">+ Górna</button>
+                                <button class="btn-mini-stacked btn-mini-bottom" onclick="addLabelVariantByIndex(${idx}, 'bottom', 'qty-available-${idx}')" title="Dodaj tylko część dolną (nominał + rok + stop)">+ Dolna</button>
+                            </div>
                         </div>
                     </div>
                 `;
             }).join('');
         }
 
-        // Add Label Variant by index in combined results
         function addLabelVariantByIndex(idx, mode, qtyInputId) {
             if (idx < 0 || idx >= currentCombinedResults.length) return;
             const rawItem = currentCombinedResults[idx];
@@ -879,17 +1089,15 @@
 
             let targetItem = [];
             if (mode === 'top') {
-                targetItem = ["", rawItem[1] || "", rawItem[2] || "", "", "", "", "", ""];
+                targetItem = ["", rawItem[1] || "", rawItem[2] || "", "", "", "", "", "", rawItem[8] || "", rawItem[9] || "", rawItem[10] || "", rawItem[11] || "", rawItem[12] || false, rawItem[13] || "pl"];
             } else if (mode === 'bottom') {
                 targetItem = [
                     rawItem[0] || "", "", "", rawItem[3] || "",
-                    rawItem[4] || "2", rawItem[5] || "", rawItem[6] || "", rawItem[7] || ""
+                    rawItem[4] || "2", rawItem[5] || "", rawItem[6] || "", rawItem[7] || "",
+                    rawItem[8] || "", rawItem[9] || "", rawItem[10] || "", rawItem[11] || "", rawItem[12] || false, rawItem[13] || "pl"
                 ];
             } else {
-                targetItem = [
-                    rawItem[0] || "", rawItem[1] || "", rawItem[2] || "", rawItem[3] || "",
-                    rawItem[4] || "2", rawItem[5] || "", rawItem[6] || "", rawItem[7] || ""
-                ];
+                targetItem = [...rawItem];
             }
 
             addGroupItem(targetItem, count);
@@ -897,7 +1105,6 @@
             renderSelectedLabels();
         }
 
-        // Helper to add item or group if consecutive matches
         function addGroupItem(item, count) {
             if (!item || !Array.isArray(item)) return;
             const cnt = Math.max(1, parseInt(count) || 1);
@@ -912,17 +1119,14 @@
             selectedGroups.push({ item: cleanItem, count: cnt });
         }
 
-        // Add ALL Labels (User Session Labels + Server Database Labels)
         async function addAllServerLabelsToSelected() {
             try {
-                // 1. Add session labels
                 if (Array.isArray(sessionLabels)) {
                     sessionLabels.forEach(item => {
                         addGroupItem(item, 1);
                     });
                 }
 
-                // 2. Fetch and add server labels
                 const response = await fetch('/api/labels?limit=10000');
                 const data = await response.json();
                 const allLabels = (data && data.labels) ? data.labels : [];
@@ -955,17 +1159,7 @@
             }
         }
 
-        function duplicateGroup(index) {
-            if (index >= 0 && index < selectedGroups.length) {
-                const orig = selectedGroups[index];
-                const newGroup = { item: [...orig.item], count: orig.count };
-                selectedGroups.splice(index + 1, 0, newGroup);
-                saveStorageData();
-                renderSelectedLabels();
-            }
-        }
-
-        function removeGroup(index) {
+        function removeSelectedGroup(index) {
             if (index >= 0 && index < selectedGroups.length) {
                 selectedGroups.splice(index, 1);
                 saveStorageData();
@@ -973,69 +1167,84 @@
             }
         }
 
-        function moveGroupUp(index) {
-            if (index > 0) {
-                const temp = selectedGroups[index];
-                selectedGroups[index] = selectedGroups[index - 1];
-                selectedGroups[index - 1] = temp;
-                saveStorageData();
-                renderSelectedLabels();
-            }
-        }
-
-        function moveGroupDown(index) {
-            if (index >= 0 && index < selectedGroups.length - 1) {
-                const temp = selectedGroups[index];
-                selectedGroups[index] = selectedGroups[index + 1];
-                selectedGroups[index + 1] = temp;
-                saveStorageData();
-                renderSelectedLabels();
-            }
-        }
-
         function clearSelectedLabels() {
             if (selectedGroups.length === 0) return;
-            if (confirm("Czy na pewno chcesz wyczyścić całą listę wybranych etykiet?")) {
-                selectedGroups = [];
-                saveStorageData();
-                renderSelectedLabels();
+            if (!confirm("Czy na pewno chcesz usunąć wszystkie wybrane etykiety z listy?")) return;
+            selectedGroups = [];
+            saveStorageData();
+            renderSelectedLabels();
+        }
+
+        function calculateA4PagesCount(itemsList) {
+            if (!itemsList || itemsList.length === 0) return 0;
+            let currentHeight = 0;
+            let pagesCount = 1;
+
+            const halfItems = itemsList.filter(item => isHalfHeight(item));
+            const normalItems = itemsList.filter(item => !isHalfHeight(item));
+
+            let halfIdx = 0;
+            while (halfIdx < halfItems.length) {
+                const remainingHeight = 285.0 - currentHeight;
+                let maxRows = Math.floor(remainingHeight / 5.7);
+                if (maxRows <= 0) {
+                    pagesCount++;
+                    currentHeight = 0;
+                    maxRows = Math.floor(285.0 / 5.7);
+                }
+                const itemsLeft = halfItems.length - halfIdx;
+                const rowsNeeded = Math.ceil(itemsLeft / 4);
+                const rowsToRender = Math.min(rowsNeeded, maxRows);
+                halfIdx += rowsToRender * 4;
+                currentHeight += rowsToRender * 5.7;
             }
+
+            let normalIdx = 0;
+            while (normalIdx < normalItems.length) {
+                const remainingHeight = 285.0 - currentHeight;
+                let maxRows = Math.floor(remainingHeight / 9.5);
+                if (maxRows <= 0) {
+                    pagesCount++;
+                    currentHeight = 0;
+                    maxRows = Math.floor(285.0 / 9.5);
+                }
+                const itemsLeft = normalItems.length - normalIdx;
+                const rowsNeeded = Math.ceil(itemsLeft / 4);
+                const rowsToRender = Math.min(rowsNeeded, maxRows);
+                normalIdx += rowsToRender * 4;
+                currentHeight += rowsToRender * 9.5;
+            }
+
+            return pagesCount;
         }
 
         function renderSelectedLabels() {
-            selectedGroups = normalizeGroups(selectedGroups);
-            const flatLabels = flattenGroups(selectedGroups);
-            const totalCount = flatLabels.length;
-
-            const gornaItems = flatLabels.filter(item => getLabelType(item) === 'gorna');
-            const dolnaItems = flatLabels.filter(item => getLabelType(item) === 'dolna');
-            const normalItems = flatLabels.filter(item => getLabelType(item) === 'normal');
-
-            // Page height calculation
-            const halfCount = gornaItems.length + dolnaItems.length;
-            const halfPages = Math.ceil(halfCount / 200);
-            const normalPages = Math.ceil(normalItems.length / 120);
-            const totalPages = totalCount > 0 ? Math.max(1, halfPages + normalPages) : 0;
-
-            document.getElementById('count-selected').textContent = 
-                `${totalCount} etykiet (${gornaItems.length} górnych, ${dolnaItems.length} dolnych, ${normalItems.length} norm.) • ${totalPages} str. A4`;
-
             const container = document.getElementById('list-selected');
+            const flatItems = flattenGroups(selectedGroups);
+            const totalCount = flatItems.length;
+            const pagesCount = calculateA4PagesCount(flatItems);
+
+            document.getElementById('count-selected').textContent = `${totalCount} etykiet • ${pagesCount} str. A4`;
+
             if (selectedGroups.length === 0) {
-                container.innerHTML = `<div class="empty-placeholder">Brak wybranych etykiet. Wpisz frazę po lewej stronie i dodaj etykiety.</div>`;
+                container.innerHTML = `<div class="empty-placeholder">Brak wybranych etykiet. Wybierz i dodaj etykiety z lewej strony.</div>`;
                 return;
             }
 
-            container.innerHTML = selectedGroups.map((group, index) => {
+            container.innerHTML = selectedGroups.map((group, idx) => {
                 const item = cleanLabelItem(group.item);
+                const count = group.count;
+
                 const year = item[0] || '';
                 const series = item[1] || '';
                 const name = item[2] || '';
-                const mintage = item[3] || '';
                 const nominal = item[4] || '';
                 const currencyAfter = item[5] || '';
                 const stop = item[6] || '';
                 const currencyBefore = item[7] || '';
+                const country = item[13] || 'pl';
+
+                const countryInfo = getCountryInfo(country);
                 const labelType = getLabelType(item);
 
                 const displayTitle = series ? `${series}: ${name}` : (name || '(Brak tytułu)');
@@ -1049,22 +1258,16 @@
                 }
 
                 return `
-                    <div class="label-item-compact" style="${labelType !== 'normal' ? 'border-left: 3px solid var(--accent-gold);' : ''}">
-                        <div style="font-weight:700; font-size:11.5px; color:var(--text-muted); min-width:22px; flex-shrink:0;">
-                            ${index + 1}.
-                        </div>
+                    <div class="label-item-compact">
                         <div class="label-main-info-compact">
+                            <span class="country-flag-badge" title="${escapeHtml(countryInfo.name)}" style="font-size:16px; background:transparent; border:none; padding:0;">${countryInfo.flag}</span>
                             ${tagText !== '(Brak nominału)' ? `<span class="label-tag-compact">${escapeHtml(tagText)}</span>` : ''}
                             <span class="label-title-compact" title="${escapeHtml(displayTitle)}">${escapeHtml(displayTitle)}</span>
                             ${typeBadge}
                         </div>
                         <div class="item-controls-compact">
-                            <input type="number" class="input-qty" value="${group.count || 1}" min="1" max="1000" onchange="updateGroupCount(${index}, this.value)" title="Edytuj liczbę sztuk tej monety">
-                            <span style="font-size:11px; color:var(--text-muted); margin-right:4px;">szt.</span>
-                            <button class="btn btn-xs" onclick="moveGroupUp(${index})" title="Przesuń wyżej" ${index === 0 ? 'disabled style="opacity:0.3;"' : ''}>⬆️</button>
-                            <button class="btn btn-xs" onclick="moveGroupDown(${index})" title="Przesuń niżej" ${index === selectedGroups.length - 1 ? 'disabled style="opacity:0.3;"' : ''}>⬇️</button>
-                            <button class="btn btn-xs" onclick="duplicateGroup(${index})" title="Duplikuj wpis">📋</button>
-                            <button class="btn btn-danger btn-xs" onclick="removeGroup(${index})" title="Usuń wpis">✖</button>
+                            <input type="number" class="input-qty" value="${count}" min="1" max="500" onchange="updateGroupCount(${idx}, this.value)">
+                            <button class="btn btn-danger btn-xs" onclick="removeSelectedGroup(${idx})" title="Usuń z wybranej grupy">🗑️</button>
                         </div>
                     </div>
                 `;
@@ -1072,26 +1275,27 @@
         }
 
         function generateLabelsPrint() {
-            if (selectedGroups.length === 0) {
-                alert("Wybierz co najmniej jedną etykietę przed wygenerowaniem pliku druku.");
+            const flatItems = flattenGroups(selectedGroups);
+            if (flatItems.length === 0) {
+                alert("Najpierw dodaj co najmniej 1 etykietę do listy wybranych.");
                 return;
             }
 
-            const flatLabels = flattenGroups(selectedGroups);
-
             try {
-                sessionStorage.setItem('selected_labels_print', JSON.stringify(flatLabels));
-                localStorage.setItem('selected_labels_print', JSON.stringify(flatLabels));
-            } catch(e) {}
+                const dataJson = JSON.stringify(flatItems);
+                sessionStorage.setItem('selected_labels_print', dataJson);
+                localStorage.setItem('selected_labels_print', dataJson);
+            } catch(e) {
+                console.error("Błąd zapisu w Storage:", e);
+            }
 
-            window.location.href = '/MetaleSzlachetnePolska/etykiety/print';
+            window.open('/MetaleSzlachetnePolska/etykiety/print', '_blank');
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             loadStorageData();
-            loadDynamicVersion();
+            loadDynamicVersionAndCountries();
             renderSelectedLabels();
-            performServerSearch();
         });
     </script>
 </body>

@@ -146,7 +146,7 @@ function formatMintage(val) {
 }
 
 function cleanLabelItem(item) {
-  if (!item || !Array.isArray(item)) return ["","","","","2","","",""];
+  if (!item || !Array.isArray(item)) return ["","","","","2","","","","","","","",false,"pl"];
 
   let year = String(item[0] || "");
   let series = String(item[1] || "");
@@ -163,7 +163,14 @@ function cleanLabelItem(item) {
     currencyBefore = String(currencyBefore || "");
   }
 
-  return [year, series, name, mintage, nominal, currencyAfter, stop, currencyBefore];
+  let rant = String(item[8] || "");
+  let typ = String(item[9] || "");
+  let weight = item[10] !== undefined && item[10] !== null ? String(item[10]) : "";
+  let diameter = item[11] !== undefined && item[11] !== null ? String(item[11]) : "";
+  let trial = Boolean(item[12] === true || String(item[12]).toLowerCase() === 'true');
+  let country = String(item[13] || "pl").toLowerCase().trim() || "pl";
+
+  return [year, series, name, mintage, nominal, currencyAfter, stop, currencyBefore, rant, typ, weight, diameter, trial, country];
 }
 
 function isHalfHeight(rawItem) {
@@ -193,15 +200,21 @@ function renderHalfCellContent(rawItem) {
   const currencyAfter = item[5];
   const stop = item[6];
   const currencyBefore = item[7];
+  const typ = item[9] ? String(item[9]).trim() : '';
 
-  const hasTop = Boolean(series || name);
+  let displayName = name;
+  if (typ) {
+    displayName = displayName ? `${displayName} (${typ})` : `(${typ})`;
+  }
+
+  const hasTop = Boolean(series || displayName);
 
   if (hasTop) {
     return `
       <div class="inner-box-half">
         <div class="line-top" style="text-align: center;">
           ${series ? `<span class="series-part">${escapeHtml(series)}:</span> ` : ''}
-          ${name ? `<span class="name-part">${escapeHtml(name)}</span>` : ''}
+          ${displayName ? `<span class="name-part">${escapeHtml(displayName)}</span>` : ''}
         </div>
       </div>
     `;
@@ -241,6 +254,12 @@ function renderNormalCellContent(rawItem) {
   const currencyAfter = item[5];
   const stop = item[6];
   const currencyBefore = item[7];
+  const typ = item[9] ? String(item[9]).trim() : '';
+
+  let displayName = name;
+  if (typ) {
+    displayName = displayName ? `${displayName} (${typ})` : `(${typ})`;
+  }
 
   const formattedMintage = formatMintage(mintage);
   const nominalYearStr = (currencyBefore + nominal + currencyAfter + year).trim();
@@ -256,7 +275,7 @@ function renderNormalCellContent(rawItem) {
     <div class="inner-box">
       <div class="line-top">
         ${series ? `<span class="series-part">${escapeHtml(series)}:</span> ` : ''}
-        ${name ? `<span class="name-part">${escapeHtml(name)}</span>` : ''}
+        ${displayName ? `<span class="name-part">${escapeHtml(displayName)}</span>` : ''}
       </div>
       <div class="line-bottom">
         <span>

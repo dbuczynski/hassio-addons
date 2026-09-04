@@ -260,7 +260,7 @@
                 </div>
 
                 <div>
-                    <textarea id="csv-textarea" placeholder="Wklej tutaj treść pliku CSV...&#10;Format: Rok;Seria;Nazwa;Nakład;Nominał;WalutaPo;Stop;WalutaPrzed&#10;Przykład:&#10;2008;;Zbigniew Herbert (1924–1998);1510000;2;zł;NG;"></textarea>
+                    <textarea id="csv-textarea" placeholder="Wklej tutaj treść pliku CSV...&#10;Format: Rok;Seria;Nazwa;Nakład;Nominał;WalutaPo;Stop;WalutaPrzed;Rant;Typ;Waga;Średnica;Trial;Kraj&#10;Przykład:&#10;2008;;Zbigniew Herbert (1924–1998);1510000;2;zł;NG;;gładki;stempel zwykły;14.14;27.00;FALSE;pl&#10;2024;Britannia;King Charles III;50000;5;;Ag999;£;ząbkowany;stempel lustrzany;31.1;38.61;FALSE;uk"></textarea>
                 </div>
             </div>
 
@@ -280,14 +280,20 @@
                     <thead>
                         <tr>
                             <th>Status</th>
-                            <th>Waluta Przed</th>
+                            <th>Przed</th>
                             <th>Nominał</th>
-                            <th>Waluta Po</th>
+                            <th>Po</th>
                             <th>Stop</th>
                             <th>Rok</th>
+                            <th>Kraj</th>
                             <th>Seria</th>
                             <th>Nazwa / Tytuł</th>
                             <th>Nakład</th>
+                            <th>Rant</th>
+                            <th>Typ</th>
+                            <th>Waga</th>
+                            <th>Średnica</th>
+                            <th>Trial</th>
                         </tr>
                     </thead>
                     <tbody id="preview-tbody"></tbody>
@@ -351,6 +357,62 @@ async function fetchServerLabels() {
     }
 }
 
+function parseFlexibleNumber(val) {
+    if (val === undefined || val === null) return "";
+    let s = String(val).trim();
+    if (!s) return "";
+
+    let lastDot = s.lastIndexOf('.');
+    let lastComma = s.lastIndexOf(',');
+
+    if (lastDot === -1 && lastComma === -1) {
+        return s.replace(/\s+/g, '');
+    }
+
+    if (lastDot !== -1 && lastComma !== -1) {
+        if (lastDot > lastComma) {
+            let integerPart = s.substring(0, lastDot).replace(/[.,\s]/g, '');
+            let decimalPart = s.substring(lastDot + 1);
+            return integerPart + '.' + decimalPart;
+        } else {
+            let integerPart = s.substring(0, lastComma).replace(/[.,\s]/g, '');
+            let decimalPart = s.substring(lastComma + 1);
+            return integerPart + '.' + decimalPart;
+        }
+    }
+
+    let sepChar = lastDot !== -1 ? '.' : ',';
+    let count = (s.split(sepChar).length - 1);
+    
+    if (count === 1) {
+        let parts = s.split(sepChar);
+        let intP = parts[0].replace(/\s+/g, '');
+        let decP = parts[1];
+        return intP + '.' + decP;
+    } else {
+        return s.replace(/[.,\s]/g, '');
+    }
+}
+function makeFingerprint(item) {
+    if (!item || !Array.isArray(item)) return "";
+    const year = String(item[0] || '').trim();
+    const series = String(item[1] || '').trim().toLowerCase();
+    const name = String(item[2] || '').trim().toLowerCase();
+    const mintage = String(item[3] || '').trim();
+    const nominal = String(item[4] || '').trim().toLowerCase();
+    const cur_after = String(item[5] || '').trim().toLowerCase();
+    const stop = String(item[6] || '').trim().toLowerCase();
+    const cur_before = String(item[7] || '').trim().toLowerCase();
+    const rant = String(item[8] || '').trim().toLowerCase();
+    const typ = String(item[9] || '').trim().toLowerCase();
+    const weight = String(item[10] || '').trim();
+    const diameter = String(item[11] || '').trim();
+    const trial = item[12] === true || String(item[12]).toLowerCase() === 'true' || String(item[12]).toLowerCase() === '1' ? '1' : '0';
+    const country = String(item[13] || 'pl').trim().toLowerCase() || 'pl';
+
+    return `${country}|${year}|${series}|${name}|${nominal}|${cur_before}|${cur_after}|${stop}|${rant}|${typ}|${weight}|${diameter}|${trial}`;
+}
+
 async function parseAndVerifyCSV() {
     const text = document.getElementById('csv-textarea').value.trim();
     if (!text) {
@@ -361,13 +423,14 @@ async function parseAndVerifyCSV() {
     await fetchServerLabels();
 
     const lines = text.split(/\r?\n/);
+    const seenInBatch = new Set();
     currentParsedItems = [];
 
     lines.forEach((line, idx) => {
         const trimmed = line.trim();
         if (!trimmed) return;
         if (idx === 0 && (trimmed.toLowerCase().includes('seria') || trimmed.toLowerCase().includes('nazwa') || trimmed.toLowerCase().includes('rok'))) {
-            return; // Pomijamy nagłówek
+            return;
         }
 
         const sep = trimmed.includes(';') ? ';' : ',';
@@ -377,23 +440,32 @@ async function parseAndVerifyCSV() {
             const year = parts[0] || '';
             const series = parts[1] || '';
             const name = parts[2] || '';
-            const mintage = parts[3] || '';
+            const mintage = parseFlexibleNumber(parts[3] || '');
             const nominal = parts[4] || '2';
             const currencyAfter = parts[5] || '';
             const stop = parts[6] || '';
             const currencyBefore = parts[7] || '';
+            const rant = parts[8] || '';
+            const typ = parts[9] || '';
+            const weight = parseFlexibleNumber(parts[10] || '');
+            const diameter = parseFlexibleNumber(parts[11] || '');
+            const trial = parts[12] ? (parts[12].toLowerCase() === 'true' || parts[12] === '1' || parts[12].toLowerCase() === 'próba') : false;
+            const country = (parts[13] || 'pl').toLowerCase().trim();
 
-            const item = [year, series, name, mintage, nominal, currencyAfter, stop, currencyBefore];
+            const item = [year, series, name, mintage, nominal, currencyAfter, stop, currencyBefore, rant, typ, weight, diameter, trial, country];
 
-            // Detekcja duplikatu po kombinacji: Rok + Seria + Nazwa + Nominał
-            const isDup = existingServerLabels.some(srv => 
-                String(srv[0] || '').trim() === year &&
-                String(srv[1] || '').trim().toLowerCase() === series.toLowerCase() &&
-                String(srv[2] || '').trim().toLowerCase() === name.toLowerCase() &&
-                String(srv[4] || '').trim() === nominal
-            );
+            const dupKey = makeFingerprint(item);
 
-            currentParsedItems.push({ item, isDup });
+            // 1. Sprawdzenie czy występuje już w bazie serwera (dokładne 14 parametrów)
+            const isDupInServer = existingServerLabels.some(srv => makeFingerprint(srv) === dupKey);
+
+            // 2. Sprawdzenie czy nie został wprowadzony wcześniej we wgrywanej paczce
+            const isDupInBatch = seenInBatch.has(dupKey);
+            seenInBatch.add(dupKey);
+
+            const isDup = isDupInServer || isDupInBatch;
+
+            currentParsedItems.push({ item, isDup, isDupInBatch, isDupInServer });
         }
     });
 
@@ -406,24 +478,34 @@ async function parseAndVerifyCSV() {
     const dupCount = currentParsedItems.filter(x => x.isDup).length;
 
     document.getElementById('summary-stats').textContent = 
-        `Rozpoznano łącznie: ${currentParsedItems.length} | Nowe: ${newCount} | Duplikaty: ${dupCount}`;
+        `Rozpoznano łącznie: ${currentParsedItems.length} | Nowe: ${newCount} | Duplikaty (baza/plik): ${dupCount}`;
 
     const tbody = document.getElementById('preview-tbody');
     tbody.innerHTML = currentParsedItems.map(row => {
         const item = row.item;
+        let badgeLabel = 'Nowa';
+        if (row.isDupInServer) badgeLabel = 'Duplikat (Serwer)';
+        else if (row.isDupInBatch) badgeLabel = 'Duplikat (W pliku)';
+
         return `
             <tr style="${row.isDup ? 'background: rgba(245, 158, 11, 0.08);' : ''}">
                 <td>
-                    ${row.isDup ? '<span class="badge-status badge-dup">Duplikat</span>' : '<span class="badge-status badge-new">Nowa</span>'}
+                    ${row.isDup ? `<span class="badge-status badge-dup">${badgeLabel}</span>` : '<span class="badge-status badge-new">Nowa</span>'}
                 </td>
                 <td>${escapeHtml(item[7])}</td>
                 <td><strong>${escapeHtml(item[4])}</strong></td>
                 <td>${escapeHtml(item[5])}</td>
                 <td>${escapeHtml(item[6])}</td>
                 <td>${escapeHtml(item[0])}</td>
+                <td><span style="text-transform:uppercase;">${escapeHtml(item[13] || 'pl')}</span></td>
                 <td><em>${escapeHtml(item[1])}</em></td>
                 <td><strong>${escapeHtml(item[2])}</strong></td>
                 <td>${escapeHtml(item[3])}</td>
+                <td>${escapeHtml(item[8])}</td>
+                <td>${escapeHtml(item[9])}</td>
+                <td>${escapeHtml(item[10])}</td>
+                <td>${escapeHtml(item[11])}</td>
+                <td>${item[12] ? 'TAK' : 'NIE'}</td>
             </tr>
         `;
     }).join('');

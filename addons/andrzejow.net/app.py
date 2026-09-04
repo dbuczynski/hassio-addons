@@ -12,7 +12,7 @@ import youtube_service
 app = Flask(__name__)
 app.secret_key = "andrzejow_net_secret_key_metale_szlachetne"
 
-APP_VERSION = "1.10.6"
+APP_VERSION = "1.11.1"
 
 DEFAULT_ALLOWED_CHANNELS = [
     {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
@@ -483,28 +483,43 @@ def admin_labels_users_delete():
         save_labels_users(users)
     return redirect('/MetaleSzlachetnePolska/etykiety/admin/users')
 
+@app.route('/MetaleSzlachetnePolska/etykiety/admin/template-csv')
+def template_labels_csv():
+    output = io.StringIO()
+    output.write("\ufeffRok;Seria;Nazwa;Nakład;Nominał;WalutaPo;Stop;WalutaPrzed;Rant;Typ;Waga;Średnica;Trial;Kraj\n")
+    output.write("2008;;Zbigniew Herbert (1924–1998);1510000;2;zł;NG;;gładki;stempel zwykły;14.14;27.00;FALSE;pl\n")
+    output.write("2024;Britannia;King Charles III;50000;5;;Ag999;£;ząbkowany;stempel lustrzany;31.1;38.61;FALSE;uk\n")
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv; charset=utf-8",
+        headers={"Content-disposition": "attachment; filename=wzorzec_etykiet.csv"}
+    )
+
 @app.route('/MetaleSzlachetnePolska/etykiety/admin/export-csv')
 def export_labels_csv():
     if not is_labels_authenticated():
         return redirect('/MetaleSzlachetnePolska/etykiety/admin/login?next=/MetaleSzlachetnePolska/etykiety/admin/export-csv')
     labels = load_labels_db()
     output = io.StringIO()
-    output.write("\ufeffRok;Seria;Nazwa;Nakład;Nominał;WalutaPo;Stop;WalutaPrzed\n")
+    output.write("\ufeffRok;Seria;Nazwa;Nakład;Nominał;WalutaPo;Stop;WalutaPrzed;Rant;Typ;Waga;Średnica;Trial;Kraj\n")
     for item in labels:
-        year = str(item[0] if len(item) > 0 else '')
-        series = str(item[1] if len(item) > 1 else '')
-        name = str(item[2] if len(item) > 2 else '')
-        mintage = str(item[3] if len(item) > 3 else '')
-        nominal = str(item[4] if len(item) > 4 else '')
-        currencyAfter = str(item[5] if len(item) > 5 else '')
-        stop = str(item[6] if len(item) > 6 else '')
-        currencyBefore = item[7] if len(item) > 7 else ''
-        if isinstance(currencyBefore, bool) or str(currencyBefore).lower() in ['true', 'false']:
-            currencyBefore = ''
-        else:
-            currencyBefore = str(currencyBefore)
+        c = clean_label_item(item)
+        year = c[0]
+        series = c[1]
+        name = c[2]
+        mintage = c[3]
+        nominal = c[4]
+        currencyAfter = c[5]
+        stop = c[6]
+        currencyBefore = c[7]
+        rant = c[8]
+        typ = c[9]
+        weight = c[10]
+        diameter = c[11]
+        trial = "TRUE" if c[12] else "FALSE"
+        country = c[13]
         
-        line = f"{year};{series};{name};{mintage};{nominal};{currencyAfter};{stop};{currencyBefore}\n"
+        line = f"{year};{series};{name};{mintage};{nominal};{currencyAfter};{stop};{currencyBefore};{rant};{typ};{weight};{diameter};{trial};{country}\n"
         output.write(line)
     
     return Response(
@@ -513,36 +528,91 @@ def export_labels_csv():
         headers={"Content-disposition": "attachment; filename=baza_etykiet.csv"}
     )
 
+def clean_label_item(item):
+    """Zapewnia spójność 14 pól etykiety w tablicy Python."""
+    if not isinstance(item, list):
+        return ["", "", "", "", "2", "", "", "", "", "", "", "", False, "pl"]
+    
+    year = str(item[0] if len(item) > 0 else "").strip()
+    series = str(item[1] if len(item) > 1 else "").strip()
+    name = str(item[2] if len(item) > 2 else "").strip()
+    mintage = str(item[3] if len(item) > 3 else "").strip()
+    nominal = str(item[4] if len(item) > 4 else "2").strip()
+    currency_after = str(item[5] if len(item) > 5 else "").strip()
+    stop = str(item[6] if len(item) > 6 else "").strip()
+    
+    currency_before = item[7] if len(item) > 7 else ""
+    if isinstance(currency_before, bool) or str(currency_before).lower() in ["true", "false"]:
+        currency_before = ""
+    else:
+        currency_before = str(currency_before or "").strip()
+
+    rant = str(item[8] if len(item) > 8 else "").strip()
+    typ = str(item[9] if len(item) > 9 else "").strip()
+    weight = str(item[10] if len(item) > 10 else "").strip()
+    diameter = str(item[11] if len(item) > 11 else "").strip()
+
+    raw_trial = item[12] if len(item) > 12 else False
+    trial = True if (raw_trial is True or str(raw_trial).lower() in ["true", "1", "próba"]) else False
+
+    country = str(item[13] if len(item) > 13 else "pl").strip().lower() or "pl"
+
+    return [year, series, name, mintage, nominal, currency_after, stop, currency_before, rant, typ, weight, diameter, trial, country]
+
+def make_label_fingerprint(item):
+    """Generuje unikalny odcisk etykiety/monety uwzględniający wszystkie 14 parametrów."""
+    c = clean_label_item(item)
+    trial_str = "1" if c[12] else "0"
+    return f"{c[13].lower()}|{c[0]}|{c[1].lower()}|{c[2].lower()}|{c[4].lower()}|{c[7].lower()}|{c[5].lower()}|{c[6].lower()}|{c[8].lower()}|{c[9].lower()}|{c[10]}|{c[11]}|{trial_str}"
+
+def deduplicate_labels(label_list):
+    """Usuwa wyłącznie identyczne duplikaty monet (wszystkie parametry jednakowe)."""
+    seen = set()
+    unique = []
+    for item in label_list:
+        if not isinstance(item, list):
+            continue
+        cleaned = clean_label_item(item)
+        fp = make_label_fingerprint(cleaned)
+        if fp not in seen:
+            seen.add(fp)
+            unique.append(cleaned)
+    return unique
+
 @app.route('/api/admin/labels/update', methods=['POST'])
-def update_single_label():
+@app.route('/MetaleSzlachetnePolska/etykiety/api/admin/labels/update', methods=['POST'])
+def update_admin_label():
+    """Endpoint do aktualizacji pojedynczego wiersza etykiety po jej dokładnym odcisku lub dodania nowej."""
     if not is_labels_authenticated():
         return jsonify({"error": "Wymagane logowanie"}), 401
     try:
         data = request.get_json(force=True, silent=True) or {}
         orig = data.get('original')
+        original_fp = data.get('original_fp') or (make_label_fingerprint(orig) if orig else None)
+        is_new = data.get('is_new', False)
         updated = data.get('updated')
-        if not orig or not updated or not isinstance(updated, list):
-            return jsonify({"error": "Brak wymaganych danych"}), 400
-        
+
+        if not updated or not isinstance(updated, list):
+            return jsonify({"error": "Brak danych do aktualizacji"}), 400
+
+        updated_clean = clean_label_item(updated)
         labels = load_labels_db()
-        found = False
-        for i, item in enumerate(labels):
-            if item == orig:
-                labels[i] = updated
-                found = True
-                break
-        
-        if not found:
+
+        if is_new or not original_fp:
+            labels.append(updated_clean)
+        else:
+            found = False
             for i, item in enumerate(labels):
-                if len(item) >= 3 and len(orig) >= 3 and item[0] == orig[0] and item[1] == orig[1] and item[2] == orig[2]:
-                    labels[i] = updated
+                if make_label_fingerprint(item) == original_fp:
+                    labels[i] = updated_clean
                     found = True
                     break
-        
-        if found:
-            save_labels_db(labels)
-            return jsonify({"success": True})
-        return jsonify({"error": "Nie odnaleziono oryginalnej monety w bazie"}), 404
+            if not found:
+                labels.append(updated_clean)
+
+        labels = deduplicate_labels(labels)
+        save_labels_db(labels)
+        return jsonify({"success": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -561,26 +631,30 @@ def update_batch_labels():
 
         for u in updates:
             orig = u.get('original')
+            original_fp = u.get('original_fp') or (make_label_fingerprint(orig) if orig else None)
+            is_new = u.get('is_new', False)
             upd = u.get('updated')
-            if not orig or not upd or not isinstance(upd, list):
+            if not upd or not isinstance(upd, list):
                 continue
 
-            found = False
-            for i, item in enumerate(labels):
-                if item == orig:
-                    labels[i] = upd
-                    found = True
-                    updated_count += 1
-                    break
-            
-            if not found:
+            upd_clean = clean_label_item(upd)
+
+            if is_new or not original_fp:
+                labels.append(upd_clean)
+                updated_count += 1
+            else:
+                found = False
                 for i, item in enumerate(labels):
-                    if len(item) >= 3 and len(orig) >= 3 and item[0] == orig[0] and item[1] == orig[1] and item[2] == orig[2]:
-                        labels[i] = upd
+                    if make_label_fingerprint(item) == original_fp:
+                        labels[i] = upd_clean
                         found = True
                         updated_count += 1
                         break
+                if not found:
+                    labels.append(upd_clean)
+                    updated_count += 1
 
+        labels = deduplicate_labels(labels)
         save_labels_db(labels)
         return jsonify({"success": True, "updated_count": updated_count})
     except Exception as e:
@@ -588,11 +662,11 @@ def update_batch_labels():
 
 @app.route('/MetaleSzlachetnePolska/etykiety/admin/template-csv')
 def download_csv_template():
-    """Endpoint do pobrania wzorcowego pliku CSV do uzupełniania monet."""
-    csv_content = "\ufeffRok;Seria;Nazwa;Nakład;Nominał;WalutaPo;Stop;WalutaPrzed\n" \
-                  "2008;;Zbigniew Herbert (1924–1998);1510000;2;zł;NG;\n" \
-                  "2024;Britannia;King Charles III;50000;5;;Ag999;£\n" \
-                  "2026;seria cc;Nowa moneta;45000000;2;;Nordic Gold;$\n"
+    """Endpoint do pobrania wzorcowego pliku CSV do uzupełniania monet z rozszerzonymi polami."""
+    csv_content = "\ufeffRok;Seria;Nazwa;Nakład;Nominał;WalutaPo;Stop;WalutaPrzed;Rant;Typ;Waga;Średnica;Trial;Kraj\n" \
+                  "2008;;Zbigniew Herbert (1924–1998);1510000;2;zł;NG;;gładki;stempel zwykły;14.14;27.00;FALSE;pl\n" \
+                  "2024;Britannia;King Charles III;50000;5;;Ag999;£;ząbkowany;stempel lustrzany;31.1;38.61;FALSE;uk\n" \
+                  "2026;seria cc;Nowa moneta;45000000;2;;Nordic Gold;$;gładki;próba;14.14;27.00;TRUE;us\n"
     return Response(
         csv_content,
         mimetype="text/csv; charset=utf-8",
@@ -602,36 +676,62 @@ def download_csv_template():
 @app.route('/api/labels', methods=['GET'])
 @app.route('/MetaleSzlachetnePolska/etykiety/api/labels', methods=['GET'])
 def get_labels():
-    """Zwraca bazę etykiet z dynamicznym wyszukiwaniem wielosłowowym (AND) i limitem max 50 wyników (chyba że podano wyższy limit)."""
+    """
+    Zwraca bazę etykiet z dynamicznym wyszukiwaniem wielosłowowym, filtrowaniem po roku i kraju
+    oraz zwraca listę dostępnych krajów.
+    """
     labels = load_labels_db()
     query = request.args.get('q', '').strip().lower()
+    year_filter = request.args.get('year', '').strip()
+    country_filter = request.args.get('country', '').strip().lower()
     limit = request.args.get('limit', 50, type=int)
 
-    if not query:
-        if limit > 50:
-            return jsonify({
-                "status": "success",
-                "total_matches": len(labels),
-                "labels": labels[:limit]
-            })
+    # Wyciągnięcie dostępnych krajów z bazy
+    countries_set = set()
+    for item in labels:
+        c = "pl"
+        if len(item) > 13 and item[13]:
+            c = str(item[13]).strip().lower()
+        if c:
+            countries_set.add(c)
+
+    for default_c in ["pl", "us", "uk", "de", "ca", "au", "at", "ch", "fr"]:
+        countries_set.add(default_c)
+
+    countries_list = sorted(list(countries_set))
+
+    matching = []
+    tokens = [t for t in query.split() if t]
+
+    for item in labels:
+        item_year = str(item[0]) if len(item) > 0 else ""
+        item_country = str(item[13]).strip().lower() if len(item) > 13 and item[13] else "pl"
+
+        if year_filter and year_filter != item_year:
+            continue
+        if country_filter and country_filter != item_country:
+            continue
+
+        if tokens:
+            item_text = " ".join([str(x) for x in item]).lower()
+            if not all(token in item_text for token in tokens):
+                continue
+
+        matching.append(item)
+
+    if not query and not year_filter and not country_filter and limit <= 50:
         return jsonify({
             "status": "success",
             "total_matches": 0,
-            "labels": []
+            "labels": [],
+            "countries": countries_list
         })
-
-    tokens = [t for t in query.split() if t]
-    matching = []
-
-    for item in labels:
-        item_text = " ".join([str(x) for x in item]).lower()
-        if all(token in item_text for token in tokens):
-            matching.append(item)
 
     return jsonify({
         "status": "success",
         "total_matches": len(matching),
-        "labels": matching[:limit]
+        "labels": matching[:limit],
+        "countries": countries_list
     })
 
 @app.route('/api/admin/labels', methods=['POST'])
@@ -639,7 +739,7 @@ def get_labels():
 def update_admin_labels():
     """
     Endpoint administracyjny do edycji bazy etykiet.
-    Można przekazać nową całą listę {"labels": [[...], [...]]} lub pojedynczy wpis.
+    Wspiera 14 pól i zabezpiecza przed wprowadzaniem duplikatów.
     """
     try:
         data = request.get_json(force=True, silent=True) or {}
@@ -658,16 +758,23 @@ def update_admin_labels():
                 str(data.get("nominal", "2")),
                 str(data.get("currency_after", data.get("currency", "zł"))),
                 str(data.get("stop", "")),
-                str(data.get("currency_before", ""))
+                str(data.get("currency_before", "")),
+                str(data.get("rant", "")),
+                str(data.get("typ", "")),
+                str(data.get("weight", "")),
+                str(data.get("diameter", "")),
+                bool(data.get("trial", False)),
+                str(data.get("country", "pl")).lower().strip() or "pl"
             ]
             labels.append(item)
         else:
             return jsonify({"error": "Nieprawidłowy format danych. Przekaż 'labels' (tablica) lub dane etykiety."}), 400
 
+        labels = deduplicate_labels(labels)
         save_labels_db(labels)
         return jsonify({
             "status": "success",
-            "message": "Baza etykiet została pomyślnie zaktualizowana na serwerze.",
+            "message": "Baza etykiet została pomyślnie zaktualizowana i odduplikowana na serwerze.",
             "total": len(labels),
             "labels": labels
         })
@@ -677,11 +784,10 @@ def update_admin_labels():
 @app.route('/api/admin/labels', methods=['DELETE'])
 @app.route('/MetaleSzlachetnePolska/etykiety/api/admin/labels', methods=['DELETE'])
 def delete_admin_label():
-    """Endpoint administracyjny do usuwania wpisu z bazy etykiet."""
+    """Endpoint administracyjny do usuwania pojedynczego wpisu z bazy etykiet."""
     try:
         data = request.get_json(force=True, silent=True) or {}
         index = data.get("index")
-        name = data.get("name")
         label = data.get("label")
         labels = load_labels_db()
         deleted = False
@@ -690,34 +796,42 @@ def delete_admin_label():
             labels.pop(index)
             deleted = True
         elif label and isinstance(label, list):
-            initial_len = len(labels)
-            labels = [l for l in labels if l != label]
-            if len(labels) < initial_len:
-                deleted = True
-            elif len(label) > 2 and label[2]:
-                name = label[2]
+            target_fp = make_label_fingerprint(label)
+            for i, item in enumerate(labels):
+                if make_label_fingerprint(item) == target_fp:
+                    labels.pop(i)
+                    deleted = True
+                    break
 
-        if not deleted and name:
-            initial_len = len(labels)
-            labels = [l for l in labels if len(l) <= 2 or l[2].lower() != str(name).lower()]
-            if len(labels) < initial_len:
-                deleted = True
-            else:
-                return jsonify({"error": f"Nie odnaleziono etykiety o nazwie '{name}'."}), 404
+        if deleted:
+            save_labels_db(labels)
+            return jsonify({
+                "status": "success",
+                "success": True,
+                "message": "Etykieta została usunięta z bazy serwera.",
+                "total": len(labels)
+            })
 
-        if not deleted:
-            return jsonify({"error": "Brak parametru 'index', 'name' lub 'label' do usunięcia."}), 400
+        return jsonify({"error": "Nie odnaleziono podanej etykiety do usunięcia."}), 404
+    except Exception as e:
+        return jsonify({"error": f"Błąd usuwania etykiety: {str(e)}"}), 500
 
-        save_labels_db(labels)
+@app.route('/api/admin/labels/clear', methods=['POST'])
+@app.route('/MetaleSzlachetnePolska/etykiety/api/admin/labels/clear', methods=['POST'])
+def clear_admin_labels_db():
+    """Endpoint administracyjny do czyszczenia całej bazy etykiet (tylko dla roli admin)."""
+    if not is_labels_authenticated('admin'):
+        return jsonify({"error": "Brak uprawnień administracyjnych (wymagana rola admin)."}), 403
+    try:
+        save_labels_db([])
         return jsonify({
             "status": "success",
             "success": True,
-            "message": "Etykieta została usunięta z bazy serwera.",
-            "total": len(labels),
-            "labels": labels
+            "message": "Cała baza etykiet została pomyślnie wyczyszczona.",
+            "total": 0
         })
     except Exception as e:
-        return jsonify({"error": f"Błąd usuwania etykiety: {str(e)}"}), 500
+        return jsonify({"error": f"Błąd czyszczenia bazy etykiet: {str(e)}"}), 500
 
 @app.route('/MetaleSzlachetnePolska/metale_polska.webp')
 def serve_metale_polska_banner():

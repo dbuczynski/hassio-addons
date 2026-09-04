@@ -188,13 +188,11 @@
 
     {% if is_trusted_ip %}
         <div class="ip-badge ip-badge-trusted">
-            🛡️ Zaufany IP: <strong>{{ client_ip }}</strong><br>
-            Wystarczy podać nazwę użytkownika (hasło pomijane).
+            🛡️ IP: <strong>{{ client_ip }}</strong> • Wystarczy podać nazwę użytkownika (hasło pomijane).
         </div>
     {% else %}
         <div class="ip-badge ip-badge-normal">
-            🌐 Adres IP: <strong>{{ client_ip }}</strong><br>
-            Podaj nazwę użytkownika oraz hasło.
+            🌐 IP: <strong>{{ client_ip }}</strong> • Podaj nazwę użytkownika oraz hasło.
         </div>
     {% endif %}
 
