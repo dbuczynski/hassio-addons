@@ -346,15 +346,32 @@
         }
 
         .label-tag-compact {
-            background: rgba(245, 158, 11, 0.12);
-            color: var(--accent-gold);
-            border: 1px solid rgba(245, 158, 11, 0.3);
-            padding: 2px 6px;
+            padding: 2px 7px;
             border-radius: 4px;
             font-size: 11.5px;
             font-weight: 700;
             white-space: nowrap;
             flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .label-tag-denom {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent-gold);
+            border: 1px solid rgba(245, 158, 11, 0.35);
+        }
+
+        .label-tag-year {
+            background: rgba(99, 102, 241, 0.15);
+            color: #a5b4fc;
+            border: 1px solid rgba(99, 102, 241, 0.35);
+        }
+
+        .label-tag-stop {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.35);
         }
 
         .label-title-compact {
@@ -979,17 +996,51 @@
 
             container.innerHTML = `<div class="empty-placeholder">⏳ Szukanie w bazie serwera...</div>`;
 
-            const tokens = query.split(/\s+/).filter(t => t.length > 0);
+            function parseSearchQueryJS(rawQuery) {
+                if (!rawQuery) return { reqTrial: false, exactPhrases: [], wordTokens: [] };
+                const q = rawQuery.trim();
+                let reqTrial = false;
+                const exactPhrases = [];
+                const pattern = /["']([^"']+)["']/g;
+                let match;
+                while ((match = pattern.exec(q)) !== null) {
+                    const phrase = match[1].trim().toLowerCase();
+                    if (['trial', 'próba', 'proba'].includes(phrase)) {
+                        reqTrial = true;
+                    } else if (phrase) {
+                        exactPhrases.push(phrase);
+                    }
+                }
+                const remainder = q.replace(/["']([^"']+)["']/g, ' ').trim().toLowerCase();
+                const wordTokens = [];
+                remainder.split(/\s+/).forEach(t => {
+                    const tok = t.trim();
+                    if (['trial', 'próba', 'proba'].includes(tok)) {
+                        reqTrial = true;
+                    } else if (tok) {
+                        wordTokens.push(tok);
+                    }
+                });
+                return { reqTrial, exactPhrases, wordTokens };
+            }
+
+            const { reqTrial, exactPhrases, wordTokens } = parseSearchQueryJS(queryRaw);
             const matchingSession = sessionLabels.filter(item => {
-                const itemYear = item[0] || '';
-                const itemCountry = (item[13] || 'pl').toLowerCase();
-                
+                const itemYear = (item[0] || '').trim();
+                const itemCountry = (item[13] || 'pl').toLowerCase().trim();
+                const trialBool = Boolean(item[12]);
+
                 if (yearFilter && itemYear !== yearFilter) return false;
                 if (countryFilter && itemCountry !== countryFilter) return false;
+                if (reqTrial && !trialBool) return false;
 
-                if (tokens.length > 0) {
-                    const itemText = (item.join(' ') + " Moja sesja").toLowerCase();
-                    return tokens.every(token => itemText.includes(token));
+                const searchableText = [item[1], item[2], item[3], item[4], item[5], item[6], item[7], item[8], item[9], item[10], item[11]].join(' ').toLowerCase();
+
+                for (let phrase of exactPhrases) {
+                    if (!searchableText.includes(phrase)) return false;
+                }
+                for (let token of wordTokens) {
+                    if (!searchableText.includes(token)) return false;
                 }
                 return true;
             });
@@ -1022,13 +1073,13 @@
             }
 
             container.innerHTML = currentCombinedResults.map((item, idx) => {
-                const year = item[0] || '';
+                const year = (item[0] || '').trim();
                 const series = item[1] || '';
                 const name = item[2] || '';
-                const nominal = item[4] || '';
-                const currencyAfter = item[5] || '';
-                const stop = item[6] || '';
-                const currencyBefore = item[7] || '';
+                const nominal = (item[4] || '').trim();
+                const currencyAfter = (item[5] || '').trim();
+                const stop = (item[6] || '').trim();
+                const currencyBefore = (item[7] || '').trim();
                 const country = item[13] || 'pl';
 
                 const countryInfo = getCountryInfo(country);
@@ -1036,7 +1087,7 @@
                 const labelType = getLabelType(item);
 
                 const displayTitle = series ? `${series}: ${name}` : (name || '(Brak tytułu)');
-                const tagText = `${currencyBefore}${nominal}${currencyAfter} ${year}${stop ? ' ' + stop : ''}`.trim() || '(Brak nominału)';
+                const denomText = `${currencyBefore}${nominal}${currencyAfter}`.trim();
 
                 let typeBadge = '';
                 if (labelType === 'gorna') {
@@ -1053,7 +1104,14 @@
                                 ${countryInfo.flag}
                             </span>
 
-                            ${tagText !== '(Brak nominału)' ? `<span class="label-tag-compact">${escapeHtml(tagText)}</span>` : ''}
+                            <!-- Box 1: Nominał i Waluty -->
+                            ${denomText ? `<span class="label-tag-compact label-tag-denom">${escapeHtml(denomText)}</span>` : ''}
+
+                            <!-- Box 2: Rok -->
+                            ${year ? `<span class="label-tag-compact label-tag-year">${escapeHtml(year)}</span>` : ''}
+
+                            <!-- Box 3: Stop -->
+                            ${stop ? `<span class="label-tag-compact label-tag-stop">${escapeHtml(stop)}</span>` : ''}
 
                             <!-- Coin Title with Hover/Click Global Tooltip -->
                             <span class="label-title-compact" onmouseover="showCoinTooltip(event, ${idx})" onmouseout="hideCoinTooltip()" onclick="showCoinTooltip(event, ${idx})" style="cursor:help;">
@@ -1235,20 +1293,20 @@
                 const item = cleanLabelItem(group.item);
                 const count = group.count;
 
-                const year = item[0] || '';
+                const year = (item[0] || '').trim();
                 const series = item[1] || '';
                 const name = item[2] || '';
-                const nominal = item[4] || '';
-                const currencyAfter = item[5] || '';
-                const stop = item[6] || '';
-                const currencyBefore = item[7] || '';
+                const nominal = (item[4] || '').trim();
+                const currencyAfter = (item[5] || '').trim();
+                const stop = (item[6] || '').trim();
+                const currencyBefore = (item[7] || '').trim();
                 const country = item[13] || 'pl';
 
                 const countryInfo = getCountryInfo(country);
                 const labelType = getLabelType(item);
 
                 const displayTitle = series ? `${series}: ${name}` : (name || '(Brak tytułu)');
-                const tagText = `${currencyBefore}${nominal}${currencyAfter} ${year}${stop ? ' ' + stop : ''}`.trim() || '(Brak nominału)';
+                const denomText = `${currencyBefore}${nominal}${currencyAfter}`.trim();
 
                 let typeBadge = '';
                 if (labelType === 'gorna') {
@@ -1261,7 +1319,16 @@
                     <div class="label-item-compact">
                         <div class="label-main-info-compact">
                             <span class="country-flag-badge" title="${escapeHtml(countryInfo.name)}" style="font-size:16px; background:transparent; border:none; padding:0;">${countryInfo.flag}</span>
-                            ${tagText !== '(Brak nominału)' ? `<span class="label-tag-compact">${escapeHtml(tagText)}</span>` : ''}
+                            
+                            <!-- Box 1: Nominał i Waluty -->
+                            ${denomText ? `<span class="label-tag-compact label-tag-denom">${escapeHtml(denomText)}</span>` : ''}
+
+                            <!-- Box 2: Rok -->
+                            ${year ? `<span class="label-tag-compact label-tag-year">${escapeHtml(year)}</span>` : ''}
+
+                            <!-- Box 3: Stop -->
+                            ${stop ? `<span class="label-tag-compact label-tag-stop">${escapeHtml(stop)}</span>` : ''}
+
                             <span class="label-title-compact" title="${escapeHtml(displayTitle)}">${escapeHtml(displayTitle)}</span>
                             ${typeBadge}
                         </div>

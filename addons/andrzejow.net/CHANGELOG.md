@@ -2,6 +2,24 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.11.2] - 2026-09-04
+
+### Dodano / Zmieniono
+- **Hierarchiczne Sortowanie Monet (Kraj -> Rocznik -> Stop -> Nominał -> Nazwa...)**:
+  - Wdrożono spójne sortowanie wielokryterialne na stronie głównej oraz w panelu edycji monet według hierarchii: Kraj -> Rocznik -> Stop -> Nominał (numerycznie) -> Nazwa -> Seria -> Średnica (numerycznie) -> Waga (numerycznie) -> Rant -> Typ -> Trial.
+  - Naprawiono parser wartości liczbowych (`parse_num_val`), co zapewnia poprawne sortowanie numeryczne nominale (np. `2 zł` przed `10 zł`), średnic oraz wag.
+- **Wyświetlanie Wszystkich Monet w Panelu Edycji (`/admin/edit`)**:
+  - Dodano opcję `Wszystkie` (`limit = 100000`) w przyciskach wyboru liczby pozycji, dostępną wyłącznie dla administratorów z rolą `admin`.
+- **Podział Badgy Monet na 3 Osobne Tag-Boxy (`/etykiety`)**:
+  - Rozdzielono dawny pojedynczy badge na 3 czytelne, estetyczne boxy: **Nominał & Waluta**, **Rok** oraz **Stop**.
+- **Wyszukiwanie Zaawansowane (Cudzysłowy & Keywords Trial)**:
+  - Obsługa ścisłych fraz w cudzysłowach (`"Husaria 3"` lub `'Husaria 3'`), słów kluczowych `trial`/`próba`/`proba` (filtrujących wyłącznie monety z flaga `TRIAL = True`) oraz wykluczenie pól rocznika, kraju i flagi trial z głównej szukajki tekstowej.
+- **Eksport CSV z Formatowaną Datą oraz Integracja Powiadomień Telegram HA**:
+  - Format daty w pliku eksportu całej bazy (`baza_etykiet_YYYY-MM-DD_HH-MM-SS.csv`) zawierającego kompletne 14 pól bazy.
+  - Obsługa akcji powiadomień Telegram (`telegram_bot.send_message`) za pośrednictwem konfiguracji dodatku (`telegram_chat_id`, `telegram_config_entry_id`).
+
+---
+
 ## [1.10.6] - 2026-09-03
 
 ### Dodano / Zmieniono

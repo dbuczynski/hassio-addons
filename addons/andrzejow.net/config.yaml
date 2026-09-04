@@ -1,5 +1,5 @@
 name: "Web server andrzejow.net"
-version: "1.11.1"
+version: "1.11.2"
 slug: "andrzejow_net"
 description: "Serwer WWW dla andrzejow.net"
 arch:
@@ -28,6 +28,8 @@ options:
   admin_trusted_ips:
     - "127.0.0.1"
   admin_password: "admin"
+  telegram_chat_id: ""
+  telegram_config_entry_id: ""
 schema:
   api_key: "str?"
   channel_handle: "str?"
@@ -36,3 +38,5 @@ schema:
   admin_trusted_ips:
     - "str?"
   admin_password: "str?"
+  telegram_chat_id: "str?"
+  telegram_config_entry_id: "str?"

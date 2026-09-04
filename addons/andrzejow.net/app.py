@@ -4,6 +4,8 @@ import hashlib
 import io
 import json
 import os
+import re
+import requests
 import time
 import uuid
 from flask import Flask, jsonify, render_template, request, Response, redirect, session, send_from_directory
@@ -67,6 +69,73 @@ def log_activity_entry(entry_type, details=None, req=None):
             json.dump(logs, f, ensure_ascii=False, indent=2)
     except Exception as e:
         print(f"Błąd zapisu pliku activity_logs.json: {e}", flush=True)
+
+def send_telegram_ha_notification(title, message):
+    """
+    Wysyła notyfikację Telegram przez Supervisor API Home Assistanta (telegram_bot.send_message).
+    Wymaga zdefiniowania parametrów 'telegram_chat_id' (XXX) oraz 'telegram_config_entry_id' (YYY).
+    Jeśli dowolny z nich nie jest zdefiniowany, funkcja nie wywołuje akcji i zwraca False (bez błędów).
+    """
+    try:
+        cfg = load_all_config_data()
+        chat_id_val = cfg.get("telegram_chat_id")
+        config_entry_id_val = cfg.get("telegram_config_entry_id")
+
+        if not chat_id_val or not config_entry_id_val:
+            return False
+
+        chat_ids = []
+        if isinstance(chat_id_val, list):
+            chat_ids = [str(x).strip() for x in chat_id_val if str(x).strip()]
+        elif isinstance(chat_id_val, (str, int)) and str(chat_id_val).strip():
+            chat_ids = [str(chat_id_val).strip()]
+
+        entry_id = str(config_entry_id_val).strip()
+
+        if not chat_ids or not entry_id:
+            return False
+
+        token = os.environ.get("SUPERVISOR_TOKEN")
+        if not token:
+            return False
+
+        url = "http://supervisor/core/api/services/telegram_bot/send_message"
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "chat_id": chat_ids,
+            "config_entry_id": entry_id,
+            "message": message,
+            "title": title or "Metale Szlachetne Polska"
+        }
+
+        requests.post(url, headers=headers, json=payload, timeout=4)
+        return True
+    except Exception as e:
+        print(f"Błąd wywołania notyfikacji Telegram w HA: {e}", flush=True)
+        return False
+
+def format_label_params_summary(item):
+    """Formatuje czytelny podgląd parametrów monety do notyfikacji."""
+    c = clean_label_item(item)
+    parts = []
+    if c[0]: parts.append(f"Rok: {c[0]}")
+    if c[4]:
+        denom = f"{c[7]}{c[4]} {c[5]}".strip()
+        parts.append(f"Nominał: {denom}")
+    if c[1]: parts.append(f"Seria: {c[1]}")
+    if c[2]: parts.append(f"Nazwa: {c[2]}")
+    if c[6]: parts.append(f"Stop: {c[6]}")
+    if c[3]: parts.append(f"Nakład: {c[3]}")
+    if c[8]: parts.append(f"Rant: {c[8]}")
+    if c[9]: parts.append(f"Typ: {c[9]}")
+    if c[10]: parts.append(f"Waga: {c[10]}g")
+    if c[11]: parts.append(f"Średnica: {c[11]}mm")
+    if c[12]: parts.append("Trial: TAK")
+    if c[13]: parts.append(f"Kraj: {c[13].upper()}")
+    return ", ".join(parts) if parts else "brak szczegółów"
 
 def load_all_config_data():
     """Ładuje i łączy konfigurację z /data/options.json (zapisywanego przez Home Assistant) oraz global_config.json."""
@@ -522,10 +591,12 @@ def export_labels_csv():
         line = f"{year};{series};{name};{mintage};{nominal};{currencyAfter};{stop};{currencyBefore};{rant};{typ};{weight};{diameter};{trial};{country}\n"
         output.write(line)
     
+    date_str = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
+    filename = f"baza_etykiet_{date_str}.csv"
     return Response(
         output.getvalue(),
         mimetype="text/csv; charset=utf-8",
-        headers={"Content-disposition": "attachment; filename=baza_etykiet.csv"}
+        headers={"Content-disposition": f'attachment; filename="{filename}"'}
     )
 
 def clean_label_item(item):
@@ -600,6 +671,9 @@ def update_admin_label():
 
         if is_new or not original_fp:
             labels.append(updated_clean)
+            ip = get_client_ip()
+            params_summary = format_label_params_summary(updated_clean)
+            send_telegram_ha_notification("Nowa moneta w sesji", f"Adres {ip} dodał do sesji nową monetę o parametrach: {params_summary}")
         else:
             found = False
             for i, item in enumerate(labels):
@@ -609,6 +683,9 @@ def update_admin_label():
                     break
             if not found:
                 labels.append(updated_clean)
+                ip = get_client_ip()
+                params_summary = format_label_params_summary(updated_clean)
+                send_telegram_ha_notification("Nowa moneta w sesji", f"Adres {ip} dodał do sesji nową monetę o parametrach: {params_summary}")
 
         labels = deduplicate_labels(labels)
         save_labels_db(labels)
@@ -642,6 +719,9 @@ def update_batch_labels():
             if is_new or not original_fp:
                 labels.append(upd_clean)
                 updated_count += 1
+                ip = get_client_ip()
+                params_summary = format_label_params_summary(upd_clean)
+                send_telegram_ha_notification("Nowa moneta w sesji", f"Adres {ip} dodał do sesji nową monetę o parametrach: {params_summary}")
             else:
                 found = False
                 for i, item in enumerate(labels):
@@ -653,6 +733,9 @@ def update_batch_labels():
                 if not found:
                     labels.append(upd_clean)
                     updated_count += 1
+                    ip = get_client_ip()
+                    params_summary = format_label_params_summary(upd_clean)
+                    send_telegram_ha_notification("Nowa moneta w sesji", f"Adres {ip} dodał do sesji nową monetę o parametrach: {params_summary}")
 
         labels = deduplicate_labels(labels)
         save_labels_db(labels)
@@ -673,15 +756,143 @@ def download_csv_template():
         headers={"Content-disposition": "attachment; filename=wzor_etykiet.csv"}
     )
 
+def parse_search_query(raw_query):
+    """
+    Parsuje zapytanie tekstowe na:
+    1. req_trial (bool) - czy wpisano 'trial', 'próba' lub 'proba'
+    2. exact_phrases (list of str) - frazy w cudzysłowach "..." lub '...'
+    3. word_tokens (list of str) - pozostałe pojedyncze słowa
+    """
+    if not raw_query or not str(raw_query).strip():
+        return False, [], []
+
+    q = str(raw_query).strip()
+    req_trial = False
+
+    exact_phrases = []
+    pattern = r'["\']([^"\']+)["\']'
+    matches = re.findall(pattern, q)
+    for m in matches:
+        phrase = m.strip().lower()
+        if phrase in ['trial', 'próba', 'proba']:
+            req_trial = True
+        elif phrase:
+            exact_phrases.append(phrase)
+
+    remainder = re.sub(pattern, ' ', q).strip().lower()
+
+    word_tokens = []
+    for token in remainder.split():
+        t = token.strip()
+        if t in ['trial', 'próba', 'proba']:
+            req_trial = True
+        elif t:
+            word_tokens.append(t)
+
+    return req_trial, exact_phrases, word_tokens
+
+def match_label_item(item, req_trial, exact_phrases, word_tokens):
+    """
+    Weryfikuje czy dany wpis monety spełnia kryteria zapytania.
+    Nie przeszukuje rocznika (item[0]), kraju (item[13]) ani 'true'/'false' z pola trial (item[12]).
+    """
+    clean = clean_label_item(item)
+    trial_bool = clean[12]
+
+    if req_trial and not trial_bool:
+        return False
+
+    # Pola przeszukiwalne w głównym oknie (wykluczono Rok[0], Trial[12], Kraj[13])
+    searchable_fields = [
+        clean[1], clean[2], clean[3], clean[4], clean[5],
+        clean[6], clean[7], clean[8], clean[9], clean[10], clean[11]
+    ]
+    searchable_text = " ".join([str(x).strip().lower() for x in searchable_fields if str(x).strip()])
+
+    for phrase in exact_phrases:
+        if phrase not in searchable_text:
+            return False
+
+    for token in word_tokens:
+        if token not in searchable_text:
+            return False
+
+    return True
+
+def parse_num_val(val_str):
+    """Pomocnicza funkcja parsująca elastycznie liczby (np. '2', '10', '14.14', '27,00') na float do właściwego sortowania numerycznego."""
+    if not val_str:
+        return 999999.0
+    s = str(val_str).strip().replace(',', '.')
+    match = re.search(r'\d+(?:\.\d+)?', s)
+    if match:
+        try:
+            return float(match.group(0))
+        except ValueError:
+            pass
+    return 999999.0
+
+def label_sort_key(item):
+    """
+    Hierarchiczny klucz sortowania monet:
+    1. Kraj (pl, uk, us...)
+    2. Rocznik (1932, 1933...) - roczniki nie są ze sobą mieszane
+    3. Stop (Ag750, Ag999, NG...) - w obrębie danego rocznika
+    4. Nominał numerycznie (2 < 5 < 10) - w obrębie danego rocznika i stopu
+    5. Nazwa (np. Głowa Kobiety)
+    6. Seria (np. skarb istebniański)
+    7. Średnica numerycznie (np. 27.00 < 38.61)
+    8. Waga numerycznie (np. 14.14 < 31.1)
+    9. Rant
+    10. Typ
+    11. Trial (0 = False, 1 = True)
+    """
+    c = clean_label_item(item)
+    year_val = c[0]
+    series_val = c[1].lower()
+    name_val = c[2].lower()
+    nominal_str = c[4]
+    stop_val = c[6].lower()
+    rant_val = c[8].lower()
+    typ_val = c[9].lower()
+    weight_str = c[10]
+    diameter_str = c[11]
+    trial_val = 1 if c[12] else 0
+    country_val = c[13].lower()
+
+    try:
+        year_clean = re.sub(r'\D', '', year_val)
+        year_num = int(year_clean) if year_clean else 999999
+    except Exception:
+        year_num = 999999
+
+    nominal_num = parse_num_val(nominal_str)
+    diameter_num = parse_num_val(diameter_str)
+    weight_num = parse_num_val(weight_str)
+
+    return (
+        country_val,     # 1. Kraj
+        year_num,        # 2. Rocznik
+        stop_val,        # 3. Stop
+        nominal_num,     # 4. Nominał numerycznie
+        name_val,        # 5. Nazwa
+        series_val,      # 6. Seria
+        diameter_num,    # 7. Średnica numerycznie
+        weight_num,      # 8. Waga numerycznie
+        rant_val,        # 9. Rant
+        typ_val,         # 10. Typ
+        trial_val        # 11. Trial
+    )
+
 @app.route('/api/labels', methods=['GET'])
 @app.route('/MetaleSzlachetnePolska/etykiety/api/labels', methods=['GET'])
 def get_labels():
     """
-    Zwraca bazę etykiet z dynamicznym wyszukiwaniem wielosłowowym, filtrowaniem po roku i kraju
-    oraz zwraca listę dostępnych krajów.
+    Zwraca bazę etykiet z precyzyjnym wyszukiwaniem, wykluczeniem rocznika/kraju/trial z szukajki,
+    obsługą cudzysłowów oraz sortowaniem (kraj, stop, rocznik, nominał, nazwa, średnica, waga, rant, typ, trial).
     """
     labels = load_labels_db()
-    query = request.args.get('q', '').strip().lower()
+    query_raw = request.args.get('q', '').strip()
     year_filter = request.args.get('year', '').strip()
     country_filter = request.args.get('country', '').strip().lower()
     limit = request.args.get('limit', 50, type=int)
@@ -700,26 +911,29 @@ def get_labels():
 
     countries_list = sorted(list(countries_set))
 
-    matching = []
-    tokens = [t for t in query.split() if t]
+    req_trial, exact_phrases, word_tokens = parse_search_query(query_raw)
 
+    matching = []
     for item in labels:
-        item_year = str(item[0]) if len(item) > 0 else ""
-        item_country = str(item[13]).strip().lower() if len(item) > 13 and item[13] else "pl"
+        clean = clean_label_item(item)
+        item_year = clean[0]
+        item_country = clean[13]
 
         if year_filter and year_filter != item_year:
             continue
         if country_filter and country_filter != item_country:
             continue
 
-        if tokens:
-            item_text = " ".join([str(x) for x in item]).lower()
-            if not all(token in item_text for token in tokens):
+        if query_raw or req_trial:
+            if not match_label_item(item, req_trial, exact_phrases, word_tokens):
                 continue
 
-        matching.append(item)
+        matching.append(clean)
 
-    if not query and not year_filter and not country_filter and limit <= 50:
+    # Sortowanie: Kraj -> Stop -> Rocznik -> Nominał -> Nazwa -> Średnica -> Waga -> Rant -> Typ -> Trial
+    matching.sort(key=label_sort_key)
+
+    if not query_raw and not year_filter and not country_filter and not req_trial and (0 < limit <= 50):
         return jsonify({
             "status": "success",
             "total_matches": 0,
@@ -727,10 +941,12 @@ def get_labels():
             "countries": countries_list
         })
 
+    result_labels = matching if (limit <= 0 or limit >= 50000) else matching[:limit]
+
     return jsonify({
         "status": "success",
         "total_matches": len(matching),
-        "labels": matching[:limit],
+        "labels": result_labels,
         "countries": countries_list
     })
 
@@ -889,6 +1105,10 @@ def log_label_print():
         "labels": labels
     }
     log_activity_entry('label_print', details=details, req=request)
+    
+    ip = get_client_ip()
+    send_telegram_ha_notification("Generowanie etykiet", f"Adres {ip} wygenerował nowe etykiety w ilości sztuk: {count}")
+
     return jsonify({"status": "success", "count": count})
 
 @app.route('/MetaleSzlachetnePolska/youtube')

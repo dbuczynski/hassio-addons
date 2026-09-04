@@ -291,6 +291,9 @@
                         <button class="btn btn-xs btn-limit" data-limit="200" onclick="setLimit(200)">200</button>
                         <button class="btn btn-xs btn-limit" data-limit="500" onclick="setLimit(500)">500</button>
                         <button class="btn btn-xs btn-limit" data-limit="1000" onclick="setLimit(1000)">1000</button>
+                        {% if current_role == 'admin' or session.get('labels_role') == 'admin' %}
+                        <button class="btn btn-xs btn-limit" data-limit="100000" onclick="setLimit(100000)" title="Wyświetla wszystkie monety z bazy danych">Wszystkie</button>
+                        {% endif %}
                     </div>
                 </div>
 
@@ -520,8 +523,8 @@ function renderTable() {
     const tbody = document.getElementById('labels-tbody');
     const longCount = currentLabelsList.filter(rowObj => getFullTitleLength(rowObj.item[1], rowObj.item[2]) > 40).length;
 
-    document.getElementById('long-labels-count').textContent = `(Za długich >40 zn: ${longCount})`;
-    document.getElementById('results-count').textContent = `Wyświetlono ${currentLabelsList.length} pozycji (max ${currentLimit})`;
+    const limitTxt = currentLimit >= 50000 ? 'wszystkie' : `max ${currentLimit}`;
+    document.getElementById('results-count').textContent = `Wyświetlono ${currentLabelsList.length} pozycji (${limitTxt})`;
 
     let displayList = currentLabelsList.map((rowObj, idx) => ({ rowObj, idx }));
     if (isFilterLongActive) {

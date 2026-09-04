@@ -30,12 +30,13 @@ W przypadku połączeń z innych adresów IP użytkownik musi podać poprawną n
 
 - **Logowanie**: `/MetaleSzlachetnePolska/etykiety/admin/login`
 - **Edytor Bazy Monet**: `/MetaleSzlachetnePolska/etykiety/admin/edit`
-  *(Edycja wierszy na żywo, przycisk `💾 Zapisz Wszystkie Zmiany`, `📋 Duplikuj` dla wariantów, wybiórczy limit wyświetlania `100/200/500/1000`, przycisk `🗑️ Wyczyść całą bazę` z automatycznym eksportem CSV dla admina, filtr `📏 Długie etykiety` oraz pobieranie pliku CSV)*
+  *(Edycja wierszy na żywo, przycisk `💾 Zapisz Wszystkie Zmiany`, `📋 Duplikuj` dla wariantów, wybiórczy limit wyświetlania `100/200/500/1000` oraz `Wszystkie` (dla admina), przycisk `🗑️ Wyczyść całą bazę` z automatycznym eksportem CSV dla admina, filtr `📏 Długie etykiety`, hierarchiczne sortowanie 10 parametrów oraz pobieranie pliku CSV)*
 - **Zarządzanie Użytkownikami**: `/MetaleSzlachetnePolska/etykiety/admin/users`
   *(Dostępne wyłącznie dla konta z rolą `admin` – tworzenie, zmiana haseł i ról użytkowników)*
 - **Masowe Wgrywanie CSV**: `/MetaleSzlachetnePolska/etykiety/admin/add`
   *(Formularz importu i wklejania danych z detekcją duplikatów dla 14 pól)*
-- **Eksport Całej Bazy (CSV)**: `/MetaleSzlachetnePolska/etykiety/admin/export-csv`
+- **Eksport Całej Bazy (CSV)**: `/MetaleSzlachetnePolska/etykiety/admin/export-csv` *(Format daty `baza_etykiet_YYYY-MM-DD_HH-MM-SS.csv`)*
+- **Powiadomienia Telegram (HA)**: Zdefiniowanie `telegram_chat_id` i `telegram_config_entry_id` w konfiguracji pozwala wysyłać natychmiastowe powiadomienia o wygenerowanych etykietach i nowych monetach w sesji.
 - **Czyszczenie Całej Bazy**: `POST /api/admin/labels/clear` *(Wymagana rola admin)*
 
 ---
