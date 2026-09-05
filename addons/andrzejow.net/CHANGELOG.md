@@ -2,6 +2,17 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.11.3] - 2026-09-05
+
+### Dodano / Zmieniono
+- **Uprawnienia Home Assistant API (`homeassistant_api: true`)**:
+  - Dodano wymagane ustawienie `homeassistant_api: true` w `config.yaml`, umożliwiające Supervisorowi dostarczenie tokena autoryzacji (`SUPERVISOR_TOKEN`) dla kontenera.
+- **Diagnostyka & Przycisk Testowy Telegram**:
+  - Dodano szczegółowe logowanie diagnostyczne w funkcji `send_telegram_ha_notification` drukowane w dzienniku dodatku w Home Assistant (`[Telegram HA] ...`).
+  - Dodano dedykowany endpoint `/MetaleSzlachetnePolska/etykiety/admin/test-telegram` oraz przycisk `✈️ Test Telegram` w panelu edycji monet do natychmiastowego testowania i weryfikacji powiadomień Telegram w przeglądarce.
+
+---
+
 ## [1.11.2] - 2026-09-04
 
 ### Dodano / Zmieniono

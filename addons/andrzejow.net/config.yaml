@@ -1,7 +1,8 @@
 name: "Web server andrzejow.net"
-version: "1.11.2"
+version: "1.11.3"
 slug: "andrzejow_net"
 description: "Serwer WWW dla andrzejow.net"
+homeassistant_api: true
 arch:
   - "aarch64"
   - "amd64"

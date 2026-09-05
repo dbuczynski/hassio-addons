@@ -70,11 +70,10 @@ def log_activity_entry(entry_type, details=None, req=None):
     except Exception as e:
         print(f"Błąd zapisu pliku activity_logs.json: {e}", flush=True)
 
-def send_telegram_ha_notification(title, message):
+def send_telegram_ha_notification(title, message, return_details=False):
     """
     Wysyła notyfikację Telegram przez Supervisor API Home Assistanta (telegram_bot.send_message).
     Wymaga zdefiniowania parametrów 'telegram_chat_id' (XXX) oraz 'telegram_config_entry_id' (YYY).
-    Jeśli dowolny z nich nie jest zdefiniowany, funkcja nie wywołuje akcji i zwraca False (bez błędów).
     """
     try:
         cfg = load_all_config_data()
@@ -82,7 +81,9 @@ def send_telegram_ha_notification(title, message):
         config_entry_id_val = cfg.get("telegram_config_entry_id")
 
         if not chat_id_val or not config_entry_id_val:
-            return False
+            msg = "[Telegram HA] Pominięto wysyłkę: brak zdefiniowanego 'telegram_chat_id' lub 'telegram_config_entry_id' w konfiguracji dodatku."
+            print(msg, flush=True)
+            return (False, msg) if return_details else False
 
         chat_ids = []
         if isinstance(chat_id_val, list):
@@ -93,11 +94,15 @@ def send_telegram_ha_notification(title, message):
         entry_id = str(config_entry_id_val).strip()
 
         if not chat_ids or not entry_id:
-            return False
+            msg = "[Telegram HA] Pominięto wysyłkę: puste wartości 'telegram_chat_id' lub 'telegram_config_entry_id'."
+            print(msg, flush=True)
+            return (False, msg) if return_details else False
 
         token = os.environ.get("SUPERVISOR_TOKEN")
         if not token:
-            return False
+            msg = "[Telegram HA] BŁĄD: Brak zmiennej środowiskowej SUPERVISOR_TOKEN w kontenerze. W pliku config.yaml dodano 'homeassistant_api: true' - zaktualizuj dodatek w Home Assistant."
+            print(msg, flush=True)
+            return (False, msg) if return_details else False
 
         url = "http://supervisor/core/api/services/telegram_bot/send_message"
         headers = {
@@ -111,11 +116,16 @@ def send_telegram_ha_notification(title, message):
             "title": title or "Metale Szlachetne Polska"
         }
 
-        requests.post(url, headers=headers, json=payload, timeout=4)
-        return True
+        resp = requests.post(url, headers=headers, json=payload, timeout=6)
+        log_msg = f"[Telegram HA] Wywołano akcję telegram_bot.send_message (chat_ids={chat_ids}, entry_id={entry_id}). Kod odpowiedzi HA: {resp.status_code}, Treść: {resp.text}"
+        print(log_msg, flush=True)
+
+        is_ok = (resp.status_code in [200, 201])
+        return (is_ok, log_msg) if return_details else is_ok
     except Exception as e:
-        print(f"Błąd wywołania notyfikacji Telegram w HA: {e}", flush=True)
-        return False
+        err_msg = f"[Telegram HA] Wyjątek podczas wysyłania notyfikacji Telegram w HA: {e}"
+        print(err_msg, flush=True)
+        return (False, err_msg) if return_details else False
 
 def format_label_params_summary(item):
     """Formatuje czytelny podgląd parametrów monety do notyfikacji."""
@@ -563,6 +573,24 @@ def template_labels_csv():
         mimetype="text/csv; charset=utf-8",
         headers={"Content-disposition": "attachment; filename=wzorzec_etykiet.csv"}
     )
+
+@app.route('/MetaleSzlachetnePolska/etykiety/admin/test-telegram')
+def test_telegram_route():
+    """Endpoint testowy dla admina do weryfikacji powiadomień Telegram w Home Assistant."""
+    if not is_labels_authenticated():
+        return jsonify({"error": "Wymagane logowanie"}), 401
+    
+    ip = get_client_ip()
+    title = "Test Powiadomienia Telegram"
+    message = f"🧪 Test wysyłania notyfikacji Telegram z portalu Metale Szlachetne Polska (IP: {ip})."
+    
+    success, log_detail = send_telegram_ha_notification(title, message, return_details=True)
+    return jsonify({
+        "success": success,
+        "detail": log_detail,
+        "supervisor_token_present": bool(os.environ.get("SUPERVISOR_TOKEN")),
+        "config_loaded": load_all_config_data()
+    })
 
 @app.route('/MetaleSzlachetnePolska/etykiety/admin/export-csv')
 def export_labels_csv():
