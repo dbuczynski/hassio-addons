@@ -179,6 +179,16 @@
             z-index: 10;
         }
 
+        .labels-table th.sortable-th {
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.15s ease, color 0.15s ease;
+        }
+        .labels-table th.sortable-th:hover {
+            background: rgba(30, 41, 59, 0.95);
+            color: #ffffff;
+        }
+
         .labels-table td {
             padding: 6px 8px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -314,27 +324,27 @@
                 </div>
             </div>
 
-            <input type="text" id="search-input" class="search-input" placeholder="🔍 Szukaj frazy w bazie (np. '2008 Herbert' lub 'Malarze 2007')..." oninput="onSearchInput()">
+            <input type="text" id="search-input" class="search-input" placeholder="🔍 Szukaj frazy lub wg kryteriów (np. 'Herbert', 'rok:2025', 'nominał:15', 'waluta:$', 'stop:900', 'kraj:pl', 'trial')..." oninput="onSearchInput()">
 
             <div class="labels-table-wrapper">
                 <table class="labels-table">
                     <thead>
                         <tr>
-                            <th style="width: 35px;">#</th>
-                            <th style="width: 65px;">Przed</th>
-                            <th style="width: 55px;">Nominał</th>
-                            <th style="width: 60px;">Po</th>
-                            <th style="width: 65px;">Stop</th>
-                            <th style="width: 60px;">Rok</th>
-                            <th style="width: 50px;">Kraj</th>
-                            <th style="width: 140px;">Seria</th>
-                            <th>Nazwa / Tytuł</th>
-                            <th style="width: 90px;">Nakład</th>
-                            <th style="width: 80px;">Rant</th>
-                            <th style="width: 85px;">Typ</th>
-                            <th style="width: 65px;">Waga</th>
-                            <th style="width: 65px;">Średnica</th>
-                            <th style="width: 50px;">Trial</th>
+                            <th style="width: 35px;" class="sortable-th" onclick="sortByColumn('idx')" title="Sortuj wg lp."># <span id="sort-icon-idx"></span></th>
+                            <th style="width: 65px;" class="sortable-th" onclick="sortByColumn('cur_before')" title="Sortuj wg waluty przed">Przed <span id="sort-icon-cur_before"></span></th>
+                            <th style="width: 55px;" class="sortable-th" onclick="sortByColumn('nominal')" title="Sortuj wg nominału">Nominał <span id="sort-icon-nominal"></span></th>
+                            <th style="width: 60px;" class="sortable-th" onclick="sortByColumn('cur_after')" title="Sortuj wg waluty po">Po <span id="sort-icon-cur_after"></span></th>
+                            <th style="width: 65px;" class="sortable-th" onclick="sortByColumn('stop')" title="Sortuj wg stopu">Stop <span id="sort-icon-stop"></span></th>
+                            <th style="width: 60px;" class="sortable-th" onclick="sortByColumn('year')" title="Sortuj wg roku">Rok <span id="sort-icon-year"></span></th>
+                            <th style="width: 50px;" class="sortable-th" onclick="sortByColumn('country')" title="Sortuj wg kraju">Kraj <span id="sort-icon-country"></span></th>
+                            <th style="width: 140px;" class="sortable-th" onclick="sortByColumn('series')" title="Sortuj wg serii">Seria <span id="sort-icon-series"></span></th>
+                            <th class="sortable-th" onclick="sortByColumn('name')" title="Sortuj wg nazwy">Nazwa / Tytuł <span id="sort-icon-name"></span></th>
+                            <th style="width: 90px;" class="sortable-th" onclick="sortByColumn('mintage')" title="Sortuj wg nakładu">Nakład <span id="sort-icon-mintage"></span></th>
+                            <th style="width: 80px;" class="sortable-th" onclick="sortByColumn('rant')" title="Sortuj wg rantu">Rant <span id="sort-icon-rant"></span></th>
+                            <th style="width: 85px;" class="sortable-th" onclick="sortByColumn('typ')" title="Sortuj wg typu">Typ <span id="sort-icon-typ"></span></th>
+                            <th style="width: 65px;" class="sortable-th" onclick="sortByColumn('weight')" title="Sortuj wg wagi">Waga <span id="sort-icon-weight"></span></th>
+                            <th style="width: 65px;" class="sortable-th" onclick="sortByColumn('diameter')" title="Sortuj wg średnicy">Średnica <span id="sort-icon-diameter"></span></th>
+                            <th style="width: 50px;" class="sortable-th" onclick="sortByColumn('trial')" title="Sortuj wg trialu">Trial <span id="sort-icon-trial"></span></th>
                             <th style="width: 160px; text-align: right;">Akcje</th>
                         </tr>
                     </thead>
@@ -350,9 +360,117 @@
 
 <script>
 let searchDebounceTimer = null;
-let currentLabelsList = []; // Tablica obiektów { original_fp, is_new, item }
+let currentLabelsList = []; // Tablica obiektów { original_fp, is_new, item, _loadIndex }
 let isFilterLongActive = false;
 let currentLimit = 100;
+let currentSortKey = 'name';
+let currentSortDir = 'asc';
+
+function getSortValue(rowObj, key) {
+    const item = rowObj.item;
+    switch(key) {
+        case 'idx': return rowObj._loadIndex !== undefined ? rowObj._loadIndex : 0;
+        case 'year': return item[0] || '';
+        case 'series': return item[1] || '';
+        case 'name': return item[2] || '';
+        case 'mintage': return item[3] || '';
+        case 'nominal': return item[4] || '';
+        case 'cur_after': return item[5] || '';
+        case 'stop': return item[6] || '';
+        case 'cur_before': return item[7] || '';
+        case 'rant': return item[8] || '';
+        case 'typ': return item[9] || '';
+        case 'weight': return item[10] || '';
+        case 'diameter': return item[11] || '';
+        case 'trial': return Boolean(item[12]);
+        case 'country': return item[13] || '';
+        default: return '';
+    }
+}
+
+function compareValues(a, b, key) {
+    let valA = getSortValue(a, key);
+    let valB = getSortValue(b, key);
+
+    if (key === 'trial') {
+        const boolA = valA ? 1 : 0;
+        const boolB = valB ? 1 : 0;
+        return boolA - boolB;
+    }
+
+    if (['year', 'nominal', 'mintage', 'weight', 'diameter', 'idx'].includes(key)) {
+        let numA = parseFloat(String(valA).replace(/\s+/g, '').replace(',', '.'));
+        let numB = parseFloat(String(valB).replace(/\s+/g, '').replace(',', '.'));
+        
+        const isNumA = !isNaN(numA);
+        const isNumB = !isNaN(numB);
+
+        if (isNumA && isNumB) {
+            return numA - numB;
+        }
+        if (isNumA && !isNumB) return -1;
+        if (!isNumA && isNumB) return 1;
+    }
+
+    return String(valA || '').localeCompare(String(valB || ''), 'pl', { numeric: true, sensitivity: 'base' });
+}
+
+function sortCurrentLabelsList() {
+    if (!currentLabelsList || currentLabelsList.length === 0) return;
+    currentLabelsList.sort((a, b) => {
+        let res = compareValues(a, b, currentSortKey);
+        if (currentSortDir === 'desc') {
+            res = -res;
+        }
+        if (res === 0 && currentSortKey !== 'name') {
+            res = compareValues(a, b, 'name');
+        }
+        if (res === 0) {
+            res = (a._loadIndex || 0) - (b._loadIndex || 0);
+        }
+        return res;
+    });
+}
+
+function syncDOMToCurrentLabelsList() {
+    if (!currentLabelsList || currentLabelsList.length === 0) return;
+    currentLabelsList.forEach((rowObj, idx) => {
+        const rowYear = document.getElementById(`year-${idx}`);
+        if (rowYear) {
+            rowObj.item = extractRowFromDOM(idx);
+        }
+    });
+}
+
+function sortByColumn(key) {
+    syncDOMToCurrentLabelsList();
+    if (currentSortKey === key) {
+        currentSortDir = (currentSortDir === 'asc') ? 'desc' : 'asc';
+    } else {
+        currentSortKey = key;
+        currentSortDir = 'asc';
+    }
+    sortCurrentLabelsList();
+    renderTable();
+    updateHeaderSortIndicators();
+}
+
+function updateHeaderSortIndicators() {
+    const keys = ['idx', 'cur_before', 'nominal', 'cur_after', 'stop', 'year', 'country', 'series', 'name', 'mintage', 'rant', 'typ', 'weight', 'diameter', 'trial'];
+    keys.forEach(key => {
+        const iconSpan = document.getElementById(`sort-icon-${key}`);
+        if (!iconSpan) return;
+        if (key === currentSortKey) {
+            iconSpan.textContent = currentSortDir === 'asc' ? ' ▲' : ' ▼';
+            iconSpan.style.opacity = '1';
+            iconSpan.style.color = 'var(--accent-gold)';
+        } else {
+            iconSpan.textContent = ' ↕';
+            iconSpan.style.opacity = '0.3';
+            iconSpan.style.color = 'var(--text-muted)';
+        }
+    });
+}
 
 function showToast(msg, isError = false) {
     const toast = document.getElementById('toast');
@@ -404,13 +522,24 @@ function parseFlexibleNumber(val) {
     }
 }
 
+function formatMintage(val) {
+    if (val === undefined || val === null) return "";
+    let s = String(val).trim();
+    if (!s) return "";
+    let clean = s.replace(/\s+/g, '');
+    if (/^\d+$/.test(clean)) {
+        return clean.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    }
+    return s;
+}
+
 function cleanLabelItem(item) {
     if (!item || !Array.isArray(item)) return ["","","","","2","","","","","","","",false,"pl"];
 
     let year = String(item[0] || "");
     let series = String(item[1] || "");
     let name = String(item[2] || "");
-    let mintage = parseFlexibleNumber(item[3] || "");
+    let mintage = formatMintage(item[3] || "");
     let nominal = String(item[4] || "");
     let currencyAfter = String(item[5] || "");
     let stop = String(item[6] || "");
@@ -438,6 +567,7 @@ function makeFingerprint(item) {
     const year = String(clean[0]).trim();
     const series = String(clean[1]).trim().toLowerCase();
     const name = String(clean[2]).trim().toLowerCase();
+    const mintage = String(clean[3]).trim().toLowerCase();
     const nominal = String(clean[4]).trim().toLowerCase();
     const cur_after = String(clean[5]).trim().toLowerCase();
     const stop = String(clean[6]).trim().toLowerCase();
@@ -449,7 +579,7 @@ function makeFingerprint(item) {
     const trial = clean[12] ? '1' : '0';
     const country = String(clean[13] || 'pl').trim().toLowerCase() || 'pl';
 
-    return `${country}|${year}|${series}|${name}|${nominal}|${cur_before}|${cur_after}|${stop}|${rant}|${typ}|${weight}|${diameter}|${trial}`;
+    return `${country}|${year}|${series}|${name}|${mintage}|${nominal}|${cur_before}|${cur_after}|${stop}|${rant}|${typ}|${weight}|${diameter}|${trial}`;
 }
 
 function getFullTitleLength(series, name) {
@@ -469,7 +599,7 @@ function toggleLongLabelsFilter() {
         btn.style.background = 'linear-gradient(135deg, var(--accent-gold), #d97706)';
         btn.textContent = '📏 Długie etykiety';
     }
-    renderTable();
+    loadLabels();
 }
 
 function onSearchInput() {
@@ -500,20 +630,27 @@ async function loadLabels() {
     tbody.innerHTML = '<tr><td colspan="16" style="text-align:center; padding:20px; color:var(--text-muted);">⏳ Ładowanie wyników...</td></tr>';
 
     try {
-        const response = await fetch('/api/labels?q=' + encodeURIComponent(query) + '&limit=' + currentLimit);
+        let url = '/api/labels?q=' + encodeURIComponent(query) + '&limit=' + currentLimit;
+        if (isFilterLongActive) {
+            url += '&long_only=1';
+        }
+        const response = await fetch(url);
         const data = await response.json();
         const rawLabels = data.labels || [];
         
-        currentLabelsList = rawLabels.map(item => {
+        currentLabelsList = rawLabels.map((item, index) => {
             const clean = cleanLabelItem(item);
             return {
                 original_fp: makeFingerprint(clean),
                 is_new: false,
-                item: clean
+                item: clean,
+                _loadIndex: index
             };
         });
 
+        sortCurrentLabelsList();
         renderTable();
+        updateHeaderSortIndicators();
     } catch(e) {
         tbody.innerHTML = '<tr><td colspan="16" style="text-align:center; color:#fca5a5;">⚠️ Błąd pobierania danych.</td></tr>';
     }
@@ -521,15 +658,11 @@ async function loadLabels() {
 
 function renderTable() {
     const tbody = document.getElementById('labels-tbody');
-    const longCount = currentLabelsList.filter(rowObj => getFullTitleLength(rowObj.item[1], rowObj.item[2]) > 40).length;
-
     const limitTxt = currentLimit >= 50000 ? 'wszystkie' : `max ${currentLimit}`;
-    document.getElementById('results-count').textContent = `Wyświetlono ${currentLabelsList.length} pozycji (${limitTxt})`;
+    const labelTypeTxt = isFilterLongActive ? 'długich etykiet (>40 znaków)' : 'pozycji';
+    document.getElementById('results-count').textContent = `Wyświetlono ${currentLabelsList.length} ${labelTypeTxt} (${limitTxt})`;
 
     let displayList = currentLabelsList.map((rowObj, idx) => ({ rowObj, idx }));
-    if (isFilterLongActive) {
-        displayList = displayList.filter(entry => getFullTitleLength(entry.rowObj.item[1], entry.rowObj.item[2]) > 40);
-    }
 
     if (displayList.length === 0) {
         tbody.innerHTML = '<tr><td colspan="16" style="text-align:center; padding:30px; color:var(--text-muted);">Brak pozycji spełniających kryteria.</td></tr>';
@@ -607,7 +740,7 @@ function extractRowFromDOM(idx) {
     const year = document.getElementById(`year-${idx}`).value.trim();
     const series = document.getElementById(`series-${idx}`).value.trim();
     const name = document.getElementById(`name-${idx}`).value.trim();
-    const mintage = parseFlexibleNumber(document.getElementById(`mintage-${idx}`).value);
+    const mintage = formatMintage(document.getElementById(`mintage-${idx}`).value);
     const nominal = document.getElementById(`nominal-${idx}`).value.trim();
     const currencyAfter = document.getElementById(`cur-after-${idx}`).value.trim();
     const stop = document.getElementById(`stop-${idx}`).value.trim();

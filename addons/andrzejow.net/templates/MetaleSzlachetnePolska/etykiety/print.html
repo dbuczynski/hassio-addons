@@ -10,20 +10,113 @@
   .page { page-break-after: always; min-height: 10mm; max-height: 285mm; overflow: hidden; }
   .page:last-child { page-break-after: auto; }
   
-  /* Normal Grid (9.5mm rows) */
-  .grid-normal { display: grid; grid-template-columns: repeat(4, 47.5mm); grid-auto-rows: 9.5mm; width: 190mm; margin: 0 auto; }
-  /* Half-height Grid (5.7mm rows for perfect vertical fit) */
-  .grid-half { display: grid; grid-template-columns: repeat(4, 47.5mm); grid-auto-rows: 5.7mm; width: 190mm; margin: 0 auto; }
+  /* Normal Grid (9.5mm rows + 6px gap) */
+  .grid-normal { display: grid; grid-template-columns: repeat(4, 47.5mm); grid-auto-rows: 9.5mm; row-gap: 6px; width: 190mm; margin: 0 auto 6px auto; }
+  /* Half-height Grid (5.7mm rows + 6px gap) */
+  .grid-half { display: grid; grid-template-columns: repeat(4, 47.5mm); grid-auto-rows: 5.7mm; row-gap: 6px; width: 190mm; margin: 0 auto 6px auto; }
   
-  .cell { width: 47.5mm; height: 100%; position: relative; padding: 0.4mm 0.6mm; }
-  .cell::before { content: ''; position: absolute; top: -1.2mm; left: 0; width: 0; height: 2.4mm; border-left: 0.25pt solid #bbb; z-index: 10; }
-  .cell::after { content: ''; position: absolute; top: 0; left: -1.2mm; width: 2.4mm; height: 0; border-top: 0.25pt solid #bbb; z-index: 10; }
+  .cell { width: 47.5mm; height: 100%; position: relative; padding: 0.4mm 0.6mm; box-sizing: border-box; }
   
-  /* Right edge cutting ticks for column 4 (col 3) */
-  .cell-right-tick { position: absolute; top: -1.2mm; right: 0; width: 0; height: 2.4mm; border-right: 0.25pt solid #bbb; z-index: 10; pointer-events: none; }
-  .cell-closing-right-tick { position: absolute; top: 0; right: 0; width: 1.2mm; height: 0; border-top: 0.25pt solid #bbb; z-index: 10; pointer-events: none; }
+  /* =========================================================
+     TICK CROSSES & CUTTING GUIDES
+     ========================================================= */
+  .tick-cross {
+    position: absolute;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+    z-index: 20;
+  }
+  .tick-cross::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -1.2mm;
+    width: 2.4mm;
+    height: 0;
+    border-top: 0.25pt solid #888;
+  }
+  .tick-cross::after {
+    content: '';
+    position: absolute;
+    top: -1.2mm;
+    left: 0;
+    width: 0;
+    height: 2.4mm;
+    border-left: 0.25pt solid #888;
+  }
 
-  .cell.cell-closing { padding: 0; }
+  /* Tick positions */
+  .tick-top-left { top: 0; left: 0; }
+  .tick-top-right { top: 0; right: 0; }
+  .tick-gap-left { bottom: -3px; left: 0; }
+  .tick-gap-right { bottom: -3px; right: 0; }
+  .tick-bottom-left { bottom: 0; left: 0; }
+  .tick-bottom-right { bottom: 0; right: 0; }
+
+  /* Mode 1: Krzyżyki (Tick marks visible, full borders hidden) */
+  .cut-mode-ticks .tick-cross {
+    display: block;
+  }
+  .cut-mode-ticks .gap-line {
+    display: none !important;
+  }
+  .cut-mode-ticks .cell {
+    border: none !important;
+  }
+
+  /* Mode 2: Pełne linie (Full guide lines with 1 center line in 6px gap) */
+  .cut-mode-lines .tick-cross {
+    display: none !important;
+  }
+  .cut-mode-lines .cell {
+    border-left: 0.25pt solid #888;
+  }
+  .cut-mode-lines .cell-last-col {
+    border-right: 0.25pt solid #888;
+  }
+  .cut-mode-lines .cell-first-row {
+    border-top: 0.25pt solid #888;
+  }
+  .cut-mode-lines .cell-last-row {
+    border-bottom: 0.25pt solid #888;
+  }
+  
+  /* Horizontal line in the middle of 6px gap (3px below cell) */
+  .cut-mode-lines .gap-line {
+    position: absolute;
+    bottom: -3px;
+    left: 0;
+    width: 100%;
+    height: 0;
+    border-top: 0.25pt solid #888;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  /* Extend vertical borders through the 6px gap with exact 0px offset */
+  .cut-mode-lines .cell-middle-row::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 0;
+    width: 0;
+    height: 6px;
+    border-left: 0.25pt solid #888;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .cut-mode-lines .cell-middle-row.cell-last-col::before {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    right: 0;
+    width: 0;
+    height: 6px;
+    border-right: 0.25pt solid #888;
+    pointer-events: none;
+    z-index: 10;
+  }
   
   .inner-box { width: 100%; height: 100%; border: 0.85pt solid #1a625d; border-radius: 3.2mm; background: #fff; padding: 0.3mm 1.6mm 0.4mm 1.8mm; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
   
@@ -55,7 +148,7 @@
   }
 
   /* Typography */
-  .line-top { font-size: 6.8pt; color: #1a1a1a; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .line-top { font-size: 6.8pt; color: #1a1a1a; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
   .series-part { font-style: italic; }
   .name-part { font-weight: bold; }
   
@@ -64,7 +157,7 @@
   .currency-font { font-size: 6.8pt; font-weight: normal; color: #0d0d0d; }
   .year-str { font-size: 8.8pt; font-weight: normal; color: #0d0d0d; margin-left: 2px; }
   .alloy-stop { font-size: 6.8pt; font-weight: bold; color: #1a1a1a; text-align: center; margin: 0 2px; flex-shrink: 0; }
-  .mintage { font-size: 6.8pt; font-style: italic; color: #555; text-align: right; flex-shrink: 0; }
+  .mintage { font-size: 6.8pt; font-style: normal; color: #555; text-align: right; flex-shrink: 0; }
 
   /* Control bar (hidden during printing) */
   .no-print-bar {
@@ -113,11 +206,18 @@
 <body>
 
 <div class="no-print-bar">
-  <div>
+  <div style="display: flex; align-items: center; gap: 16px;">
     <strong>🖨️ Podgląd wydruku etykiet</strong>
-    <span id="label-count-info" style="font-size: 13px; color: #94a3b8; margin-left: 10px;"></span>
+    <span id="label-count-info" style="font-size: 13px; color: #94a3b8;"></span>
   </div>
-  <div style="display: flex; gap: 10px;">
+  <div style="display: flex; align-items: center; gap: 14px;">
+    <label style="font-size: 13px; color: #cbd5e1; display: flex; align-items: center; gap: 6px;">
+      Linie cięcia:
+      <select id="cut-lines-mode" onchange="setCutLinesMode(this.value)" style="background: #1e293b; color: #fff; border: 1px solid #475569; padding: 5px 10px; border-radius: 6px; font-size: 13px; font-family: inherit; cursor: pointer;">
+        <option value="ticks">Krzyżyki (Znaczniki)</option>
+        <option value="lines">Pełne linie pomocnicze</option>
+      </select>
+    </label>
     <button class="btn-print" onclick="window.print()">🖨️ Drukuj teraz</button>
     <a href="/MetaleSzlachetnePolska/etykiety" class="btn-back">← Wróć do edycji</a>
   </div>
@@ -136,13 +236,28 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 
+function isIntegerMintage(val) {
+  if (!val) return false;
+  const clean = String(val).trim().replace(/\s+/g, '');
+  return /^\d+$/.test(clean);
+}
+
 function formatMintage(val) {
   if (!val) return '';
   const clean = String(val).replace(/\s+/g, '').replace(',', '.');
   const num = parseFloat(clean);
-  if (isNaN(num)) return String(val);
+  if (isNaN(num)) return String(val).trim();
   const intVal = Math.floor(num);
   return intVal.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+function formatNominal(val) {
+  if (!val) return '';
+  const clean = String(val).trim().replace(/\s+/g, '');
+  if (/^\d+$/.test(clean)) {
+    return clean.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  }
+  return String(val).trim();
 }
 
 function cleanLabelItem(item) {
@@ -204,7 +319,7 @@ function renderHalfCellContent(rawItem) {
 
   let displayName = name;
   if (typ) {
-    displayName = displayName ? `${displayName} (${typ})` : `(${typ})`;
+    displayName = displayName ? `${displayName} <${typ}>` : `<${typ}>`;
   }
 
   const hasTop = Boolean(series || displayName);
@@ -219,10 +334,11 @@ function renderHalfCellContent(rawItem) {
       </div>
     `;
   } else {
+    const isIntMintage = isIntegerMintage(mintage);
     const formattedMintage = formatMintage(mintage);
     const nominalYearStr = (currencyBefore + nominal + currencyAfter + year).trim();
     const totalCharLen = nominalYearStr.length + stop.length + formattedMintage.length;
-    const showNakladWord = (totalCharLen <= 22);
+    const showNakladWord = isIntMintage && (totalCharLen <= 22);
 
     let mintageDisplay = '';
     if (formattedMintage) {
@@ -233,7 +349,7 @@ function renderHalfCellContent(rawItem) {
       <div class="inner-box-half">
         <div class="line-bottom">
           <span>
-            <span class="currency-font">${escapeHtml(currencyBefore)}</span><span class="nominal">${escapeHtml(nominal)}</span><span class="currency-font">${escapeHtml(currencyAfter)}</span>
+            <span class="currency-font">${escapeHtml(currencyBefore)}</span><span class="nominal">${escapeHtml(formatNominal(nominal))}</span><span class="currency-font">${escapeHtml(currencyAfter)}</span>
             <span class="year-str">${escapeHtml(year)}</span>
           </span>
           <span class="alloy-stop">${escapeHtml(stop)}</span>
@@ -258,13 +374,14 @@ function renderNormalCellContent(rawItem) {
 
   let displayName = name;
   if (typ) {
-    displayName = displayName ? `${displayName} (${typ})` : `(${typ})`;
+    displayName = displayName ? `${displayName} <${typ}>` : `<${typ}>`;
   }
 
+  const isIntMintage = isIntegerMintage(mintage);
   const formattedMintage = formatMintage(mintage);
   const nominalYearStr = (currencyBefore + nominal + currencyAfter + year).trim();
   const totalCharLen = nominalYearStr.length + stop.length + formattedMintage.length;
-  const showNakladWord = (totalCharLen <= 22);
+  const showNakladWord = isIntMintage && (totalCharLen <= 22);
 
   let mintageDisplay = '';
   if (formattedMintage) {
@@ -279,7 +396,7 @@ function renderNormalCellContent(rawItem) {
       </div>
       <div class="line-bottom">
         <span>
-          <span class="currency-font">${escapeHtml(currencyBefore)}</span><span class="nominal">${escapeHtml(nominal)}</span><span class="currency-font">${escapeHtml(currencyAfter)}</span>
+          <span class="currency-font">${escapeHtml(currencyBefore)}</span><span class="nominal">${escapeHtml(formatNominal(nominal))}</span><span class="currency-font">${escapeHtml(currencyAfter)}</span>
           <span class="year-str">${escapeHtml(year)}</span>
         </span>
         <span class="alloy-stop">${escapeHtml(stop)}</span>
@@ -287,6 +404,62 @@ function renderNormalCellContent(rawItem) {
       </div>
     </div>
   `;
+}
+
+function setCutLinesMode(mode) {
+  const container = document.getElementById('container');
+  if (!container) return;
+  if (mode === 'lines') {
+    container.classList.remove('cut-mode-ticks');
+    container.classList.add('cut-mode-lines');
+  } else {
+    container.classList.remove('cut-mode-lines');
+    container.classList.add('cut-mode-ticks');
+    mode = 'ticks';
+  }
+  try {
+    localStorage.setItem('label_cut_lines_mode', mode);
+  } catch (e) {}
+}
+
+function createCell(rowIndex, colIndex, isLastRow, contentHtml) {
+  const cell = document.createElement('div');
+  const classNames = ['cell'];
+  if (rowIndex === 0) classNames.push('cell-first-row');
+  if (isLastRow) classNames.push('cell-last-row');
+  else classNames.push('cell-middle-row');
+  if (colIndex === 3) classNames.push('cell-last-col');
+  cell.className = classNames.join(' ');
+
+  let ticksHtml = '';
+
+  // 1. Top ticks for first row
+  if (rowIndex === 0) {
+    ticksHtml += `<div class="tick-cross tick-top-left"></div>`;
+    if (colIndex === 3) {
+      ticksHtml += `<div class="tick-cross tick-top-right"></div>`;
+    }
+  }
+
+  // 2. Gap ticks (3px below cell) & gap line for middle rows
+  if (!isLastRow) {
+    ticksHtml += `<div class="tick-cross tick-gap-left"></div>`;
+    if (colIndex === 3) {
+      ticksHtml += `<div class="tick-cross tick-gap-right"></div>`;
+    }
+    ticksHtml += `<div class="gap-line"></div>`;
+  }
+
+  // 3. Bottom ticks for last row
+  if (isLastRow) {
+    ticksHtml += `<div class="tick-cross tick-bottom-left"></div>`;
+    if (colIndex === 3) {
+      ticksHtml += `<div class="tick-cross tick-bottom-right"></div>`;
+    }
+  }
+
+  cell.innerHTML = contentHtml ? (contentHtml + ticksHtml) : ticksHtml;
+  return cell;
 }
 
 let data = [];
@@ -311,6 +484,11 @@ const normalItems = data.filter(item => !isHalfHeight(item));
 
 const container = document.getElementById('container');
 
+const savedCutMode = localStorage.getItem('label_cut_lines_mode') || 'ticks';
+const selectElem = document.getElementById('cut-lines-mode');
+if (selectElem) selectElem.value = savedCutMode;
+setCutLinesMode(savedCutMode);
+
 if (data.length === 0) {
   container.innerHTML = '<div style="padding: 40px; text-align: center; font-family: sans-serif; color: #666;">Brak wyznaczonych etykiet do druku. Powróć do edytora i dodaj etykiety.</div>';
 } else {
@@ -319,18 +497,23 @@ if (data.length === 0) {
   pageDiv.className = 'page';
   let currentHeight = 0; // in mm
 
+  const ROW_GAP_MM = (6 * 25.4) / 96; // 6px vertical spacing (~1.5875 mm)
+  const HALF_ROW_HEIGHT_MM = 5.7 + ROW_GAP_MM;
+  const NORMAL_ROW_HEIGHT_MM = 9.5 + ROW_GAP_MM;
+  const PAGE_MAX_HEIGHT_MM = 280.0;
+
   // 1. PROCESS HALF-HEIGHT ITEMS
   let currentHalfIdx = 0;
   while (currentHalfIdx < halfItems.length) {
-    const remainingPageHeight = 285.0 - currentHeight;
-    let maxRows = Math.floor(remainingPageHeight / 5.7);
+    const remainingPageHeight = PAGE_MAX_HEIGHT_MM - currentHeight;
+    let maxRows = Math.floor(remainingPageHeight / HALF_ROW_HEIGHT_MM);
 
     if (maxRows <= 0) {
       container.appendChild(pageDiv);
       pageDiv = document.createElement('div');
       pageDiv.className = 'page';
       currentHeight = 0;
-      maxRows = Math.floor(285.0 / 5.7); // 50 rows
+      maxRows = Math.floor(PAGE_MAX_HEIGHT_MM / HALF_ROW_HEIGHT_MM);
     }
 
     const itemsLeft = halfItems.length - currentHalfIdx;
@@ -341,50 +524,37 @@ if (data.length === 0) {
     const gridHalf = document.createElement('div');
     gridHalf.className = 'grid-half';
 
-    const lastFilledRow = Math.ceil(itemsToRender / 4) - 1;
-    const maxRowIndex = lastFilledRow + 1;
-    const totalCells = (maxRowIndex + 1) * 4;
+    const totalCells = rowsToRender * 4;
 
     for (let i = 0; i < totalCells; i++) {
       const rowIndex = Math.floor(i / 4);
       const colIndex = i % 4;
+      const isLastRow = (rowIndex === rowsToRender - 1);
       const itemIdx = currentHalfIdx + i;
-      const cell = document.createElement('div');
-
-      if (rowIndex === lastFilledRow + 1) {
-        cell.className = 'cell cell-closing';
-        if (colIndex === 3) cell.innerHTML = '<div class="cell-closing-right-tick"></div>';
-      } else {
-        cell.className = 'cell';
-        let rightTick = (colIndex === 3) ? '<div class="cell-right-tick"></div>' : '';
-
-        if (itemIdx < currentHalfIdx + itemsToRender) {
-          const item = halfItems[itemIdx];
-          cell.innerHTML = renderHalfCellContent(item) + rightTick;
-        } else {
-          cell.innerHTML = rightTick;
-        }
+      let content = '';
+      if (itemIdx < currentHalfIdx + itemsToRender) {
+        content = renderHalfCellContent(halfItems[itemIdx]);
       }
-      gridHalf.appendChild(cell);
+      gridHalf.appendChild(createCell(rowIndex, colIndex, isLastRow, content));
     }
 
     pageDiv.appendChild(gridHalf);
-    currentHeight += (maxRowIndex + 1) * 5.7;
+    currentHeight += rowsToRender * HALF_ROW_HEIGHT_MM;
     currentHalfIdx += itemsToRender;
   }
 
-  // 2. PROCESS NORMAL FULL-HEIGHT ITEMS ON THE SAME PAGE (if space permits)!
+  // 2. PROCESS NORMAL FULL-HEIGHT ITEMS ON THE SAME PAGE (if space permits)
   let currentNormalIdx = 0;
   while (currentNormalIdx < normalItems.length) {
-    const remainingPageHeight = 285.0 - currentHeight;
-    let maxRows = Math.floor(remainingPageHeight / 9.5);
+    const remainingPageHeight = PAGE_MAX_HEIGHT_MM - currentHeight;
+    let maxRows = Math.floor(remainingPageHeight / NORMAL_ROW_HEIGHT_MM);
 
     if (maxRows <= 0) {
       container.appendChild(pageDiv);
       pageDiv = document.createElement('div');
       pageDiv.className = 'page';
       currentHeight = 0;
-      maxRows = Math.floor(285.0 / 9.5); // 30 rows
+      maxRows = Math.floor(PAGE_MAX_HEIGHT_MM / NORMAL_ROW_HEIGHT_MM);
     }
 
     const itemsLeft = normalItems.length - currentNormalIdx;
@@ -395,35 +565,22 @@ if (data.length === 0) {
     const gridNormal = document.createElement('div');
     gridNormal.className = 'grid-normal';
 
-    const lastFilledRow = Math.ceil(itemsToRender / 4) - 1;
-    const maxRowIndex = lastFilledRow + 1;
-    const totalCells = (maxRowIndex + 1) * 4;
+    const totalCells = rowsToRender * 4;
 
     for (let i = 0; i < totalCells; i++) {
       const rowIndex = Math.floor(i / 4);
       const colIndex = i % 4;
+      const isLastRow = (rowIndex === rowsToRender - 1);
       const itemIdx = currentNormalIdx + i;
-      const cell = document.createElement('div');
-
-      if (rowIndex === lastFilledRow + 1) {
-        cell.className = 'cell cell-closing';
-        if (colIndex === 3) cell.innerHTML = '<div class="cell-closing-right-tick"></div>';
-      } else {
-        cell.className = 'cell';
-        let rightTick = (colIndex === 3) ? '<div class="cell-right-tick"></div>' : '';
-
-        if (itemIdx < currentNormalIdx + itemsToRender) {
-          const item = normalItems[itemIdx];
-          cell.innerHTML = renderNormalCellContent(item) + rightTick;
-        } else {
-          cell.innerHTML = rightTick;
-        }
+      let content = '';
+      if (itemIdx < currentNormalIdx + itemsToRender) {
+        content = renderNormalCellContent(normalItems[itemIdx]);
       }
-      gridNormal.appendChild(cell);
+      gridNormal.appendChild(createCell(rowIndex, colIndex, isLastRow, content));
     }
 
     pageDiv.appendChild(gridNormal);
-    currentHeight += (maxRowIndex + 1) * 9.5;
+    currentHeight += rowsToRender * NORMAL_ROW_HEIGHT_MM;
     currentNormalIdx += itemsToRender;
   }
 

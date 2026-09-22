@@ -2,6 +2,27 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.12.0] - 2026-09-22
+
+### Dodano / Zmieniono
+- **Nowa Aplikacja Wyprzedaż Sprzętu (`/wyprzedaz/` & `/wyprzedaz/admin`)**:
+  - **Publiczna Galeria (`/wyprzedaz/`)**:
+    - Siatka kart produktów z podglądem zdjęć, badgami liczby zdjęć oraz oznaczeniami niedostępności (grayscale przy `ilosc == 0`).
+    - Drzewo kategorii z licznikami widocznych produktów (w tym z podkategorii) oraz automatycznym ukrywaniem pustych kategorii (0 produktów).
+    - Odrzucanie i ukrywanie produktów z błędną lub nieistniejącą kategorią z widoku publicznego.
+    - Opcjonalne pole ceny oraz specjalna prezentacja ceny `0 PLN` jako **`🎁 Za darmo`**.
+    - Wyszukiwarka z obsługą fraz ujętych w cudzysłowy oraz słów kluczowych (`AND`).
+    - Ograniczenie wyświetlania do 6 produktów na stronę z pełnym stronnicowaniem (`▶ Poprzednia`, numery stron, `Następna ▶`).
+  - **Panel Administracyjny Wyprzedaży (`/wyprzedaz/admin`)**:
+    - Dostęp ograniczony wyłącznie do zaufanych adresów IP (`admin_trusted_ips`). Wyświetlanie przycisku nawigacyjnego "🔒 Panel Admina" wyłącznie dla zaufanych IP.
+    - Dwukolumnowy układ z drzewem kategorii po lewej stronie i zarządzaniem produktami po prawej.
+    - Tworzenie i edycja drzewa kategorii do 4 poziomów głębokości z automatycznym zapobieganiem pętlom i sortowaniem alfabetycznym.
+    - Wskaźnik i filtr `⚠️ BŁĘDNA KATEGORIA` pozwalający natychmiast odnaleźć produkty wymagające przypisania kategorii.
+    - Wyszukiwarka produktów w panelu admina z tokenizatorem fraz i słów kluczowych.
+    - Bezszwowe zachowywanie trybu edycji przedmiotu po jego zapisaniu.
+
+---
+
 ## [1.11.3] - 2026-09-05
 
 ### Dodano / Zmieniono

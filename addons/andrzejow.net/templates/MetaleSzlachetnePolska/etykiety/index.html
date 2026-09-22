@@ -598,7 +598,7 @@
                         </select>
                     </div>
                     <div style="flex: 1; min-width: 0;">
-                        <input type="text" id="search-input" class="search-input" style="height: 42px; font-size: 13.5px;" placeholder="🔍 Szukaj frazy (np. '2007 NG' lub 'Herbert 2008')..." oninput="onSearchInput()">
+                        <input type="text" id="search-input" class="search-input" style="height: 42px; font-size: 13.5px;" placeholder="🔍 Szukaj (np. 'Herbert', 'rok:2025', 'nominał:15', 'waluta:$', 'stop:900', 'kraj:pl', 'trial')..." oninput="onSearchInput()">
                     </div>
                 </div>
 
@@ -996,14 +996,41 @@
 
             container.innerHTML = `<div class="empty-placeholder">⏳ Szukanie w bazie serwera...</div>`;
 
+            const CURRENCY_SYNONYMS_JS = {
+                '$': ['$', 'dollar', 'dolar', 'usd'],
+                'dollar': ['$', 'dollar', 'dolar', 'usd'],
+                'dolar': ['$', 'dollar', 'dolar', 'usd'],
+                'usd': ['$', 'dollar', 'dolar', 'usd'],
+                'zł': ['zł', 'zloty', 'złoty', 'pln'],
+                'zloty': ['zł', 'zloty', 'złoty', 'pln'],
+                'złoty': ['zł', 'zloty', 'złoty', 'pln'],
+                'pln': ['zł', 'zloty', 'złoty', 'pln'],
+                '£': ['£', 'funt', 'gbp'],
+                'funt': ['£', 'funt', 'gbp'],
+                'gbp': ['£', 'funt', 'gbp']
+            };
+
+            function checkSynonymMatchJS(targetText, queryVal) {
+                const targetLower = String(targetText || '').trim().toLowerCase();
+                const qLower = String(queryVal || '').trim().toLowerCase();
+                if (!qLower) return true;
+                if (targetLower.includes(qLower)) return true;
+                if (CURRENCY_SYNONYMS_JS[qLower]) {
+                    for (let syn of CURRENCY_SYNONYMS_JS[qLower]) {
+                        if (targetLower.includes(syn)) return true;
+                    }
+                }
+                return false;
+            }
+
             function parseSearchQueryJS(rawQuery) {
-                if (!rawQuery) return { reqTrial: false, exactPhrases: [], wordTokens: [] };
+                if (!rawQuery) return { reqTrial: false, fieldFilters: {}, exactPhrases: [], wordTokens: [] };
                 const q = rawQuery.trim();
                 let reqTrial = false;
                 const exactPhrases = [];
-                const pattern = /["']([^"']+)["']/g;
+                const phrasePattern = /["']([^"']+)["']/g;
                 let match;
-                while ((match = pattern.exec(q)) !== null) {
+                while ((match = phrasePattern.exec(q)) !== null) {
                     const phrase = match[1].trim().toLowerCase();
                     if (['trial', 'próba', 'proba'].includes(phrase)) {
                         reqTrial = true;
@@ -1011,9 +1038,22 @@
                         exactPhrases.push(phrase);
                     }
                 }
-                const remainder = q.replace(/["']([^"']+)["']/g, ' ').trim().toLowerCase();
+                const qNoQuotes = q.replace(/["']([^"']+)["']/g, ' ');
+                const fieldFilters = {};
+                const fieldPattern = /\b(rok|waluta|nominał|nominal|stop|kraj):([^\s"'\`]+|"[^"]+"|\'[^\']+\')/gi;
+                let fieldMatch;
+                while ((fieldMatch = fieldPattern.exec(qNoQuotes)) !== null) {
+                    const fk = fieldMatch[1].toLowerCase();
+                    const fv = fieldMatch[2].replace(/^["']|["']$/g, '').toLowerCase();
+                    if (['nominal', 'nominał'].includes(fk)) {
+                        fieldFilters['nominal'] = fv;
+                    } else if (['rok', 'waluta', 'stop', 'kraj'].includes(fk)) {
+                        fieldFilters[fk] = fv;
+                    }
+                }
+                const qRemainder = qNoQuotes.replace(fieldPattern, ' ').trim().toLowerCase();
                 const wordTokens = [];
-                remainder.split(/\s+/).forEach(t => {
+                qRemainder.split(/\s+/).forEach(t => {
                     const tok = t.trim();
                     if (['trial', 'próba', 'proba'].includes(tok)) {
                         reqTrial = true;
@@ -1021,20 +1061,41 @@
                         wordTokens.push(tok);
                     }
                 });
-                return { reqTrial, exactPhrases, wordTokens };
+                return { reqTrial, fieldFilters, exactPhrases, wordTokens };
             }
 
-            const { reqTrial, exactPhrases, wordTokens } = parseSearchQueryJS(queryRaw);
+            const { reqTrial, fieldFilters, exactPhrases, wordTokens } = parseSearchQueryJS(queryRaw);
             const matchingSession = sessionLabels.filter(item => {
-                const itemYear = (item[0] || '').trim();
+                const itemYear = (item[0] || '').trim().toLowerCase();
                 const itemCountry = (item[13] || 'pl').toLowerCase().trim();
                 const trialBool = Boolean(item[12]);
 
-                if (yearFilter && itemYear !== yearFilter) return false;
+                if (yearFilter && itemYear !== yearFilter.toLowerCase()) return false;
                 if (countryFilter && itemCountry !== countryFilter) return false;
                 if (reqTrial && !trialBool) return false;
 
-                const searchableText = [item[1], item[2], item[3], item[4], item[5], item[6], item[7], item[8], item[9], item[10], item[11]].join(' ').toLowerCase();
+                if (fieldFilters.rok && !itemYear.includes(fieldFilters.rok)) return false;
+                if (fieldFilters.kraj && !itemCountry.includes(fieldFilters.kraj)) return false;
+                if (fieldFilters.stop && !(item[6] || '').toLowerCase().includes(fieldFilters.stop)) return false;
+                if (fieldFilters.waluta) {
+                    const qWal = fieldFilters.waluta;
+                    const matchedCurr = checkSynonymMatchJS(item[7], qWal) || checkSynonymMatchJS(item[5], qWal);
+                    let matchedCountryFallback = false;
+                    if (qWal.length === 3) {
+                        const countryPrefix = qWal.substring(0, 2).toLowerCase();
+                        if (itemCountry.includes(countryPrefix)) {
+                            matchedCountryFallback = true;
+                        }
+                    }
+                    if (!matchedCurr && !matchedCountryFallback) return false;
+                }
+                if (fieldFilters.nominal) {
+                    const combinedNom = `${item[7]} ${item[4]} ${item[5]}`.trim().toLowerCase();
+                    if (!checkSynonymMatchJS(combinedNom, fieldFilters.nominal)) return false;
+                }
+
+                // Excluded fields from traditional general search: Rok [0], Nominał [4], WalutaPo [5], Stop [6], WalutaPrzed [7], Trial [12], Kraj [13]
+                const searchableText = [item[1], item[2], item[3], item[8], item[9], item[10], item[11]].join(' ').toLowerCase();
 
                 for (let phrase of exactPhrases) {
                     if (!searchableText.includes(phrase)) return false;

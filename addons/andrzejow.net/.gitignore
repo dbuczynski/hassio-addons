@@ -1,0 +1,19 @@
+# Local environment & python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.venv/
+venv/
+ENV/
+
+# Temporary test scripts
+scratch/
+temporary/
+
+# Wyprzedaż application data & uploaded photos (persistent, excluded from git)
+wyprzedaz_data/
+**/wyprzedaz_data/*
+**/uploads/*
+*.json.bak

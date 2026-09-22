@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admina - Wyprzedaż Sprzętu</title>
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: rgba(30, 41, 59, 0.85);
+            --accent-primary: #6366f1;
+            --accent-gold: #f59e0b;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --glass-blur: blur(16px);
+            --radius-lg: 18px;
+            --radius-md: 10px;
+            --radius-sm: 6px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.15) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar {
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: var(--glass-blur);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand-title {
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff 40%, var(--accent-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn {
+            background: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .btn-green {
+            background: linear-gradient(135deg, var(--accent-green), #059669);
+            color: #fff;
+            border: none;
+        }
+        .btn-green:hover { background: linear-gradient(135deg, #059669, #047857); }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.4);
+            color: #fff;
+        }
+
+        .main-container {
+            max-width: 1500px;
+            width: 96%;
+            margin: 24px auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            flex: 1;
+        }
+
+        .ip-badge {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #6ee7b7;
+            padding: 10px 16px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* 2-Column Grid Layout */
+        .admin-grid {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 960px) {
+            .admin-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .card-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--accent-gold);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        /* Category Tree Sidebar Items */
+        .sidebar-cat-item {
+            padding: 8px 10px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            transition: all 0.15s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+            border: 1px solid transparent;
+        }
+        .sidebar-cat-item:hover, .sidebar-cat-item.active {
+            background: rgba(99, 102, 241, 0.18);
+            color: #fff;
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+        .sidebar-cat-item.active {
+            font-weight: 700;
+            border-left: 3px solid var(--accent-primary);
+        }
+        .sidebar-cat-item.invalid-cat {
+            background: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+            border: 1px dashed rgba(239, 68, 68, 0.4);
+        }
+        .sidebar-cat-item.invalid-cat.active {
+            background: rgba(239, 68, 68, 0.3);
+            border-left: 3px solid var(--accent-red);
+        }
+
+        .cat-actions-btns {
+            display: flex;
+            gap: 4px;
+            opacity: 0.7;
+        }
+        .sidebar-cat-item:hover .cat-actions-btns { opacity: 1; }
+
+        .count-badge {
+            background: rgba(15, 23, 42, 0.8);
+            padding: 2px 7px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        /* Form Controls */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+        .form-control {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 10px 14px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+        }
+        .form-control:focus {
+            border-color: var(--accent-primary);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 90px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 14px;
+        }
+        @media (max-width: 768px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        }
+
+        /* Photo Thumbnails in Form */
+        .existing-photos-wrapper {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        .existing-photo-card {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+        .existing-photo-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .remove-photo-btn {
+            position: absolute;
+            top: 3px; right: 3px;
+            background: rgba(239, 68, 68, 0.9);
+            color: #fff;
+            border: none;
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .remove-photo-btn:hover { background: #dc2626; }
+
+        .upload-preview-container {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        .upload-preview-item {
+            width: 70px;
+            height: 70px;
+            border-radius: var(--radius-sm);
+            object-fit: cover;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .data-table th, .data-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-color);
+            text-align: left;
+        }
+        .data-table th {
+            color: var(--accent-gold);
+            font-weight: 700;
+            background: rgba(15, 23, 42, 0.6);
+        }
+        .data-table tr:hover { background: rgba(255, 255, 255, 0.02); }
+
+        .table-thumb {
+            width: 44px;
+            height: 44px;
+            border-radius: 4px;
+            object-fit: cover;
+        }
+
+        /* Status Badges */
+        .badge-status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .badge-out-of-stock { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
+        .badge-hidden { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.4); }
+        .badge-available { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); }
+        .badge-invalid-cat { background: rgba(239, 68, 68, 0.25); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.5); font-weight:800; }
+
+        .cat-level-badge {
+            font-size: 9.5px;
+            font-weight: 700;
+            padding: 2px 5px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .cat-level-badge.level-1 { background: rgba(245, 158, 11, 0.2); color: #fef08a; border: 1px solid rgba(245, 158, 11, 0.4); }
+        .cat-level-badge.level-2 { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.4); }
+        .cat-level-badge.level-3 { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); }
+        .cat-level-badge.level-4 { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; border: 1px solid rgba(168, 85, 247, 0.4); }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="brand-title">
+            <span>🔒 Panel Administracyjny - Wyprzedaż</span>
+        </div>
+        <div class="nav-actions">
+            <a href="/wyprzedaz/" class="btn">🛒 Podgląd Galerii</a>
+            <a href="/" class="btn">🏠 Strona Główna</a>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="ip-badge">
+            <span>✅ Zalogowano przez autoryzowany adres IP: <strong>{{ client_ip }}</strong></span>
+            <span style="font-size:12px; color:var(--text-muted);">Dostęp ograniczony wyłącznie do zaufanych IP</span>
+        </div>
+
+        <div class="admin-grid">
+            <!-- LEFT SIDEBAR: DRZEWO KATEGORII -->
+            <div class="card" style="align-self: start;">
+                <div class="card-title">
+                    <span>🌳 Drzewo Kategorii</span>
+                    <button class="btn btn-green" style="padding:4px 8px; font-size:11px;" onclick="prepareNewCategoryForm()">➕ Nowa</button>
+                </div>
+
+                <div id="sidebar-categories-tree">
+                    <!-- Dynamic category tree list -->
+                </div>
+            </div>
+
+            <!-- RIGHT MAIN AREA: PRODUKTY I FORMULARZE -->
+            <div style="display:flex; flex-direction:column; gap:20px;">
+                <!-- CARD 1: FORMULARZ PRODUKTU -->
+                <div class="card">
+                    <div id="prod-form-title" class="card-title">➕ Dodaj Nowy Produkt do Sprzedania</div>
+                    <form id="product-form" onsubmit="saveProduct(event)">
+                        <input type="hidden" id="prod-id" value="">
+                        
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label>Nazwa Produktu *</label>
+                                <input type="text" id="prod-name" class="form-control" placeholder="np. Wkrętarka Bosch GSR 18V" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Cena (PLN) <small style="color:var(--text-muted); font-weight:normal;">(Opcjonalnie, 0 = Za darmo)</small></label>
+                                <input type="text" id="prod-price" class="form-control" placeholder="np. 250, 0 (za darmo) lub zostaw puste">
+                            </div>
+                        </div>
+
+                        <div class="grid-3">
+                            <div class="form-group">
+                                <label>Kategoria Produktu *</label>
+                                <select id="prod-category" class="form-control" required>
+                                    <!-- Dynamically loaded -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Waga Jednostkowa (Opcjonalnie)</label>
+                                <input type="text" id="prod-weight" class="form-control" placeholder="np. 1.5 kg, 500g">
+                            </div>
+                            <div class="form-group">
+                                <label>Dostępna Ilość (Sztuk) *</label>
+                                <input type="number" id="prod-qty" class="form-control" min="0" value="1" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="flex-direction:row; align-items:center; gap:10px; margin-bottom:14px;">
+                            <input type="checkbox" id="prod-visible" checked style="width:18px; height:18px; cursor:pointer;">
+                            <label for="prod-visible" style="cursor:pointer; font-size:14px; color:#fff; font-weight:600;">
+                                👁️ Widoczny w galerii publicznej dla kupujących
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Opis Przedmiotu *</label>
+                            <textarea id="prod-desc" class="form-control" placeholder="Podaj szczegóły, stan techniczny, co wchodzi w skład zestawu..." required></textarea>
+                        </div>
+
+                        <!-- Existing photos during edit -->
+                        <div id="existing-photos-block" class="form-group" style="display:none;">
+                            <label>Aktualne Zdjęcia Produktu (Kliknij ✕ aby usunąć wybrane zdjęcie)</label>
+                            <div id="existing-photos-container" class="existing-photos-wrapper"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label id="upload-label">Dodaj Zdjęcia 📷 (Można wybrać wiele plików na raz)</label>
+                            <input type="file" id="prod-files" class="form-control" multiple accept="image/*" onchange="previewSelectedFiles(this)">
+                            <div id="file-previews" class="upload-preview-container"></div>
+                        </div>
+
+                        <div style="display:flex; gap:12px; margin-top:10px;">
+                            <button id="prod-submit-btn" type="submit" class="btn btn-green">💾 Zapisz Produkt w Bazie</button>
+                            <button type="button" class="btn" onclick="resetProductForm()">❌ Anuluj / Wyczyść</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- CARD 2: TABELA PRODUKTÓW -->
+                <div class="card">
+                    <div class="card-title">
+                        <span>📋 Lista Produktów w Bazie</span>
+                        <span id="active-filter-indicator" style="font-size:12.5px; font-weight:600; color:var(--accent-primary);"></span>
+                    </div>
+
+                    <div style="display:flex; gap:12px; margin-bottom:12px;">
+                        <input type="text" id="admin-search-input" class="search-input form-control" style="flex:1;" placeholder="🔍 Szukaj produktu w panelu admina..." oninput="renderProductsTable()">
+                    </div>
+
+                    <div style="overflow-x:auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Zdjęcie</th>
+                                    <th>Nazwa</th>
+                                    <th>Cena</th>
+                                    <th>Kategoria</th>
+                                    <th>Waga</th>
+                                    <th>Ilość</th>
+                                    <th>Widoczność</th>
+                                    <th style="text-align:right;">Akcje</th>
+                                </tr>
+                            </thead>
+                            <tbody id="products-tbody">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- CARD 3: FORMULARZ KATEGORII -->
+                <div id="category-form-card" class="card">
+                    <div id="cat-form-title" class="card-title">📁 Dodaj / Edytuj Kategorię</div>
+                    <form id="category-form" onsubmit="saveCategory(event)">
+                        <input type="hidden" id="cat-id" value="">
+                        
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label>Nazwa Kategorii *</label>
+                                <input type="text" id="cat-name" class="form-control" placeholder="np. Elektronarzędzia" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Kategoria Nadrzędna (Maksymalny poziom: 4)</label>
+                                <select id="cat-parent" class="form-control">
+                                    <option value="">-- Kategoria Główna (Poziom 1 - Brak nadrzędnej) --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Opis Kategorii (Opcjonalnie)</label>
+                            <input type="text" id="cat-desc" class="form-control" placeholder="Krótki opis kategorii...">
+                        </div>
+
+                        <div style="display:flex; gap:12px;">
+                            <button id="cat-submit-btn" type="submit" class="btn btn-green">💾 Zapisz Kategorię</button>
+                            <button type="button" class="btn" onclick="resetCategoryForm()">❌ Anuluj</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allCategories = [];
+        let allProducts = [];
+        let currentExistingPhotos = [];
+        let selectedAdminCatFilter = null; // null = all, 'INVALID_CAT' = broken category, or catId
+
+        async function initData() {
+            await loadCategories();
+            await loadProducts();
+        }
+
+        async function loadCategories() {
+            try {
+                const res = await fetch('/api/wyprzedaz/categories');
+                allCategories = await res.json();
+                renderCategoryDropdowns();
+                renderSidebarCategoryTree();
+            } catch(e) {
+                console.error("Błąd kategorii:", e);
+            }
+        }
+
+        // Tworzy płaską mapę ID -> Nazwa kategorii
+        function buildCategoryMap() {
+            const map = {};
+            function traverse(list) {
+                if (!list) return;
+                list.forEach(c => {
+                    map[c.id] = c.name;
+                    if (c.children && c.children.length > 0) {
+                        traverse(c.children);
+                    }
+                });
+            }
+            traverse(allCategories);
+            return map;
+        }
+
+        function getCategoryDisplay(catId) {
+            if (!catId || !catId.trim()) {
+                return '<span class="badge-status badge-invalid-cat" title="Brak przypisanej kategorii">⚠️ BŁĘDNA KATEGORIA</span>';
+            }
+            const catMap = buildCategoryMap();
+            if (catMap[catId]) {
+                return catMap[catId];
+            }
+            return `<span class="badge-status badge-invalid-cat" title="Kategoria o ID '${catId}' nie istnieje w bazie">⚠️ BŁĘDNA KATEGORIA</span>`;
+        }
+
+        function renderCategoryDropdowns() {
+            const prodCatSelect = document.getElementById('prod-category');
+            const parentCatSelect = document.getElementById('cat-parent');
+            const currentEditCatId = document.getElementById('cat-id').value;
+
+            let optionsHtml = '<option value="">-- Wybierz Kategorię --</option>';
+            let parentOptionsHtml = '<option value="">-- Kategoria Główna (Poziom 1 - Brak nadrzędnej) --</option>';
+
+            function addCatOptions(cats, depth = 0) {
+                const sorted = [...cats].sort((a,b) => a.name.localeCompare(b.name, 'pl'));
+                sorted.forEach(c => {
+                    const levelNum = depth + 1;
+                    const indentStr = '&nbsp;&nbsp;'.repeat(depth * 2) + (depth > 0 ? '└─ ' : '');
+                    
+                    optionsHtml += `<option value="${c.id}">${indentStr}[P${levelNum}] ${c.name}</option>`;
+                    
+                    const isMaxDepth = (depth >= 3);
+                    const isSelfOrDescendant = currentEditCatId && isDescendantOrSelf(c, currentEditCatId);
+                    
+                    let disabledAttr = '';
+                    let labelSuffix = '';
+
+                    if (isSelfOrDescendant) {
+                        disabledAttr = 'disabled';
+                        labelSuffix = ' (Nie można wybrać własnej kategorii lub jej podkategorii)';
+                    } else if (isMaxDepth) {
+                        disabledAttr = 'disabled';
+                        labelSuffix = ' (Maksymalny poziom 4 - nie można dodać podkategorii)';
+                    }
+
+                    parentOptionsHtml += `<option value="${c.id}" ${disabledAttr}>${indentStr}[P${levelNum}] ${c.name}${labelSuffix}</option>`;
+                    
+                    if (c.children && c.children.length > 0) {
+                        addCatOptions(c.children, depth + 1);
+                    }
+                });
+            }
+
+            addCatOptions(allCategories);
+            prodCatSelect.innerHTML = optionsHtml;
+            parentCatSelect.innerHTML = parentOptionsHtml;
+        }
+
+        function isDescendantOrSelf(cat, targetId) {
+            if (cat.id === targetId) return true;
+            if (cat.children && cat.children.length > 0) {
+                return cat.children.some(c => isDescendantOrSelf(c, targetId));
+            }
+            return false;
+        }
+
+        function getLevelColor(level) {
+            switch(level) {
+                case 1: return 'var(--accent-gold)';
+                case 2: return 'var(--accent-primary)';
+                case 3: return 'var(--accent-green)';
+                case 4: return '#a855f7';
+                default: return 'var(--border-color)';
+            }
+        }
+
+        function countProductsInSubtree(cat) {
+            const validSubCatIds = new Set();
+            function collectSubIds(c) {
+                validSubCatIds.add(c.id);
+                if (c.children) c.children.forEach(collectSubIds);
+            }
+            collectSubIds(cat);
+            return allProducts.filter(p => p.kategoria_id && validSubCatIds.has(p.kategoria_id)).length;
+        }
+
+        function getInvalidCatProductsCount() {
+            const catMap = buildCategoryMap();
+            return allProducts.filter(p => !p.kategoria_id || !catMap[p.kategoria_id]).length;
+        }
+
+        function renderSidebarCategoryTree() {
+            const container = document.getElementById('sidebar-categories-tree');
+            const totalProds = allProducts.length;
+            const invalidCount = getInvalidCatProductsCount();
+
+            let html = `
+                <div class="sidebar-cat-item ${selectedAdminCatFilter === null ? 'active' : ''}" onclick="selectAdminCatFilter(null)">
+                    <span>📂 Wszystkie produkty</span>
+                    <span class="count-badge">${totalProds}</span>
+                </div>
+            `;
+
+            // Jeśli istnieją produkty z błędną/brakującą kategorią, wyświetl czerwoną opcję
+            if (invalidCount > 0) {
+                html += `
+                    <div class="sidebar-cat-item invalid-cat ${selectedAdminCatFilter === 'INVALID_CAT' ? 'active' : ''}" onclick="selectAdminCatFilter('INVALID_CAT')">
+                        <span>⚠️ BŁĘDNA KATEGORIA</span>
+                        <span class="count-badge" style="background:#ef4444; color:#fff;">${invalidCount}</span>
+                    </div>
+                `;
+            }
+
+            function renderNode(cat, depth = 0) {
+                const levelNum = depth + 1;
+                const levelBadgeClass = `level-${levelNum}`;
+                const prefix = depth > 0 ? '└─ '.repeat(depth) : '';
+                const color = getLevelColor(levelNum);
+                const isActive = selectedAdminCatFilter === cat.id;
+                const prodCount = countProductsInSubtree(cat);
+
+                const itemStyle = `border-left: 3px solid ${color}; margin-left: ${depth * 12}px;`;
+
+                return `
+                    <div class="sidebar-cat-item ${isActive ? 'active' : ''}" style="${itemStyle}" onclick="selectAdminCatFilter('${cat.id}')">
+                        <div style="display:flex; align-items:center; gap:6px; overflow:hidden;">
+                            <span class="cat-level-badge ${levelBadgeClass}">P${levelNum}</span>
+                            <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${cat.name}">${prefix}${cat.name}</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span class="count-badge">${prodCount}</span>
+                            <div class="cat-actions-btns" onclick="event.stopPropagation()">
+                                <button style="background:none; border:none; cursor:pointer; font-size:11px;" onclick="editCategory('${cat.id}')" title="Edytuj kategorię">✏️</button>
+                                <button style="background:none; border:none; cursor:pointer; font-size:11px;" onclick="deleteCategory('${cat.id}')" title="Usuń kategorię">🗑️</button>
+                            </div>
+                        </div>
+                    </div>
+                    ${cat.children ? [...cat.children].sort((a,b) => a.name.localeCompare(b.name, 'pl')).map(c => renderNode(c, depth + 1)).join('') : ''}
+                `;
+            }
+
+            const sortedRoots = [...allCategories].sort((a,b) => a.name.localeCompare(b.name, 'pl'));
+            sortedRoots.forEach(cat => {
+                html += renderNode(cat, 0);
+            });
+
+            container.innerHTML = html;
+        }
+
+        function selectAdminCatFilter(catId) {
+            selectedAdminCatFilter = catId;
+            renderSidebarCategoryTree();
+            renderProductsTable();
+
+            const indicator = document.getElementById('active-filter-indicator');
+            if (catId === null) {
+                indicator.textContent = '';
+            } else if (catId === 'INVALID_CAT') {
+                indicator.textContent = 'Filtrowanie: ⚠️ BŁĘDNA KATEGORIA';
+                indicator.style.color = '#fca5a5';
+            } else {
+                const cat = findCategoryById(catId);
+                indicator.textContent = 'Filtrowanie: 📂 ' + (cat ? cat.name : catId);
+                indicator.style.color = 'var(--accent-primary)';
+            }
+        }
+
+        function findCategoryById(catId, cats = allCategories) {
+            for (let c of cats) {
+                if (c.id === catId) return c;
+                if (c.children && c.children.length > 0) {
+                    let found = findCategoryById(catId, c.children);
+                    if (found) return found;
+                }
+            }
+            return null;
+        }
+
+        function prepareNewCategoryForm() {
+            resetCategoryForm();
+            window.scrollTo({ top: document.getElementById('category-form-card').offsetTop - 80, behavior: 'smooth' });
+        }
+
+        function editCategory(catId) {
+            const cat = findCategoryById(catId);
+            if (!cat) return;
+
+            document.getElementById('cat-id').value = cat.id;
+            document.getElementById('cat-name').value = cat.name;
+            document.getElementById('cat-desc').value = cat.description || '';
+
+            renderCategoryDropdowns();
+            document.getElementById('cat-parent').value = cat.parent_id || '';
+
+            document.getElementById('cat-form-title').textContent = '✏️ Edytuj Kategorię: ' + cat.name;
+            document.getElementById('cat-submit-btn').textContent = '💾 Zapisz Zmiany Kategorii';
+
+            window.scrollTo({ top: document.getElementById('category-form-card').offsetTop - 80, behavior: 'smooth' });
+        }
+
+        async function saveCategory(e) {
+            e.preventDefault();
+            const id = document.getElementById('cat-id').value;
+            const name = document.getElementById('cat-name').value;
+            const parent_id = document.getElementById('cat-parent').value;
+            const description = document.getElementById('cat-desc').value;
+
+            try {
+                const res = await fetch('/api/wyprzedaz/categories', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ id, name, parent_id, description })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    resetCategoryForm();
+                    await loadCategories();
+                    renderProductsTable();
+                } else {
+                    alert("⚠️ Błąd zapisu kategorii: " + (data.error || "Wystąpił błąd"));
+                }
+            } catch(err) {
+                alert("⚠️ Błąd połączenia z serwerem: " + err);
+            }
+        }
+
+        function resetCategoryForm() {
+            document.getElementById('category-form').reset();
+            document.getElementById('cat-id').value = '';
+            document.getElementById('cat-form-title').textContent = '📁 Dodaj Nową Kategorię';
+            document.getElementById('cat-submit-btn').textContent = '💾 Zapisz Kategorię';
+            renderCategoryDropdowns();
+        }
+
+        async function deleteCategory(catId) {
+            if (!confirm("Czy na pewno chcesz usunąć tę kategorię? Podkategorie staną się kategoriami głównymi.")) return;
+            try {
+                const res = await fetch(`/api/wyprzedaz/categories?id=${catId}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) {
+                    await loadCategories();
+                    renderProductsTable();
+                }
+            } catch(e) {
+                alert("Błąd usuwania: " + e);
+            }
+        }
+
+        /* PRODUCTS */
+        async function loadProducts() {
+            try {
+                const res = await fetch('/api/wyprzedaz/products');
+                allProducts = await res.json();
+                renderSidebarCategoryTree();
+                renderProductsTable();
+            } catch(e) {
+                console.error("Błąd produktów:", e);
+            }
+        }
+
+        function parseSearchQuery(query) {
+            if (!query || !query.trim()) return [];
+            const regex = /"([^"]+)"|'([^']+)'|(\S+)/g;
+            const terms = [];
+            let match;
+            while ((match = regex.exec(query)) !== null) {
+                const term = match[1] || match[2] || match[3];
+                if (term && term.trim()) {
+                    terms.push(term.trim().toLowerCase());
+                }
+            }
+            return terms;
+        }
+
+        function getAdminPriceDisplay(cena) {
+            if (cena === undefined || cena === null || String(cena).trim() === '') {
+                return '<span style="color:var(--text-muted); font-size:12px;">-</span>';
+            }
+            const cleanStr = String(cena).trim().replace(',', '.');
+            const num = parseFloat(cleanStr);
+            if (!isNaN(num) && num === 0) {
+                return '<span style="color:var(--accent-green); font-weight:700;">Za darmo</span>';
+            }
+            return `<span style="color:var(--accent-gold); font-weight:700;">${cena} PLN</span>`;
+        }
+
+        function renderProductsTable() {
+            const tbody = document.getElementById('products-tbody');
+            if (!allProducts || allProducts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">Brak produktów w bazie. Dodaj pierwszy produkt powyżej!</td></tr>';
+                return;
+            }
+
+            const rawSearchQuery = document.getElementById('admin-search-input').value || '';
+            const searchTerms = parseSearchQuery(rawSearchQuery);
+            const catMap = buildCategoryMap();
+
+            let filtered = allProducts.filter(p => {
+                // Filtrowanie wg kategorii z lewego menu
+                if (selectedAdminCatFilter === 'INVALID_CAT') {
+                    const isInvalid = !p.kategoria_id || !catMap[p.kategoria_id];
+                    if (!isInvalid) return false;
+                } else if (selectedAdminCatFilter !== null) {
+                    const validSubCatIds = new Set();
+                    function collectSub(c) {
+                        validSubCatIds.add(c.id);
+                        if (c.children) c.children.forEach(collectSub);
+                    }
+                    const targetCat = findCategoryById(selectedAdminCatFilter);
+                    if (targetCat) collectSub(targetCat);
+                    if (!p.kategoria_id || !validSubCatIds.has(p.kategoria_id)) return false;
+                }
+
+                // Wyszukiwanie w panelu admina (obsługa słów oraz fraz w cudzysłowach)
+                if (searchTerms.length > 0) {
+                    const targetText = ((p.nazwa || '') + ' ' + (p.opis || '')).toLowerCase();
+                    const matchAllTerms = searchTerms.every(term => targetText.includes(term));
+                    if (!matchAllTerms) return false;
+                }
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">Brak produktów spełniających kryteria filtrowania.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(p => {
+                const thumb = (p.zdjecia && p.zdjecia.length > 0) ? p.zdjecia[0] : null;
+                const catDisplay = getCategoryDisplay(p.kategoria_id);
+                const priceDisplay = getAdminPriceDisplay(p.cena);
+                const weightTxt = p.waga_jednostkowa || '-';
+                const qtyVal = (p.ilosc !== undefined && p.ilosc !== null) ? parseInt(p.ilosc) : 1;
+                const isVisible = p.widocznosc !== false;
+
+                const qtyBadge = qtyVal > 0 
+                    ? `<span class="badge-status badge-available">${qtyVal} szt.</span>` 
+                    : `<span class="badge-status badge-out-of-stock">⛔ Brak (0)</span>`;
+
+                const visBadge = isVisible 
+                    ? `<span style="color:#6ee7b7; font-size:12px; font-weight:600;">👁️ Widoczny</span>` 
+                    : `<span class="badge-status badge-hidden">🚫 Ukryty</span>`;
+
+                return `
+                    <tr>
+                        <td>${thumb ? `<img src="${thumb}" class="table-thumb">` : '📷'}</td>
+                        <td><strong>${p.nazwa}</strong></td>
+                        <td>${priceDisplay}</td>
+                        <td>${catDisplay}</td>
+                        <td>${weightTxt}</td>
+                        <td>${qtyBadge}</td>
+                        <td>${visBadge}</td>
+                        <td style="text-align:right; white-space:nowrap;">
+                            <button class="btn" style="padding:4px 10px; font-size:12px; background:rgba(99,102,241,0.2); border-color:var(--accent-primary);" onclick="editProduct('${p.id}')">✏️ Edytuj</button>
+                            <button class="btn btn-danger" style="padding:4px 10px; font-size:12px;" onclick="deleteProduct('${p.id}')">🗑️ Usuń</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function editProduct(prodId) {
+            const prod = allProducts.find(p => p.id === prodId);
+            if (!prod) return;
+
+            document.getElementById('prod-id').value = prod.id;
+            document.getElementById('prod-name').value = prod.nazwa;
+            document.getElementById('prod-price').value = prod.cena;
+            document.getElementById('prod-category').value = prod.kategoria_id || '';
+            document.getElementById('prod-weight').value = prod.waga_jednostkowa || '';
+            document.getElementById('prod-qty').value = (prod.ilosc !== undefined && prod.ilosc !== null) ? prod.ilosc : 1;
+            document.getElementById('prod-visible').checked = prod.widocznosc !== false;
+            document.getElementById('prod-desc').value = prod.opis;
+
+            currentExistingPhotos = prod.zdjecia ? [...prod.zdjecia] : [];
+            renderExistingPhotos();
+
+            document.getElementById('prod-form-title').textContent = '✏️ Edytuj Produkt: ' + prod.nazwa;
+            document.getElementById('prod-submit-btn').textContent = '💾 Zapisz Zmiany Produktu';
+            document.getElementById('upload-label').textContent = 'Dodaj Dodatkowe Zdjęcia 📷 (Opcjonalnie)';
+
+            window.scrollTo({ top: document.getElementById('product-form').offsetTop - 80, behavior: 'smooth' });
+        }
+
+        function renderExistingPhotos() {
+            const block = document.getElementById('existing-photos-block');
+            const container = document.getElementById('existing-photos-container');
+
+            if (!currentExistingPhotos || currentExistingPhotos.length === 0) {
+                block.style.display = 'none';
+                container.innerHTML = '';
+                return;
+            }
+
+            block.style.display = 'block';
+            container.innerHTML = currentExistingPhotos.map((url, idx) => `
+                <div class="existing-photo-card">
+                    <img src="${url}" alt="Zdjęcie ${idx + 1}">
+                    <button type="button" class="remove-photo-btn" onclick="removeExistingPhoto(${idx})" title="Usuń to zdjęcie">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function removeExistingPhoto(idx) {
+            currentExistingPhotos.splice(idx, 1);
+            renderExistingPhotos();
+        }
+
+        function previewSelectedFiles(input) {
+            const container = document.getElementById('file-previews');
+            container.innerHTML = '';
+            if (input.files) {
+                Array.from(input.files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'upload-preview-item';
+                        container.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        }
+
+        async function saveProduct(e) {
+            e.preventDefault();
+            const formData = new FormData();
+            const prodId = document.getElementById('prod-id').value;
+
+            if (prodId) {
+                formData.append('id', prodId);
+                formData.append('existing_zdjecia', JSON.stringify(currentExistingPhotos));
+            }
+
+            formData.append('nazwa', document.getElementById('prod-name').value);
+            formData.append('cena', document.getElementById('prod-price').value);
+            formData.append('kategoria_id', document.getElementById('prod-category').value);
+            formData.append('waga_jednostkowa', document.getElementById('prod-weight').value);
+            formData.append('ilosc', document.getElementById('prod-qty').value);
+            formData.append('widocznosc', document.getElementById('prod-visible').checked ? 'true' : 'false');
+            formData.append('opis', document.getElementById('prod-desc').value);
+
+            const fileInput = document.getElementById('prod-files');
+            if (fileInput.files) {
+                Array.from(fileInput.files).forEach(f => {
+                    formData.append('zdjecia', f);
+                });
+            }
+
+            try {
+                const res = await fetch('/api/wyprzedaz/products', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    await loadProducts();
+                    if (data.product && data.product.id) {
+                        editProduct(data.product.id);
+                    }
+                    document.getElementById('prod-files').value = '';
+                    document.getElementById('file-previews').innerHTML = '';
+                } else {
+                    alert("⚠️ Błąd zapisu produktu: " + (data.error || "Błąd"));
+                }
+            } catch(err) {
+                alert("⚠️ Błąd połączenia z serwerem: " + err);
+            }
+        }
+
+        function resetProductForm() {
+            document.getElementById('product-form').reset();
+            document.getElementById('prod-id').value = '';
+            document.getElementById('prod-visible').checked = true;
+            currentExistingPhotos = [];
+            renderExistingPhotos();
+            document.getElementById('file-previews').innerHTML = '';
+            document.getElementById('prod-form-title').textContent = '➕ Dodaj Nowy Produkt do Sprzedania';
+            document.getElementById('prod-submit-btn').textContent = '💾 Zapisz Produkt w Bazie';
+            document.getElementById('upload-label').textContent = 'Dodaj Zdjęcia (Można wybrać wiele plików na raz) 📷';
+        }
+
+        async function deleteProduct(prodId) {
+            if (!confirm("Czy na pewno chcesz usunąć ten produkt oraz jego zdjęcia z bazy?")) return;
+            try {
+                const res = await fetch(`/api/wyprzedaz/products?id=${prodId}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) {
+                    await loadProducts();
+                }
+            } catch(e) {
+                alert("Błąd usuwania: " + e);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initData);
+    </script>
+</body>
+</html>

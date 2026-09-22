@@ -14,7 +14,7 @@ import youtube_service
 app = Flask(__name__)
 app.secret_key = "andrzejow_net_secret_key_metale_szlachetne"
 
-APP_VERSION = "1.11.1"
+APP_VERSION = "1.12.0"
 
 DEFAULT_ALLOWED_CHANNELS = [
     {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
@@ -29,6 +29,9 @@ LABELS_DB_PATH = os.path.join(DATA_DIR, "labels_db.json")
 DEFAULT_LABELS_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "labels_db.json")
 LABELS_USERS_PATH = os.path.join(DATA_DIR, "labels_users.json")
 ACTIVITY_LOGS_PATH = os.path.join(DATA_DIR, "activity_logs.json")
+
+from wyprzedaz_service import WyprzedazService
+wyprzedaz_svc = WyprzedazService(DATA_DIR)
 
 def log_activity_entry(entry_type, details=None, req=None):
     """
@@ -82,6 +85,12 @@ def send_telegram_ha_notification(title, message, return_details=False):
 
         if not chat_id_val or not config_entry_id_val:
             msg = "[Telegram HA] Pominięto wysyłkę: brak zdefiniowanego 'telegram_chat_id' lub 'telegram_config_entry_id' w konfiguracji dodatku."
+            print(msg, flush=True)
+            return (False, msg) if return_details else False
+
+        skip_trusted = cfg.get("skip_telegram_trusted_ips", False)
+        if (skip_trusted is True or str(skip_trusted).lower() in ["true", "1"]) and is_client_ip_trusted():
+            msg = f"[Telegram HA] Pominięto wysyłkę powiadomienia: ruch pochodzi z zaufanego IP ({get_client_ip()}), a włączona jest opcja 'skip_telegram_trusted_ips'."
             print(msg, flush=True)
             return (False, msg) if return_details else False
 
@@ -206,9 +215,21 @@ def get_client_ip():
     return request.remote_addr or "127.0.0.1"
 
 def is_client_ip_trusted():
-    ip = get_client_ip()
-    trusted = get_trusted_ips()
-    return (ip in trusted) or ("127.0.0.1" in trusted and ip == "127.0.0.1")
+    try:
+        from flask import has_request_context
+        if not has_request_context():
+            return False
+        ip = get_client_ip()
+        trusted = get_trusted_ips()
+        if ip in trusted:
+            return True
+        if ip in ["127.0.0.1", "::1", "localhost"]:
+            return True
+        if ip.startswith("192.168.") or ip.startswith("10.") or ip.startswith("172."):
+            return True
+        return False
+    except Exception:
+        return False
 
 def refresh_labels_session_activity():
     if session.get('labels_scope') == "MetaleSzlachetnePolska/etykiety" and session.get('labels_user'):
@@ -627,6 +648,15 @@ def export_labels_csv():
         headers={"Content-disposition": f'attachment; filename="{filename}"'}
     )
 
+def format_mintage(val):
+    if not val:
+        return ""
+    s = str(val).strip()
+    clean = re.sub(r'\s+', '', s)
+    if clean.isdigit():
+        return f"{int(clean):,}".replace(",", " ")
+    return s
+
 def clean_label_item(item):
     """Zapewnia spójność 14 pól etykiety w tablicy Python."""
     if not isinstance(item, list):
@@ -635,7 +665,7 @@ def clean_label_item(item):
     year = str(item[0] if len(item) > 0 else "").strip()
     series = str(item[1] if len(item) > 1 else "").strip()
     name = str(item[2] if len(item) > 2 else "").strip()
-    mintage = str(item[3] if len(item) > 3 else "").strip()
+    mintage = format_mintage(item[3] if len(item) > 3 else "")
     nominal = str(item[4] if len(item) > 4 else "2").strip()
     currency_after = str(item[5] if len(item) > 5 else "").strip()
     stop = str(item[6] if len(item) > 6 else "").strip()
@@ -662,7 +692,8 @@ def make_label_fingerprint(item):
     """Generuje unikalny odcisk etykiety/monety uwzględniający wszystkie 14 parametrów."""
     c = clean_label_item(item)
     trial_str = "1" if c[12] else "0"
-    return f"{c[13].lower()}|{c[0]}|{c[1].lower()}|{c[2].lower()}|{c[4].lower()}|{c[7].lower()}|{c[5].lower()}|{c[6].lower()}|{c[8].lower()}|{c[9].lower()}|{c[10]}|{c[11]}|{trial_str}"
+    mintage_str = str(c[3]).strip().lower()
+    return f"{c[13].lower()}|{c[0]}|{c[1].lower()}|{c[2].lower()}|{mintage_str}|{c[4].lower()}|{c[7].lower()}|{c[5].lower()}|{c[6].lower()}|{c[8].lower()}|{c[9].lower()}|{c[10]}|{c[11]}|{trial_str}"
 
 def deduplicate_labels(label_list):
     """Usuwa wyłącznie identyczne duplikaty monet (wszystkie parametry jednakowe)."""
@@ -784,45 +815,101 @@ def download_csv_template():
         headers={"Content-disposition": "attachment; filename=wzor_etykiet.csv"}
     )
 
+CURRENCY_SYNONYMS = {
+    '$': ['$', 'dollar', 'dolar', 'usd'],
+    'dollar': ['$', 'dollar', 'dolar', 'usd'],
+    'dolar': ['$', 'dollar', 'dolar', 'usd'],
+    'usd': ['$', 'dollar', 'dolar', 'usd'],
+
+    'zł': ['zł', 'zloty', 'złoty', 'pln'],
+    'zloty': ['zł', 'zloty', 'złoty', 'pln'],
+    'złoty': ['zł', 'zloty', 'złoty', 'pln'],
+    'pln': ['zł', 'zloty', 'złoty', 'pln'],
+
+    '£': ['£', 'funt', 'gbp'],
+    'funt': ['£', 'funt', 'gbp'],
+    'gbp': ['£', 'funt', 'gbp']
+}
+
+def get_full_title_length(item):
+    clean = clean_label_item(item)
+    series = clean[1].strip()
+    name = clean[2].strip()
+    full = f"{series}: {name}" if series else name
+    return len(full)
+
+def check_synonym_match(target_text, query_val):
+    target_lower = str(target_text or '').strip().lower()
+    q_lower = str(query_val or '').strip().lower()
+    
+    if not q_lower:
+        return True
+    
+    if q_lower in target_lower:
+        return True
+    
+    if q_lower in CURRENCY_SYNONYMS:
+        for syn in CURRENCY_SYNONYMS[q_lower]:
+            if syn in target_lower:
+                return True
+                
+    return False
+
 def parse_search_query(raw_query):
     """
     Parsuje zapytanie tekstowe na:
     1. req_trial (bool) - czy wpisano 'trial', 'próba' lub 'proba'
-    2. exact_phrases (list of str) - frazy w cudzysłowach "..." lub '...'
-    3. word_tokens (list of str) - pozostałe pojedyncze słowa
+    2. field_filters (dict) - filtry prefiksów np. rok:, waluta:, nominał:/nominal:, stop:, kraj:
+    3. exact_phrases (list of str) - frazy w cudzysłowach "..." lub '...'
+    4. word_tokens (list of str) - pozostałe pojedyncze słowa ogólne
     """
     if not raw_query or not str(raw_query).strip():
-        return False, [], []
+        return False, {}, [], []
 
     q = str(raw_query).strip()
     req_trial = False
 
     exact_phrases = []
-    pattern = r'["\']([^"\']+)["\']'
-    matches = re.findall(pattern, q)
-    for m in matches:
+    phrase_pattern = r'["\']([^"\']+)["\']'
+    phrase_matches = re.findall(phrase_pattern, q)
+    for m in phrase_matches:
         phrase = m.strip().lower()
         if phrase in ['trial', 'próba', 'proba']:
             req_trial = True
         elif phrase:
             exact_phrases.append(phrase)
 
-    remainder = re.sub(pattern, ' ', q).strip().lower()
+    q_no_quotes = re.sub(phrase_pattern, ' ', q)
+
+    field_filters = {}
+    field_pattern = r'\b(rok|waluta|nominał|nominal|stop|kraj):([^\s"\'\`]+|"[^"]+"|\'[^\']+\')'
+    field_matches = re.findall(field_pattern, q_no_quotes, flags=re.IGNORECASE)
+
+    for field_key, field_val in field_matches:
+        fk = field_key.lower()
+        fv = field_val.strip('"\'').lower()
+        if fk in ['nominal', 'nominał']:
+            field_filters['nominal'] = fv
+        elif fk in ['rok', 'waluta', 'stop', 'kraj']:
+            field_filters[fk] = fv
+
+    q_remainder = re.sub(field_pattern, ' ', q_no_quotes, flags=re.IGNORECASE).strip().lower()
 
     word_tokens = []
-    for token in remainder.split():
+    for token in q_remainder.split():
         t = token.strip()
         if t in ['trial', 'próba', 'proba']:
             req_trial = True
         elif t:
             word_tokens.append(t)
 
-    return req_trial, exact_phrases, word_tokens
+    return req_trial, field_filters, exact_phrases, word_tokens
 
-def match_label_item(item, req_trial, exact_phrases, word_tokens):
+def match_label_item(item, req_trial, field_filters, exact_phrases, word_tokens):
     """
     Weryfikuje czy dany wpis monety spełnia kryteria zapytania.
-    Nie przeszukuje rocznika (item[0]), kraju (item[13]) ani 'true'/'false' z pola trial (item[12]).
+    Pola wykluczone z tradycyjnego szukania ogólnego:
+    Rok [0], Nominał [4], WalutaPo [5], Stop [6], WalutaPrzed [7], Trial [12], Kraj [13].
     """
     clean = clean_label_item(item)
     trial_bool = clean[12]
@@ -830,10 +917,39 @@ def match_label_item(item, req_trial, exact_phrases, word_tokens):
     if req_trial and not trial_bool:
         return False
 
-    # Pola przeszukiwalne w głównym oknie (wykluczono Rok[0], Trial[12], Kraj[13])
+    if 'rok' in field_filters:
+        if field_filters['rok'] not in clean[0].lower():
+            return False
+
+    if 'kraj' in field_filters:
+        if field_filters['kraj'] not in clean[13].lower():
+            return False
+
+    if 'stop' in field_filters:
+        if field_filters['stop'] not in clean[6].lower():
+            return False
+
+    if 'waluta' in field_filters:
+        q_wal = field_filters['waluta']
+        matched_currency = (check_synonym_match(clean[7], q_wal) or check_synonym_match(clean[5], q_wal))
+        matched_country_fallback = False
+        if len(q_wal) == 3:
+            country_prefix = q_wal[:2].lower()
+            if country_prefix in clean[13].lower():
+                matched_country_fallback = True
+
+        if not (matched_currency or matched_country_fallback):
+            return False
+
+    if 'nominal' in field_filters:
+        q_nom = field_filters['nominal']
+        combined_nom = f"{clean[7]} {clean[4]} {clean[5]}".strip().lower()
+        if not check_synonym_match(combined_nom, q_nom):
+            return False
+
+    # Pola ogólnego wyszukiwania tekstowego (wykluczono Rok[0], Nominał[4], WalutaPo[5], Stop[6], WalutaPrzed[7], Trial[12], Kraj[13])
     searchable_fields = [
-        clean[1], clean[2], clean[3], clean[4], clean[5],
-        clean[6], clean[7], clean[8], clean[9], clean[10], clean[11]
+        clean[1], clean[2], clean[3], clean[8], clean[9], clean[10], clean[11]
     ]
     searchable_text = " ".join([str(x).strip().lower() for x in searchable_fields if str(x).strip()])
 
@@ -923,9 +1039,9 @@ def get_labels():
     query_raw = request.args.get('q', '').strip()
     year_filter = request.args.get('year', '').strip()
     country_filter = request.args.get('country', '').strip().lower()
+    long_only = request.args.get('long_only', '0').strip().lower() in ['1', 'true', 'yes']
     limit = request.args.get('limit', 50, type=int)
 
-    # Wyciągnięcie dostępnych krajów z bazy
     countries_set = set()
     for item in labels:
         c = "pl"
@@ -939,7 +1055,7 @@ def get_labels():
 
     countries_list = sorted(list(countries_set))
 
-    req_trial, exact_phrases, word_tokens = parse_search_query(query_raw)
+    req_trial, field_filters, exact_phrases, word_tokens = parse_search_query(query_raw)
 
     matching = []
     for item in labels:
@@ -947,21 +1063,24 @@ def get_labels():
         item_year = clean[0]
         item_country = clean[13]
 
+        if long_only and get_full_title_length(clean) <= 40:
+            continue
+
         if year_filter and year_filter != item_year:
             continue
         if country_filter and country_filter != item_country:
             continue
 
         if query_raw or req_trial:
-            if not match_label_item(item, req_trial, exact_phrases, word_tokens):
+            if not match_label_item(item, req_trial, field_filters, exact_phrases, word_tokens):
                 continue
 
         matching.append(clean)
 
-    # Sortowanie: Kraj -> Stop -> Rocznik -> Nominał -> Nazwa -> Średnica -> Waga -> Rant -> Typ -> Trial
+    # Sortowanie: Kraj -> Rocznik -> Stop -> Nominał -> Nazwa -> Średnica -> Waga -> Rant -> Typ -> Trial
     matching.sort(key=label_sort_key)
 
-    if not query_raw and not year_filter and not country_filter and not req_trial and (0 < limit <= 50):
+    if not query_raw and not year_filter and not country_filter and not req_trial and not long_only and (0 < limit <= 50):
         return jsonify({
             "status": "success",
             "total_matches": 0,
@@ -1480,6 +1599,149 @@ def get_draw_history():
         "total": len(history),
         "history": history
     })
+
+# ================================================================================
+# APLIKACJA WYPRZEDAŻ (/wyprzedaz/ & /wyprzedaz/admin)
+# ================================================================================
+
+@app.route('/wyprzedaz/')
+@app.route('/wyprzedaz')
+def wyprzedaz_public_index():
+    """Publiczna galeria wyprzedaży sprzętu."""
+    return render_template('wyprzedaz/index.html', is_admin_ip=is_client_ip_trusted())
+
+@app.route('/wyprzedaz/admin/')
+@app.route('/wyprzedaz/admin')
+def wyprzedaz_admin_index():
+    """Panel administracyjny wyprzedaży dostępny wyłącznie dla zaufanych adresów IP."""
+    if not is_client_ip_trusted():
+        return redirect('/wyprzedaz/')
+    return render_template('wyprzedaz/admin.html', client_ip=get_client_ip())
+
+@app.route('/wyprzedaz/uploads/<path:filename>')
+def wyprzedaz_serve_upload(filename):
+    """Serwuje wgrane zdjęcia produktów wyprzedaży."""
+    uploads_dir = wyprzedaz_svc.paths["uploads_dir"]
+    return send_from_directory(uploads_dir, filename)
+
+@app.route('/api/wyprzedaz/categories', methods=['GET', 'POST', 'DELETE'])
+def api_wyprzedaz_categories():
+    if request.method == 'GET':
+        return jsonify(wyprzedaz_svc.get_category_tree())
+    
+    if not is_client_ip_trusted():
+        return jsonify({"error": "Dostęp zabroniony - brak zaufanego adresu IP"}), 403
+
+    if request.method == 'POST':
+        data = request.get_json(silent=True) or {}
+        cat_id = data.get('id')
+        name = data.get('name')
+        parent_id = data.get('parent_id')
+        description = data.get('description', '')
+
+        if not name or not name.strip():
+            return jsonify({"error": "Brak nazwy kategorii"}), 400
+
+        try:
+            if cat_id:
+                cat = wyprzedaz_svc.update_category(cat_id, name, parent_id, description)
+            else:
+                cat = wyprzedaz_svc.add_category(name, parent_id, description)
+            return jsonify({"success": True, "category": cat})
+        except ValueError as ve:
+            return jsonify({"error": str(ve)}), 400
+
+    if request.method == 'DELETE':
+        cat_id = request.args.get('id')
+        if not cat_id:
+            return jsonify({"error": "Brak ID kategorii"}), 400
+        wyprzedaz_svc.delete_category(cat_id)
+        return jsonify({"success": True})
+
+@app.route('/api/wyprzedaz/products', methods=['GET', 'POST', 'DELETE'])
+def api_wyprzedaz_products():
+    if request.method == 'GET':
+        return jsonify(wyprzedaz_svc.load_products())
+
+    if not is_client_ip_trusted():
+        return jsonify({"error": "Dostęp zabroniony - brak zaufanego adresu IP"}), 403
+
+    if request.method == 'POST':
+        is_form = bool(request.form or request.files)
+        if is_form:
+            prod_id = request.form.get('id')
+            nazwa = request.form.get('nazwa', '')
+            cena = request.form.get('cena', '')
+            opis = request.form.get('opis', '')
+            kategoria_id = request.form.get('kategoria_id', '')
+            waga_jednostkowa = request.form.get('waga_jednostkowa', '')
+            ilosc_str = request.form.get('ilosc', '1')
+            widocznosc_str = request.form.get('widocznosc', 'true')
+            
+            existing_urls_raw = request.form.get('existing_zdjecia')
+            existing_urls = []
+            if existing_urls_raw:
+                try:
+                    existing_urls = json.loads(existing_urls_raw)
+                except Exception:
+                    existing_urls = []
+
+            uploaded_files = request.files.getlist('zdjecia')
+            new_urls = []
+            for f in uploaded_files:
+                if f and f.filename:
+                    url = wyprzedaz_svc.save_uploaded_file(f)
+                    if url:
+                        new_urls.append(url)
+        else:
+            data = request.get_json(silent=True) or {}
+            prod_id = data.get('id')
+            nazwa = data.get('nazwa', '')
+            cena = data.get('cena', '')
+            opis = data.get('opis', '')
+            kategoria_id = data.get('kategoria_id', '')
+            waga_jednostkowa = data.get('waga_jednostkowa', '')
+            ilosc_str = data.get('ilosc', 1)
+            widocznosc_str = data.get('widocznosc', True)
+            existing_urls = data.get('existing_zdjecia', [])
+            new_urls = data.get('zdjecia', [])
+
+        widocznosc = str(widocznosc_str).lower() in ['true', '1', 'on']
+        try:
+            ilosc = int(ilosc_str)
+        except (ValueError, TypeError):
+            ilosc = 1
+
+        if not nazwa or not nazwa.strip():
+            return jsonify({"error": "Brak nazwy produktu"}), 400
+
+        if prod_id:
+            final_photos = existing_urls + new_urls if is_form else (new_urls if new_urls else existing_urls)
+            prod = wyprzedaz_svc.update_product(
+                prod_id, nazwa, cena, opis, kategoria_id,
+                zdjecia=final_photos,
+                waga_jednostkowa=waga_jednostkowa,
+                ilosc=ilosc,
+                widocznosc=widocznosc
+            )
+        else:
+            final_photos = existing_urls + new_urls
+            prod = wyprzedaz_svc.add_product(
+                nazwa, cena, opis, kategoria_id,
+                zdjecia=final_photos,
+                waga_jednostkowa=waga_jednostkowa,
+                ilosc=ilosc,
+                widocznosc=widocznosc
+            )
+
+        return jsonify({"success": True, "product": prod})
+
+    if request.method == 'DELETE':
+        prod_id = request.args.get('id')
+        if not prod_id:
+            return jsonify({"error": "Brak ID produktu"}), 400
+        res = wyprzedaz_svc.delete_product(prod_id)
+        return jsonify({"success": res})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)

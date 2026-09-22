@@ -1,5 +1,5 @@
 name: "Web server andrzejow.net"
-version: "1.11.3"
+version: "1.12.0"
 slug: "andrzejow_net"
 description: "Serwer WWW dla andrzejow.net"
 homeassistant_api: true
@@ -31,6 +31,7 @@ options:
   admin_password: "admin"
   telegram_chat_id: ""
   telegram_config_entry_id: ""
+  skip_telegram_trusted_ips: false
 schema:
   api_key: "str?"
   channel_handle: "str?"
@@ -41,3 +42,4 @@ schema:
   admin_password: "str?"
   telegram_chat_id: "str?"
   telegram_config_entry_id: "str?"
+  skip_telegram_trusted_ips: "bool?"
