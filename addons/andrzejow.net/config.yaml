@@ -1,5 +1,5 @@
 name: "Web server andrzejow.net"
-version: "1.12.0"
+version: "1.12.1"
 slug: "andrzejow_net"
 description: "Serwer WWW dla andrzejow.net"
 homeassistant_api: true

@@ -14,7 +14,7 @@ import youtube_service
 app = Flask(__name__)
 app.secret_key = "andrzejow_net_secret_key_metale_szlachetne"
 
-APP_VERSION = "1.12.0"
+APP_VERSION = "1.12.1"
 
 DEFAULT_ALLOWED_CHANNELS = [
     {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},

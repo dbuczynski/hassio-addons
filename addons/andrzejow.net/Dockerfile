@@ -8,6 +8,7 @@ WORKDIR /app
 # Kopiowanie plików aplikacji z modułu
 COPY app.py /app/app.py
 COPY youtube_service.py /app/youtube_service.py
+COPY wyprzedaz_service.py /app/wyprzedaz_service.py
 COPY config.json /app/config.json
 COPY templates /app/templates
 COPY requirements.txt /app/requirements.txt

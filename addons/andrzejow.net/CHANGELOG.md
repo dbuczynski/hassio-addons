@@ -2,6 +2,15 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.12.1] - 2026-09-22
+
+### Dodano / Zmieniono
+- **Poprawka Budowania Kontenera Docker (`Dockerfile`)**:
+  - Dodano brakującą instrukcję `COPY wyprzedaz_service.py /app/wyprzedaz_service.py` w pliku `Dockerfile`.
+  - Naprawiono błąd uruchomienia kontenera `ModuleNotFoundError: No module named 'wyprzedaz_service'`.
+
+---
+
 ## [1.12.0] - 2026-09-22
 
 ### Dodano / Zmieniono
