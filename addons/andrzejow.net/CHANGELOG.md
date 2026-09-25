@@ -2,6 +2,22 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.13.0] - 2026-09-25
+
+### Dodano / Zmieniono
+- **Aplikacja Wyprzedaż Sprzętu (`/wyprzedaz/` & `/wyprzedaz/admin`)**:
+  - **Przycisk "Zapisz jako nowy przedmiot"**: Dedykowana opcja przy edycji wybranego produktu pozwalająca zapisać jego modyfikację jako nowy osobny produkt.
+  - **Przeliczanie Dostępnych Sztuk w Menu Bocznym**: Liczniki drzewa kategorii w panelu admina oraz galerii sumują łączną dostępną i widoczną ilość sztuk produktów (`ilosc`), zamiast unikalnych pozycji w bazie.
+  - **Format `({n} szt)` w Galerii**: Nazwy na kartach produktów w galerii zawierają informację o liczbie sztuk w nawiasie przed nazwą przedmiotu.
+  - **Informacja o Ilości w Tabeli Admina**: W tabeli edycji produktów dodano czytelną informację `(n szt)` obok nazwy przedmiotu.
+  - **Bezpośrednie Linki URL (`?kategoria=ID` & `?produkt=ID`)**: Integracja `history.replaceState` i `URLSearchParams` pozwalająca na dzielenie się bezpośrednimi linkami do kategorii oraz wyskakujących okien ze szczegółami przedmiotu.
+  - **Górne Stronnicowanie Nad Galerią**: Przeniesiono pasek stronnicowania wyłącznie nad siatkę produktów ze stałą widocznością przycisków stron.
+  - **Wykrywanie Duplikatów Nazw na Żywo**: Automatyczna sugestia zwiększenia ilości sztuk (`+1 szt`), przejścia do edycji lub utworzenia osobnego wpisu przy wpisywaniu nazwy istniejącego produktu.
+  - **Obsługa Aparatu / Kamery Lokalnej**: Wykonywanie i podgląd zdjęć prosto z kamery urządzenia w panelu admina z obsługą wyboru kamer (np. przednia / tylna).
+  - **Nowa Baza Produktów w Kategorii Kryształy**: Wygenerowano 80 pozycji w kategorii P3 (kryształy).
+
+---
+
 ## [1.12.1] - 2026-09-22
 
 ### Dodano / Zmieniono
