@@ -2,6 +2,25 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.14.0] - 2026-10-28
+
+### Dodano / Zmieniono
+- **Aplikacja Wyprzedaż Sprzętu (`/wyprzedaz/` & `/wyprzedaz/admin`)**:
+  - **Wybór Ilości Elementów na Stronie i Układu Siatki**: Dodano przełącznik liczby wyświetlanych produktów w galerii głównej:
+    - `6 na stronę`: 2 rzędy po 3 elementy (`grid-cols-3`),
+    - `12 na stronę`: 3 rzędy po 4 elementy (`grid-cols-4`),
+    - `Wszystko`: po 5 elementów na rząd (`grid-cols-5`).
+  - **Dopasowanie Grafik (`object-fit: contain`)**: Zdjęcia produktów na kartach galerii oraz w oknie szczegółów (wraz z miniaturami) są wyrównane i skalowane proporcjonalnie do dostępnego okna bez przycinania góry ani dołu.
+  - **Tryb Pełnoekranowy Zdjęcia (Lightbox)**: Kliknięcie na aktualnie wyświetlane zdjęcie w oknie szczegółów przedmiotu otwiera je w trybie pełnoekranowym (maks. `95%` szerokości ekranu) z przyciskiem `✕` w prawym górnym rogu.
+  - **Zamiana Miejscami Zdjęć w Edycji**: Dodano obsługę zmiany kolejności zdjęć przedmiotu za pomocą przycisków `◀` / `▶` oraz przeciągania myszką (`Drag & Drop`).
+  - **Eksport i Import Bazy Danych ze Zdjęciami (ZIP)**: W górnej belce panelu administracyjnego dodano eksport pełnej bazy (`categories.json`, `products.json` oraz katalog `uploads/`) do pliku `.zip` oraz import z wyborem trybu:
+    - **Dodaj (bez tworzenia duplikatów)**: dopisuje nowe kategorie, produkty i zdjęcia bez duplikowania istniejących pozycji,
+    - **Nadpisz**: całkowicie usuwa lokalną bazę oraz zdjęcia przed wgraniem danych z archiwum.
+  - **Parametr Lokalizacji Magazynowej (`lokalizacja`)**: Pole widoczne wyłącznie dla administratora oraz w galerii otwieranej z zaufanego adresu IP (`admin_trusted_ips`), z obsługą wyszukiwania w panelu admina.
+  - **Wydzielony Widok Zarządzania Kategoriami**: Przeniesiono formularz dodawania/edycji kategorii do osobnej zakładki (`📁 Zarządzanie Kategoriami` / `/wyprzedaz/admin/kategorie`), oczyszczając widok edycji produktu.
+
+---
+
 ## [1.13.0] - 2026-09-25
 
 ### Dodano / Zmieniono

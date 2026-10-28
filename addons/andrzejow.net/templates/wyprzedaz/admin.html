@@ -266,16 +266,26 @@
         }
         .existing-photo-card {
             position: relative;
-            width: 80px;
-            height: 80px;
+            width: 96px;
+            height: 96px;
             border-radius: var(--radius-sm);
             overflow: hidden;
             border: 1px solid var(--border-color);
+            background: rgba(15, 23, 42, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.15s ease, border-color 0.15s ease;
+        }
+        .existing-photo-card.dragging {
+            opacity: 0.45;
+            border-color: var(--accent-gold);
+            transform: scale(0.95);
         }
         .existing-photo-card img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
         }
         .remove-photo-btn {
             position: absolute;
@@ -291,8 +301,49 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            z-index: 4;
         }
         .remove-photo-btn:hover { background: #dc2626; }
+
+        .photo-reorder-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 23, 42, 0.85);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2px 4px;
+            z-index: 3;
+        }
+        .photo-move-btn {
+            background: rgba(99, 102, 241, 0.35);
+            color: #fff;
+            border: 1px solid rgba(99, 102, 241, 0.5);
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 800;
+            width: 22px;
+            height: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        .photo-move-btn:hover:not(:disabled) {
+            background: var(--accent-primary);
+        }
+        .photo-move-btn:disabled {
+            opacity: 0.25;
+            cursor: not-allowed;
+        }
+        .photo-order-badge {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--accent-gold);
+        }
 
         .upload-preview-container {
             display: flex;
@@ -304,7 +355,8 @@
             width: 70px;
             height: 70px;
             border-radius: var(--radius-sm);
-            object-fit: cover;
+            object-fit: contain;
+            background: rgba(15, 23, 42, 0.9);
             border: 1px solid var(--border-color);
         }
 
@@ -330,7 +382,8 @@
             width: 44px;
             height: 44px;
             border-radius: 4px;
-            object-fit: cover;
+            object-fit: contain;
+            background: rgba(15, 23, 42, 0.8);
         }
 
         /* Status Badges */
@@ -389,7 +442,9 @@
         <div class="brand-title">
             <span>🔒 Panel Administracyjny - Wyprzedaż</span>
         </div>
-        <div class="nav-actions">
+        <div class="nav-actions" style="flex-wrap:wrap;">
+            <a href="/api/wyprzedaz/export" class="btn" style="background:rgba(16,185,129,0.2); border-color:var(--accent-green); color:#6ee7b7;" title="Pobierz pełną kopię bazy JSON wraz ze zdjęciami (ZIP)">⬇️ Eksport Danych (ZIP)</a>
+            <button type="button" class="btn" style="background:rgba(245,158,11,0.2); border-color:var(--accent-gold); color:#fef08a;" onclick="openImportModal()" title="Wgraj bazę JSON oraz zdjęcia z archiwum ZIP">⬆️ Import Danych (ZIP)</button>
             <a href="/wyprzedaz/" class="btn">🛒 Podgląd Galerii</a>
             <a href="/" class="btn">🏠 Strona Główna</a>
         </div>
@@ -401,12 +456,23 @@
             <span style="font-size:12px; color:var(--text-muted);">Dostęp ograniczony wyłącznie do zaufanych IP</span>
         </div>
 
-        <div class="admin-grid">
+        <!-- TOP ADMIN TABS NAVIGATION -->
+        <div style="display:flex; gap:12px; margin-bottom:20px; border-bottom:1px solid var(--border-color); padding-bottom:14px; flex-wrap:wrap;">
+            <button id="tab-btn-products" type="button" class="btn btn-green" onclick="switchAdminTab('products')" style="padding:10px 22px; font-size:14.5px; font-weight:700;">
+                📦 Zarządzanie Produktami
+            </button>
+            <button id="tab-btn-categories" type="button" class="btn" onclick="switchAdminTab('categories')" style="padding:10px 22px; font-size:14.5px; font-weight:700;">
+                📁 Zarządzanie Kategoriami
+            </button>
+        </div>
+
+        <!-- VIEW 1: ZARZĄDZANIE PRODUKTAMI -->
+        <div id="view-products" class="admin-grid">
             <!-- LEFT SIDEBAR: DRZEWO KATEGORII -->
             <div class="card" style="align-self: start;">
                 <div class="card-title">
                     <span>🌳 Drzewo Kategorii</span>
-                    <button class="btn btn-green" style="padding:4px 8px; font-size:11px;" onclick="prepareNewCategoryForm()">➕ Nowa</button>
+                    <button class="btn" style="padding:4px 8px; font-size:11px; background:rgba(99,102,241,0.25); border-color:var(--accent-primary);" onclick="switchAdminTab('categories')">📁 Zarządzaj</button>
                 </div>
 
                 <div id="sidebar-categories-tree">
@@ -414,7 +480,7 @@
                 </div>
             </div>
 
-            <!-- RIGHT MAIN AREA: PRODUKTY I FORMULARZE -->
+            <!-- RIGHT MAIN AREA: PRODUKTY -->
             <div style="display:flex; flex-direction:column; gap:20px;">
                 <!-- CARD 1: FORMULARZ PRODUKTU -->
                 <div class="card">
@@ -452,13 +518,23 @@
                             </div>
                         </div>
 
-                        <div class="grid-3">
+                        <div class="grid-2">
                             <div class="form-group">
-                                <label>Kategoria Produktu *</label>
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                                    <label style="margin-bottom:0;">Kategoria Produktu *</label>
+                                    <button type="button" class="btn" style="padding:2px 8px; font-size:11px;" onclick="switchAdminTab('categories')">📁 Kategorie</button>
+                                </div>
                                 <select id="prod-category" class="form-control" required>
                                     <!-- Dynamically loaded -->
                                 </select>
                             </div>
+                            <div class="form-group">
+                                <label>📍 Lokalizacja Magazynowa <small style="color:#6ee7b7; font-weight:normal;">(Tylko dla Admina)</small></label>
+                                <input type="text" id="prod-location" class="form-control" placeholder="np. Regał A, Półka 2, Pudełko 5">
+                            </div>
+                        </div>
+
+                        <div class="grid-2">
                             <div class="form-group">
                                 <label>Waga Jednostkowa (Opcjonalnie)</label>
                                 <input type="text" id="prod-weight" class="form-control" placeholder="np. 1.5 kg, 500g">
@@ -483,7 +559,7 @@
 
                         <!-- Existing photos during edit -->
                         <div id="existing-photos-block" class="form-group" style="display:none;">
-                            <label>Aktualne Zdjęcia Produktu (Kliknij ✕ aby usunąć wybrane zdjęcie)</label>
+                            <label>Aktualne Zdjęcia Produktu (Użyj strzałek ◀ ▶ lub przeciągnij, aby zmienić kolejność; ✕ usuwa zdjęcie)</label>
                             <div id="existing-photos-container" class="existing-photos-wrapper"></div>
                         </div>
 
@@ -521,7 +597,7 @@
                     </div>
 
                     <div style="display:flex; gap:12px; margin-bottom:12px;">
-                        <input type="text" id="admin-search-input" class="search-input form-control" style="flex:1;" placeholder="🔍 Szukaj produktu w panelu admina..." oninput="renderProductsTable()">
+                        <input type="text" id="admin-search-input" class="search-input form-control" style="flex:1;" placeholder="🔍 Szukaj produktu w panelu admina (nazwa, opis, lokalizacja)..." oninput="renderProductsTable()">
                     </div>
 
                     <div style="overflow-x:auto;">
@@ -532,6 +608,7 @@
                                     <th>Nazwa</th>
                                     <th>Cena</th>
                                     <th>Kategoria</th>
+                                    <th>Lokalizacja</th>
                                     <th>Waga</th>
                                     <th>Ilość</th>
                                     <th>Widoczność</th>
@@ -544,8 +621,13 @@
                         </table>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <!-- CARD 3: FORMULARZ KATEGORII -->
+        <!-- VIEW 2: ZARZĄDZANIE KATEGORIAMI -->
+        <div id="view-categories" style="display:none;">
+            <div style="display:flex; flex-direction:column; gap:20px;">
+                <!-- FORMULARZ KATEGORII -->
                 <div id="category-form-card" class="card">
                     <div id="cat-form-title" class="card-title">📁 Dodaj / Edytuj Kategorię</div>
                     <form id="category-form" onsubmit="saveCategory(event)">
@@ -575,6 +657,17 @@
                         </div>
                     </form>
                 </div>
+
+                <!-- ZARZĄDZANIE STRUKTURĄ KATEGORII -->
+                <div class="card">
+                    <div class="card-title">
+                        <span>🌳 Struktura & Drzewo Kategorii</span>
+                        <button class="btn btn-green" style="padding:4px 10px; font-size:12px;" onclick="prepareNewCategoryForm()">➕ Dodaj Nową Kategorię</button>
+                    </div>
+                    <div id="main-categories-tree-view">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -585,9 +678,39 @@
         let currentExistingPhotos = [];
         let selectedAdminCatFilter = null; // null = all, 'INVALID_CAT' = broken category, or catId
 
+        function switchAdminTab(tabName) {
+            const productsView = document.getElementById('view-products');
+            const categoriesView = document.getElementById('view-categories');
+            const btnProducts = document.getElementById('tab-btn-products');
+            const btnCategories = document.getElementById('tab-btn-categories');
+
+            if (tabName === 'categories') {
+                productsView.style.display = 'none';
+                categoriesView.style.display = 'block';
+                btnProducts.classList.remove('btn-green');
+                btnCategories.classList.add('btn-green');
+                if (location.hash !== '#kategorie') {
+                    history.replaceState(null, '', location.pathname + '#kategorie');
+                }
+            } else {
+                productsView.style.display = 'grid';
+                categoriesView.style.display = 'none';
+                btnProducts.classList.add('btn-green');
+                btnCategories.classList.remove('btn-green');
+                if (location.hash !== '#produkty' && location.hash !== '') {
+                    history.replaceState(null, '', location.pathname + '#produkty');
+                }
+            }
+        }
+
         async function initData() {
             await loadCategories();
             await loadProducts();
+
+            const initialTab = "{{ initial_tab|default('products') }}";
+            if (initialTab === 'categories' || location.hash === '#kategorie') {
+                switchAdminTab('categories');
+            }
         }
 
         async function loadCategories() {
@@ -596,9 +719,47 @@
                 allCategories = await res.json();
                 renderCategoryDropdowns();
                 renderSidebarCategoryTree();
+                renderMainCategoriesTree();
             } catch(e) {
                 console.error("Błąd kategorii:", e);
             }
+        }
+
+        function renderMainCategoriesTree() {
+            const container = document.getElementById('main-categories-tree-view');
+            if (!container) return;
+
+            if (!allCategories || allCategories.length === 0) {
+                container.innerHTML = '<div style="padding:20px; color:var(--text-muted); text-align:center;">Brak zdefiniowanych kategorii. Dodaj pierwszą powyżej!</div>';
+                return;
+            }
+
+            function renderNode(cat, depth = 0) {
+                const levelNum = depth + 1;
+                const prefix = depth > 0 ? '└─ '.repeat(depth) : '';
+                const color = getLevelColor(levelNum);
+                const prodCount = countProductsInSubtree(cat);
+                const itemStyle = `border-left: 3px solid ${color}; margin-left: ${depth * 16}px; margin-bottom: 8px; padding: 10px 14px; background: rgba(15, 23, 42, 0.6); border-radius: var(--radius-md); display:flex; justify-content:space-between; align-items:center;`;
+
+                return `
+                    <div style="${itemStyle}">
+                        <div style="display:flex; align-items:center; gap:10px; overflow:hidden;">
+                            <span class="cat-level-badge level-${levelNum}">Poziom ${levelNum}</span>
+                            <strong style="color:#fff; font-size:14px;">${prefix}${cat.name}</strong>
+                            ${cat.description ? `<span style="color:var(--text-muted); font-size:12px;">(${cat.description})</span>` : ''}
+                        </div>
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <span class="count-badge">${prodCount} szt.</span>
+                            <button class="btn" style="padding:4px 10px; font-size:12px; background:rgba(99,102,241,0.25); border-color:var(--accent-primary);" onclick="editCategory('${cat.id}')">✏️ Edytuj</button>
+                            <button class="btn btn-danger" style="padding:4px 10px; font-size:12px;" onclick="deleteCategory('${cat.id}')">🗑️ Usuń</button>
+                        </div>
+                    </div>
+                    ${cat.children ? [...cat.children].sort((a,b) => a.name.localeCompare(b.name, 'pl')).map(c => renderNode(c, depth + 1)).join('') : ''}
+                `;
+            }
+
+            const sortedRoots = [...allCategories].sort((a,b) => a.name.localeCompare(b.name, 'pl'));
+            container.innerHTML = sortedRoots.map(cat => renderNode(cat, 0)).join('');
         }
 
         // Tworzy płaską mapę ID -> Nazwa kategorii
@@ -818,11 +979,13 @@
         }
 
         function prepareNewCategoryForm() {
+            switchAdminTab('categories');
             resetCategoryForm();
             window.scrollTo({ top: document.getElementById('category-form-card').offsetTop - 80, behavior: 'smooth' });
         }
 
         function editCategory(catId) {
+            switchAdminTab('categories');
             const cat = findCategoryById(catId);
             if (!cat) return;
 
@@ -928,7 +1091,7 @@
         function renderProductsTable() {
             const tbody = document.getElementById('products-tbody');
             if (!allProducts || allProducts.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">Brak produktów w bazie. Dodaj pierwszy produkt powyżej!</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Brak produktów w bazie. Dodaj pierwszy produkt powyżej!</td></tr>';
                 return;
             }
 
@@ -952,9 +1115,9 @@
                     if (!p.kategoria_id || !validSubCatIds.has(p.kategoria_id)) return false;
                 }
 
-                // Wyszukiwanie w panelu admina (obsługa słów oraz fraz w cudzysłowach)
+                // Wyszukiwanie w panelu admina (obsługa słów oraz fraz w cudzysłowach, nazwy, opisu i lokalizacji)
                 if (searchTerms.length > 0) {
-                    const targetText = ((p.nazwa || '') + ' ' + (p.opis || '')).toLowerCase();
+                    const targetText = ((p.nazwa || '') + ' ' + (p.opis || '') + ' ' + (p.lokalizacja || '')).toLowerCase();
                     const matchAllTerms = searchTerms.every(term => targetText.includes(term));
                     if (!matchAllTerms) return false;
                 }
@@ -962,7 +1125,7 @@
             });
 
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">Brak produktów spełniających kryteria filtrowania.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Brak produktów spełniających kryteria filtrowania.</td></tr>';
                 return;
             }
 
@@ -970,6 +1133,7 @@
                 const thumb = (p.zdjecia && p.zdjecia.length > 0) ? p.zdjecia[0] : null;
                 const catDisplay = getCategoryDisplay(p.kategoria_id);
                 const priceDisplay = getAdminPriceDisplay(p.cena);
+                const locDisplay = p.lokalizacja ? `<span style="color:#6ee7b7; font-size:13px; font-weight:500;">📍 ${p.lokalizacja}</span>` : '<span style="color:var(--text-muted); font-size:12px;">-</span>';
                 const weightTxt = p.waga_jednostkowa || '-';
                 const qtyVal = (p.ilosc !== undefined && p.ilosc !== null) ? parseInt(p.ilosc) : 1;
                 const isVisible = p.widocznosc !== false;
@@ -988,6 +1152,7 @@
                         <td><strong>${p.nazwa}</strong> <span style="font-size:12px; color:#94a3b8; font-weight:500; margin-left:4px;">(${qtyVal} szt.)</span></td>
                         <td>${priceDisplay}</td>
                         <td>${catDisplay}</td>
+                        <td>${locDisplay}</td>
                         <td>${weightTxt}</td>
                         <td>${qtyBadge}</td>
                         <td>${visBadge}</td>
@@ -1010,6 +1175,7 @@
             document.getElementById('prod-name').value = prod.nazwa;
             document.getElementById('prod-price').value = prod.cena;
             document.getElementById('prod-category').value = prod.kategoria_id || '';
+            document.getElementById('prod-location').value = prod.lokalizacja || '';
             document.getElementById('prod-weight').value = prod.waga_jednostkowa || '';
             document.getElementById('prod-qty').value = (prod.ilosc !== undefined && prod.ilosc !== null) ? prod.ilosc : 1;
             document.getElementById('prod-visible').checked = prod.widocznosc !== false;
@@ -1094,6 +1260,7 @@
             formData.append('nazwa', targetProd.nazwa);
             formData.append('cena', targetProd.cena !== undefined && targetProd.cena !== null ? targetProd.cena : '');
             formData.append('kategoria_id', targetProd.kategoria_id || '');
+            formData.append('lokalizacja', targetProd.lokalizacja || '');
             formData.append('waga_jednostkowa', targetProd.waga_jednostkowa || '');
             formData.append('ilosc', newQty);
             formData.append('widocznosc', targetProd.widocznosc !== false ? 'true' : 'false');
@@ -1119,6 +1286,8 @@
             }
         }
 
+        let draggedExistingPhotoIdx = null;
+
         function renderExistingPhotos() {
             const block = document.getElementById('existing-photos-block');
             const container = document.getElementById('existing-photos-container');
@@ -1130,12 +1299,57 @@
             }
 
             block.style.display = 'block';
+            const total = currentExistingPhotos.length;
             container.innerHTML = currentExistingPhotos.map((url, idx) => `
-                <div class="existing-photo-card">
+                <div class="existing-photo-card" draggable="true"
+                     ondragstart="onExistingPhotoDragStart(event, ${idx})"
+                     ondragover="onExistingPhotoDragOver(event)"
+                     ondrop="onExistingPhotoDrop(event, ${idx})"
+                     ondragend="onExistingPhotoDragEnd(event)"
+                     title="Przeciągnij lub użyj strzałek ◀ ▶, aby zmienić kolejność">
                     <img src="${url}" alt="Zdjęcie ${idx + 1}">
                     <button type="button" class="remove-photo-btn" onclick="removeExistingPhoto(${idx})" title="Usuń to zdjęcie">✕</button>
+                    <div class="photo-reorder-bar">
+                        <button type="button" class="photo-move-btn" onclick="moveExistingPhoto(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} title="Przesuń w lewo">◀</button>
+                        <span class="photo-order-badge">#${idx + 1}</span>
+                        <button type="button" class="photo-move-btn" onclick="moveExistingPhoto(${idx}, 1)" ${idx === total - 1 ? 'disabled' : ''} title="Przesuń w prawo">▶</button>
+                    </div>
                 </div>
             `).join('');
+        }
+
+        function moveExistingPhoto(idx, dir) {
+            const targetIdx = idx + dir;
+            if (targetIdx < 0 || targetIdx >= currentExistingPhotos.length) return;
+            const temp = currentExistingPhotos[idx];
+            currentExistingPhotos[idx] = currentExistingPhotos[targetIdx];
+            currentExistingPhotos[targetIdx] = temp;
+            renderExistingPhotos();
+        }
+
+        function onExistingPhotoDragStart(e, idx) {
+            draggedExistingPhotoIdx = idx;
+            if (e.currentTarget) e.currentTarget.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function onExistingPhotoDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+
+        function onExistingPhotoDrop(e, dropIdx) {
+            e.preventDefault();
+            if (draggedExistingPhotoIdx === null || draggedExistingPhotoIdx === dropIdx) return;
+            const movedItem = currentExistingPhotos.splice(draggedExistingPhotoIdx, 1)[0];
+            currentExistingPhotos.splice(dropIdx, 0, movedItem);
+            draggedExistingPhotoIdx = null;
+            renderExistingPhotos();
+        }
+
+        function onExistingPhotoDragEnd(e) {
+            draggedExistingPhotoIdx = null;
+            if (e.currentTarget) e.currentTarget.classList.remove('dragging');
         }
 
         function removeExistingPhoto(idx) {
@@ -1143,21 +1357,52 @@
             renderExistingPhotos();
         }
 
+        let selectedDiskFiles = [];
+
         function previewSelectedFiles(input) {
+            if (input.files && input.files.length > 0) {
+                selectedDiskFiles = Array.from(input.files);
+            } else {
+                selectedDiskFiles = [];
+            }
+            renderSelectedDiskFiles();
+        }
+
+        function renderSelectedDiskFiles() {
             const container = document.getElementById('file-previews');
             container.innerHTML = '';
-            if (input.files) {
-                Array.from(input.files).forEach(file => {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const img = document.createElement('img');
-                        img.src = e.target.result;
-                        img.className = 'upload-preview-item';
-                        container.appendChild(img);
-                    };
-                    reader.readAsDataURL(file);
-                });
-            }
+            if (!selectedDiskFiles || selectedDiskFiles.length === 0) return;
+
+            const total = selectedDiskFiles.length;
+            selectedDiskFiles.forEach((file, idx) => {
+                const card = document.createElement('div');
+                card.className = 'existing-photo-card';
+                const imgUrl = URL.createObjectURL(file);
+                card.innerHTML = `
+                    <img src="${imgUrl}" alt="Nowe zdjęcie ${idx + 1}">
+                    <button type="button" class="remove-photo-btn" onclick="removeSelectedDiskFile(${idx})" title="Usuń to zdjęcie">✕</button>
+                    <div class="photo-reorder-bar">
+                        <button type="button" class="photo-move-btn" onclick="moveSelectedDiskFile(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} title="Przesuń w lewo">◀</button>
+                        <span class="photo-order-badge">#${idx + 1}</span>
+                        <button type="button" class="photo-move-btn" onclick="moveSelectedDiskFile(${idx}, 1)" ${idx === total - 1 ? 'disabled' : ''} title="Przesuń w prawo">▶</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function moveSelectedDiskFile(idx, dir) {
+            const targetIdx = idx + dir;
+            if (targetIdx < 0 || targetIdx >= selectedDiskFiles.length) return;
+            const temp = selectedDiskFiles[idx];
+            selectedDiskFiles[idx] = selectedDiskFiles[targetIdx];
+            selectedDiskFiles[targetIdx] = temp;
+            renderSelectedDiskFiles();
+        }
+
+        function removeSelectedDiskFile(idx) {
+            selectedDiskFiles.splice(idx, 1);
+            renderSelectedDiskFiles();
         }
 
         async function saveProduct(e) {
@@ -1173,14 +1418,14 @@
             formData.append('nazwa', document.getElementById('prod-name').value);
             formData.append('cena', document.getElementById('prod-price').value);
             formData.append('kategoria_id', document.getElementById('prod-category').value);
+            formData.append('lokalizacja', document.getElementById('prod-location').value);
             formData.append('waga_jednostkowa', document.getElementById('prod-weight').value);
             formData.append('ilosc', document.getElementById('prod-qty').value);
             formData.append('widocznosc', document.getElementById('prod-visible').checked ? 'true' : 'false');
             formData.append('opis', document.getElementById('prod-desc').value);
 
-            const fileInput = document.getElementById('prod-files');
-            if (fileInput.files) {
-                Array.from(fileInput.files).forEach(f => {
+            if (selectedDiskFiles && selectedDiskFiles.length > 0) {
+                selectedDiskFiles.forEach(f => {
                     formData.append('zdjecia', f);
                 });
             }
@@ -1199,6 +1444,7 @@
                 const data = await res.json();
                 if (data.success) {
                     cameraCapturedFiles = [];
+                    selectedDiskFiles = [];
                     renderCameraCapturedPhotos();
                     await loadProducts();
                     if (data.product && data.product.id) {
@@ -1226,9 +1472,11 @@
             dismissDuplicateWarning();
             document.getElementById('product-form').reset();
             document.getElementById('prod-id').value = '';
+            document.getElementById('prod-location').value = '';
             document.getElementById('prod-visible').checked = true;
             currentExistingPhotos = [];
             cameraCapturedFiles = [];
+            selectedDiskFiles = [];
             renderExistingPhotos();
             renderCameraCapturedPhotos();
             document.getElementById('file-previews').innerHTML = '';
@@ -1377,15 +1625,30 @@
             }
 
             block.style.display = 'block';
+            const total = cameraCapturedFiles.length;
             container.innerHTML = cameraCapturedFiles.map((file, idx) => {
                 const imgUrl = URL.createObjectURL(file);
                 return `
                     <div class="existing-photo-card">
                         <img src="${imgUrl}" alt="Zdjęcie z aparatu ${idx + 1}">
                         <button type="button" class="remove-photo-btn" onclick="removeCameraPhoto(${idx})" title="Usuń to zdjęcie">✕</button>
+                        <div class="photo-reorder-bar">
+                            <button type="button" class="photo-move-btn" onclick="moveCameraPhoto(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} title="Przesuń w lewo">◀</button>
+                            <span class="photo-order-badge">#${idx + 1}</span>
+                            <button type="button" class="photo-move-btn" onclick="moveCameraPhoto(${idx}, 1)" ${idx === total - 1 ? 'disabled' : ''} title="Przesuń w prawo">▶</button>
+                        </div>
                     </div>
                 `;
             }).join('');
+        }
+
+        function moveCameraPhoto(idx, dir) {
+            const targetIdx = idx + dir;
+            if (targetIdx < 0 || targetIdx >= cameraCapturedFiles.length) return;
+            const temp = cameraCapturedFiles[idx];
+            cameraCapturedFiles[idx] = cameraCapturedFiles[targetIdx];
+            cameraCapturedFiles[targetIdx] = temp;
+            renderCameraCapturedPhotos();
         }
 
         function removeCameraPhoto(idx) {
@@ -1406,8 +1669,117 @@
             }
         }
 
+        /* --- LOGIKA EKSPORTU / IMPORTU BAZY DANYCH (ZIP) --- */
+        function openImportModal() {
+            document.getElementById('import-zip-form').reset();
+            document.getElementById('import-status-msg').style.display = 'none';
+            document.getElementById('import-modal').style.display = 'flex';
+        }
+
+        function closeImportModal() {
+            document.getElementById('import-modal').style.display = 'none';
+        }
+
+        async function handleImportZip(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('import-zip-file');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert("⚠️ Wybierz plik ZIP do zaimportowania.");
+                return;
+            }
+
+            const modeRadio = document.querySelector('input[name="import_mode"]:checked');
+            const mode = modeRadio ? modeRadio.value : 'add';
+
+            if (mode === 'overwrite') {
+                const confirmed = confirm("⚠️ UWAGA: Wybrano opcję NADPISZ!\nWszystkie obecne lokalne kategorie, produkty oraz zdjęcia zostaną CAŁKOWICIE USUNIĘTE i zastąpione zawartością pliku ZIP.\n\nCzy na pewno chcesz kontynuować?");
+                if (!confirmed) return;
+            }
+
+            const submitBtn = document.getElementById('import-submit-btn');
+            const statusMsg = document.getElementById('import-status-msg');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Importowanie danych...';
+            statusMsg.style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('mode', mode);
+
+            try {
+                const res = await fetch('/api/wyprzedaz/import', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const s = data.summary || {};
+                    const modeLabel = s.mode === 'overwrite' ? 'Nadpisano całą bazę' : 'Dodano nowe pozycje (bez duplikatów)';
+                    alert(`✅ Import zakończony pomyślnie!\n\nTryb: ${modeLabel}\nKategorie dodane: ${s.categories_added}\nProdukty dodane: ${s.products_added}\nPominięte duplikaty produktów: ${s.products_skipped}\nWgrane obrazy: ${s.images_imported}`);
+                    closeImportModal();
+                    resetProductForm();
+                    await loadCategories();
+                    await loadProducts();
+                } else {
+                    statusMsg.textContent = '⚠️ ' + (data.error || 'Błąd importu');
+                    statusMsg.style.display = 'block';
+                }
+            } catch (err) {
+                statusMsg.textContent = '⚠️ Błąd połączenia z serwerem: ' + err;
+                statusMsg.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '⬆️ Rozpocznij Import';
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', initData);
     </script>
+
+    <!-- IMPORT DATA MODAL -->
+    <div id="import-modal" class="modal-overlay" style="display:none;" onclick="if(event.target.id==='import-modal') closeImportModal()">
+        <div class="modal-content" style="max-width:560px; display:flex; flex-direction:column; gap:16px;">
+            <div class="card-title">
+                <span>⬆️ Import Danych Wyprzedaży (Archiwum ZIP)</span>
+                <button type="button" class="remove-photo-btn" style="position:static; width:28px; height:28px; font-size:14px;" onclick="closeImportModal()">✕</button>
+            </div>
+
+            <form id="import-zip-form" onsubmit="handleImportZip(event)" style="display:flex; flex-direction:column; gap:14px;">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>📦 Wybierz plik eksportu (`.zip` zawierający bazę JSON oraz zdjęcia):</label>
+                    <input type="file" id="import-zip-file" class="form-control" accept=".zip,application/zip" required>
+                </div>
+
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>⚙️ Tryb importu danych:</label>
+                    <div style="display:flex; flex-direction:column; gap:10px; margin-top:4px;">
+                        <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; border-radius:var(--radius-md); background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.35); cursor:pointer; color:#fff; font-weight:500;">
+                            <input type="radio" name="import_mode" value="add" checked style="margin-top:3px; width:16px; height:16px;">
+                            <div>
+                                <div style="font-weight:700; color:#6ee7b7;">➕ Dodaj (bez tworzenia duplikatów)</div>
+                                <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">Zachowuje obecną bazę i dopisuje wyłącznie brakujące kategorie, produkty (weryfikacja po ID oraz nazwie) i zdjęcia.</div>
+                            </div>
+                        </label>
+
+                        <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; border-radius:var(--radius-md); background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.35); cursor:pointer; color:#fff; font-weight:500;">
+                            <input type="radio" name="import_mode" value="overwrite" style="margin-top:3px; width:16px; height:16px;">
+                            <div>
+                                <div style="font-weight:700; color:#fca5a5;">⚠️ Nadpisz (najpierw usuwa całkowicie bazę lokalną)</div>
+                                <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">Całkowicie usuwa obecne lokalne kategorie, przedmioty oraz zdjęcia, a następnie zastępuje je danymi z pliku ZIP.</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="import-status-msg" style="display:none; padding:10px 14px; border-radius:var(--radius-sm); background:rgba(239,68,68,0.2); border:1px solid rgba(239,68,68,0.4); color:#fca5a5; font-size:13px;"></div>
+
+                <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:6px;">
+                    <button type="button" class="btn" onclick="closeImportModal()">❌ Anuluj</button>
+                    <button id="import-submit-btn" type="submit" class="btn btn-green">⬆️ Rozpocznij Import</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- CAMERA CAPTURE MODAL -->
     <div id="camera-modal" class="modal-overlay" style="display:none;">

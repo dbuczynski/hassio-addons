@@ -8,13 +8,13 @@ import re
 import requests
 import time
 import uuid
-from flask import Flask, jsonify, render_template, request, Response, redirect, session, send_from_directory
+from flask import Flask, jsonify, render_template, request, Response, redirect, session, send_from_directory, send_file
 import youtube_service
 
 app = Flask(__name__)
 app.secret_key = "andrzejow_net_secret_key_metale_szlachetne"
 
-APP_VERSION = "1.13.0"
+APP_VERSION = "1.14.0"
 
 DEFAULT_ALLOWED_CHANNELS = [
     {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
@@ -1616,7 +1616,15 @@ def wyprzedaz_admin_index():
     """Panel administracyjny wyprzedaży dostępny wyłącznie dla zaufanych adresów IP."""
     if not is_client_ip_trusted():
         return redirect('/wyprzedaz/')
-    return render_template('wyprzedaz/admin.html', client_ip=get_client_ip())
+    return render_template('wyprzedaz/admin.html', client_ip=get_client_ip(), initial_tab='products')
+
+@app.route('/wyprzedaz/admin/kategorie/')
+@app.route('/wyprzedaz/admin/kategorie')
+def wyprzedaz_admin_kategorie():
+    """Widok zarządzania kategoriami wyprzedaży."""
+    if not is_client_ip_trusted():
+        return redirect('/wyprzedaz/')
+    return render_template('wyprzedaz/admin.html', client_ip=get_client_ip(), initial_tab='categories')
 
 @app.route('/wyprzedaz/uploads/<path:filename>')
 def wyprzedaz_serve_upload(filename):
@@ -1675,6 +1683,7 @@ def api_wyprzedaz_products():
             opis = request.form.get('opis', '')
             kategoria_id = request.form.get('kategoria_id', '')
             waga_jednostkowa = request.form.get('waga_jednostkowa', '')
+            lokalizacja = request.form.get('lokalizacja', '')
             ilosc_str = request.form.get('ilosc', '1')
             widocznosc_str = request.form.get('widocznosc', 'true')
             
@@ -1701,6 +1710,7 @@ def api_wyprzedaz_products():
             opis = data.get('opis', '')
             kategoria_id = data.get('kategoria_id', '')
             waga_jednostkowa = data.get('waga_jednostkowa', '')
+            lokalizacja = data.get('lokalizacja', '')
             ilosc_str = data.get('ilosc', 1)
             widocznosc_str = data.get('widocznosc', True)
             existing_urls = data.get('existing_zdjecia', [])
@@ -1722,7 +1732,8 @@ def api_wyprzedaz_products():
                 zdjecia=final_photos,
                 waga_jednostkowa=waga_jednostkowa,
                 ilosc=ilosc,
-                widocznosc=widocznosc
+                widocznosc=widocznosc,
+                lokalizacja=lokalizacja
             )
         else:
             final_photos = existing_urls + new_urls
@@ -1731,7 +1742,8 @@ def api_wyprzedaz_products():
                 zdjecia=final_photos,
                 waga_jednostkowa=waga_jednostkowa,
                 ilosc=ilosc,
-                widocznosc=widocznosc
+                widocznosc=widocznosc,
+                lokalizacja=lokalizacja
             )
 
         return jsonify({"success": True, "product": prod})
@@ -1742,6 +1754,42 @@ def api_wyprzedaz_products():
             return jsonify({"error": "Brak ID produktu"}), 400
         res = wyprzedaz_svc.delete_product(prod_id)
         return jsonify({"success": res})
+
+@app.route('/api/wyprzedaz/export', methods=['GET'])
+def api_wyprzedaz_export():
+    if not is_client_ip_trusted():
+        return jsonify({"error": "Dostęp zabroniony - brak zaufanego adresu IP"}), 403
+    try:
+        mem_zip = wyprzedaz_svc.export_zip_bytes()
+        filename = f"wyprzedaz_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
+        return send_file(
+            mem_zip,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name=filename
+        )
+    except Exception as e:
+        return jsonify({"error": f"Błąd eksportu bazy: {e}"}), 500
+
+@app.route('/api/wyprzedaz/import', methods=['POST'])
+def api_wyprzedaz_import():
+    if not is_client_ip_trusted():
+        return jsonify({"error": "Dostęp zabroniony - brak zaufanego adresu IP"}), 403
+    if 'file' not in request.files:
+        return jsonify({"error": "Nie przesłano pliku ZIP"}), 400
+    f = request.files['file']
+    if not f or not f.filename:
+        return jsonify({"error": "Nie wybrano pliku ZIP"}), 400
+
+    mode = request.form.get('mode', 'add')
+    if mode not in ('add', 'overwrite'):
+        mode = 'add'
+
+    try:
+        summary = wyprzedaz_svc.import_zip(f.stream, mode=mode)
+        return jsonify({"success": True, "summary": summary})
+    except Exception as e:
+        return jsonify({"error": f"Błąd importu archiwum ZIP: {e}"}), 400
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)

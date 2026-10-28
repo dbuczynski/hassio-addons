@@ -1,6 +1,9 @@
 import os
+import io
 import json
 import uuid
+import shutil
+import zipfile
 from datetime import datetime
 from werkzeug.utils import secure_filename
 
@@ -215,7 +218,7 @@ class WyprzedazService:
         with open(self.paths["products_file"], "w", encoding="utf-8") as f:
             json.dump(products, f, ensure_ascii=False, indent=2)
 
-    def add_product(self, nazwa, cena, opis, kategoria_id=None, zdjecia=None, waga_jednostkowa="", ilosc=1, widocznosc=True):
+    def add_product(self, nazwa, cena, opis, kategoria_id=None, zdjecia=None, waga_jednostkowa="", ilosc=1, widocznosc=True, lokalizacja=""):
         prods = self.load_products()
         prod_id = f"prod_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{str(uuid.uuid4())[:6]}"
         
@@ -231,6 +234,7 @@ class WyprzedazService:
             "opis": opis.strip(),
             "kategoria_id": kategoria_id if kategoria_id and str(kategoria_id).strip() else None,
             "waga_jednostkowa": str(waga_jednostkowa or "").strip(),
+            "lokalizacja": str(lokalizacja or "").strip(),
             "ilosc": ilosc_val,
             "widocznosc": bool(widocznosc),
             "zdjecia": zdjecia or [],
@@ -240,7 +244,7 @@ class WyprzedazService:
         self.save_products(prods)
         return new_prod
 
-    def update_product(self, prod_id, nazwa, cena, opis, kategoria_id=None, zdjecia=None, waga_jednostkowa=None, ilosc=None, widocznosc=None):
+    def update_product(self, prod_id, nazwa, cena, opis, kategoria_id=None, zdjecia=None, waga_jednostkowa=None, ilosc=None, widocznosc=None, lokalizacja=None):
         prods = self.load_products()
         updated = None
         for p in prods:
@@ -252,6 +256,8 @@ class WyprzedazService:
                 
                 if waga_jednostkowa is not None:
                     p["waga_jednostkowa"] = str(waga_jednostkowa).strip()
+                if lokalizacja is not None:
+                    p["lokalizacja"] = str(lokalizacja).strip()
                 if ilosc is not None:
                     try:
                         p["ilosc"] = int(ilosc)
@@ -301,3 +307,162 @@ class WyprzedazService:
         save_path = os.path.join(self.paths["uploads_dir"], unique_name)
         file_obj.save(save_path)
         return f"/wyprzedaz/uploads/{unique_name}"
+
+    def export_zip_bytes(self):
+        """Tworzy w pamięci archiwum ZIP z plikami categories.json, products.json oraz katalogiem uploads/."""
+        mem_zip = io.BytesIO()
+        with zipfile.ZipFile(mem_zip, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
+            cats = self.load_categories()
+            prods = self.load_products()
+            zf.writestr("categories.json", json.dumps(cats, ensure_ascii=False, indent=2))
+            zf.writestr("products.json", json.dumps(prods, ensure_ascii=False, indent=2))
+
+            uploads_dir = self.paths["uploads_dir"]
+            if os.path.exists(uploads_dir):
+                for fname in os.listdir(uploads_dir):
+                    fpath = os.path.join(uploads_dir, fname)
+                    if os.path.isfile(fpath):
+                        zf.write(fpath, arcname=f"uploads/{fname}")
+        mem_zip.seek(0)
+        return mem_zip
+
+    def import_zip(self, zip_stream, mode="add"):
+        """
+        Importuje bazę danych i obrazki z pliku ZIP.
+        mode:
+          - 'overwrite': całkowicie czyści lokalną bazę kategorii, produktów oraz zdjęć przed wgraniem.
+          - 'add': dodaje nowe kategorie i produkty (bez tworzenia duplikatów po id lub nazwie).
+        """
+        with zipfile.ZipFile(zip_stream, mode="r") as zf:
+            names = zf.namelist()
+            imported_cats = []
+            imported_prods = []
+
+            if "categories.json" in names:
+                raw_cats = json.loads(zf.read("categories.json").decode("utf-8"))
+                if isinstance(raw_cats, list):
+                    imported_cats = raw_cats
+
+            if "products.json" in names:
+                raw_prods = json.loads(zf.read("products.json").decode("utf-8"))
+                if isinstance(raw_prods, list):
+                    imported_prods = raw_prods
+
+            uploads_dir = self.paths["uploads_dir"]
+            os.makedirs(uploads_dir, exist_ok=True)
+
+            if mode == "overwrite":
+                # Usuń wszystkie dotychczasowe pliki zdjęć z uploads_dir
+                for fname in os.listdir(uploads_dir):
+                    fpath = os.path.join(uploads_dir, fname)
+                    if os.path.isfile(fpath):
+                        try:
+                            os.remove(fpath)
+                        except Exception:
+                            pass
+
+                # Wypakuj wszystkie zdjęcia z archiwum
+                img_count = 0
+                for member in names:
+                    if member.startswith("uploads/") and not member.endswith("/"):
+                        fname = os.path.basename(member)
+                        if fname:
+                            target_path = os.path.join(uploads_dir, secure_filename(fname) or fname)
+                            with zf.open(member) as src, open(target_path, "wb") as dst:
+                                shutil.copyfileobj(src, dst)
+                            img_count += 1
+
+                self.save_categories(imported_cats)
+                self.save_products(imported_prods)
+                return {
+                    "mode": "overwrite",
+                    "categories_added": len(imported_cats),
+                    "products_added": len(imported_prods),
+                    "products_skipped": 0,
+                    "images_imported": img_count
+                }
+            else:
+                # Tryb 'add' - dodaj bez duplikatów
+                existing_cats = self.load_categories()
+                existing_prods = self.load_products()
+
+                cat_id_map = {}  # mapowanie starego ID kategorii z importu na istniejące ID (jeśli dopasowano po nazwie i rodzicu)
+                existing_cat_ids = {c["id"] for c in existing_cats}
+
+                cats_added = 0
+                for ic in imported_cats:
+                    ic_id = ic.get("id")
+                    ic_name = (ic.get("name") or "").strip().lower()
+                    ic_parent = ic.get("parent_id")
+                    mapped_parent = cat_id_map.get(ic_parent, ic_parent)
+
+                    if ic_id in existing_cat_ids:
+                        cat_id_map[ic_id] = ic_id
+                        continue
+
+                    # Sprawdź czy kategoria o tej samej nazwie i rodzicu już istnieje
+                    match = next(
+                        (c for c in existing_cats if (c.get("name") or "").strip().lower() == ic_name and c.get("parent_id") == mapped_parent),
+                        None
+                    )
+                    if match:
+                        cat_id_map[ic_id] = match["id"]
+                    else:
+                        new_cat = dict(ic)
+                        new_cat["parent_id"] = mapped_parent
+                        existing_cats.append(new_cat)
+                        existing_cat_ids.add(ic_id)
+                        cat_id_map[ic_id] = ic_id
+                        cats_added += 1
+
+                existing_prod_ids = {p.get("id") for p in existing_prods}
+                existing_prod_names = {(p.get("nazwa") or "").strip().lower() for p in existing_prods if p.get("nazwa")}
+
+                prods_added = 0
+                prods_skipped = 0
+                needed_images = set()
+
+                for ip in imported_prods:
+                    ip_id = ip.get("id")
+                    ip_name = (ip.get("nazwa") or "").strip().lower()
+
+                    if (ip_id and ip_id in existing_prod_ids) or (ip_name and ip_name in existing_prod_names):
+                        prods_skipped += 1
+                        continue
+
+                    new_prod = dict(ip)
+                    orig_cat = new_prod.get("kategoria_id")
+                    if orig_cat in cat_id_map:
+                        new_prod["kategoria_id"] = cat_id_map[orig_cat]
+
+                    existing_prods.append(new_prod)
+                    if ip_id:
+                        existing_prod_ids.add(ip_id)
+                    if ip_name:
+                        existing_prod_names.add(ip_name)
+                    prods_added += 1
+
+                    for img_url in new_prod.get("zdjecia", []):
+                        needed_images.add(os.path.basename(img_url))
+
+                img_count = 0
+                for member in names:
+                    if member.startswith("uploads/") and not member.endswith("/"):
+                        fname = os.path.basename(member)
+                        if fname and (fname in needed_images or not os.path.exists(os.path.join(uploads_dir, fname))):
+                            target_path = os.path.join(uploads_dir, fname)
+                            if not os.path.exists(target_path):
+                                with zf.open(member) as src, open(target_path, "wb") as dst:
+                                    shutil.copyfileobj(src, dst)
+                                img_count += 1
+
+                self.save_categories(existing_cats)
+                self.save_products(existing_prods)
+                return {
+                    "mode": "add",
+                    "categories_added": cats_added,
+                    "products_added": prods_added,
+                    "products_skipped": prods_skipped,
+                    "images_imported": img_count
+                }
+
