@@ -2,6 +2,20 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.14.2] - 2026-10-28
+
+### Dodano / Zmieniono
+- **Aplikacje Zbiór (`/zbior/`) oraz Wyprzedaż (`/wyprzedaz/`)**:
+  - **Parametry Siatki w Adresie URL (GET)**: Ustawienia liczby kolumn (`kolumny=3|4|5`) oraz limitu na stronę (`limit=6|8|9|10|12|15|16|20|wszystko`) są automatycznie dopisywane do adresu URL i odczytywane przy otwieraniu udostępnionego linku.
+  - **Ikony Kategorii**: Dodano obsługę opcjonalnych ikon dla kategorii w panelu administracyjnym oraz ich wyświetlanie przed nazwą kategorii (bez placeholdera w przypadku braku ikony).
+  - **Ścieżka Nawigacji (Breadcrumbs)**: Dodano interaktywną ścieżkę aktualnej kategorii nad wyszukiwarką (`ZBIÓR --> Kategoria 1 --> Kategoria 2 --> ...` / `WYPRZEDAŻ --> ...`).
+  - **Nowa Nawigacja w Bocznym Menu i Mniejsze Wcięcia**: Przebudowano boczne menu na kompaktowy układ kontekstowy (`Wyżej`, `-> kategoria bieżąca`, `--> sub kategorie`) ze zmniejszonymi wcięciami, dzięki czemu długie nazwy kategorii mieszczą się w jednej linii.
+  - **Zwijane Menu Boczne (Desktop i Telefon)**:
+    - W widoku szerokim (komputer / telefon w poziomie) menu znajduje się domyślnie obok siatki produktów z możliwością zwinięcia (`◀ Zwiń` / `📁 Menu ▸`).
+    - W widoku pionowym na telefonie menu jest domyślnie zminimalizowane z możliwością chwilowego rozwinięcia nad siatką produktów (`▾ Otwórz`).
+
+---
+
 ## [1.14.1] - 2026-10-28
 
 ### Dodano / Zmieniono

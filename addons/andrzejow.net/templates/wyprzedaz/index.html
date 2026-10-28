@@ -101,19 +101,21 @@
         }
 
         .main-container {
-            max-width: 1400px;
-            width: 95%;
-            margin: 24px auto;
+            max-width: 1440px;
+            width: 96%;
+            margin: 20px auto;
             display: grid;
-            grid-template-columns: 280px 1fr;
-            gap: 24px;
+            grid-template-columns: 235px 1fr;
+            gap: 20px;
             flex: 1;
+            align-items: start;
+            position: relative;
         }
-
-        @media (max-width: 900px) {
-            .main-container {
-                grid-template-columns: 1fr;
-            }
+        .main-container.sidebar-collapsed {
+            grid-template-columns: 1fr;
+        }
+        .main-container.sidebar-collapsed #sidebar-card {
+            display: none;
         }
 
         .card {
@@ -121,46 +123,213 @@
             backdrop-filter: var(--glass-blur);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-lg);
-            padding: 20px;
+            padding: 12px 10px;
         }
 
         /* Sidebar Categories Tree */
+        #sidebar-card {
+            position: sticky;
+            top: 76px;
+            z-index: 90;
+        }
+        .category-tree-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            margin-bottom: 10px;
+            padding: 0 4px;
+        }
         .category-tree-title {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 700;
-            margin-bottom: 14px;
             color: var(--accent-gold);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .sidebar-toggle-btn {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            border-radius: var(--radius-sm);
+            padding: 3px 8px;
+            font-size: 11.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .sidebar-toggle-btn:hover {
+            border-color: var(--accent-primary);
+            color: #fff;
+            background: rgba(99, 102, 241, 0.2);
+        }
+        .mobile-only-toggle {
+            display: none;
         }
 
         .cat-item {
-            padding: 8px 12px;
-            border-radius: var(--radius-md);
+            padding: 6px 8px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
-            font-size: 13.5px;
+            font-size: 13px;
             font-weight: 500;
             color: var(--text-muted);
             transition: all 0.15s ease;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 4px;
+            gap: 6px;
+            margin-bottom: 3px;
         }
         .cat-item:hover, .cat-item.active {
-            background: rgba(99, 102, 241, 0.15);
+            background: rgba(99, 102, 241, 0.16);
             color: #fff;
         }
         .cat-item.active {
             font-weight: 700;
             border-left: 3px solid var(--accent-primary);
         }
+        .cat-item.cat-up-item {
+            color: var(--accent-gold);
+            font-weight: 700;
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px dashed rgba(245, 158, 11, 0.3);
+            margin-bottom: 5px;
+        }
+        .cat-item.cat-up-item:hover {
+            background: rgba(245, 158, 11, 0.18);
+            color: #fff;
+        }
+        .cat-item.cat-sub-item {
+            padding-left: 12px;
+        }
+        .cat-label {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-width: 0;
+            flex: 1;
+        }
+        .cat-arrow {
+            color: var(--accent-primary);
+            font-family: monospace;
+            font-weight: 700;
+            margin-right: 3px;
+        }
 
-        .cat-sub-list {
-            border-left: 1px dashed rgba(255, 255, 255, 0.1);
-            padding-left: 4px;
-            margin-bottom: 4px;
+        /* Breadcrumb Path Bar above search */
+        .breadcrumb-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            background: rgba(30, 41, 59, 0.65);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            flex-wrap: wrap;
+            font-size: 13px;
+        }
+        .breadcrumb-expand-btn {
+            display: none;
+            background: rgba(99, 102, 241, 0.2);
+            border: 1px solid rgba(99, 102, 241, 0.45);
+            color: #e0e7ff;
+            border-radius: var(--radius-sm);
+            padding: 4px 9px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-right: 4px;
+            white-space: nowrap;
+        }
+        .breadcrumb-expand-btn:hover {
+            background: var(--accent-primary);
+            color: #fff;
+        }
+        .main-container.sidebar-collapsed .breadcrumb-expand-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .breadcrumb-link {
+            color: #cbd5e1;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+        .breadcrumb-link:hover {
+            color: #fff;
+            background: rgba(99, 102, 241, 0.22);
+        }
+        .breadcrumb-link.active {
+            color: var(--accent-gold);
+            font-weight: 800;
+        }
+        .breadcrumb-sep {
+            color: var(--text-muted);
+            font-family: monospace;
+            font-size: 12px;
+            font-weight: 700;
+            user-select: none;
+        }
+
+        /* Widok na telefonie (pionowo): zminimalizowane menu z możliwością chwilowego otwarcia nad siatką */
+        @media (max-width: 768px) and (orientation: portrait), (max-width: 540px) {
+            .main-container,
+            .main-container.sidebar-collapsed {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .main-container.sidebar-collapsed #sidebar-card {
+                display: block;
+            }
+            .breadcrumb-expand-btn,
+            .main-container.sidebar-collapsed .breadcrumb-expand-btn {
+                display: none !important;
+            }
+            #sidebar-card {
+                position: relative;
+                top: 0;
+                padding: 10px 12px;
+            }
+            .category-tree-header {
+                margin-bottom: 0;
+                cursor: pointer;
+            }
+            .desktop-only-toggle {
+                display: none;
+            }
+            .mobile-only-toggle {
+                display: inline-flex;
+            }
+            #category-tree-container {
+                display: none;
+                position: absolute;
+                top: calc(100% + 4px);
+                left: 0;
+                right: 0;
+                background: #111827;
+                border: 1px solid rgba(99, 102, 241, 0.5);
+                border-radius: var(--radius-md);
+                padding: 10px;
+                box-shadow: 0 18px 40px rgba(0, 0, 0, 0.85);
+                z-index: 180;
+                max-height: 68vh;
+                overflow-y: auto;
+            }
+            #sidebar-card.mobile-open #category-tree-container {
+                display: block;
+            }
         }
 
         /* Filter Controls */
@@ -677,19 +846,31 @@
         </div>
     </nav>
 
-    <div class="main-container">
+    <div class="main-container" id="main-container">
         <!-- Sidebar Category Tree -->
-        <div class="card">
-            <div class="category-tree-title">📁 Drzewo Kategorii</div>
+        <div class="card" id="sidebar-card">
+            <div class="category-tree-header" onclick="onSidebarHeaderClick(event)">
+                <div class="category-tree-title">
+                    <span>📁 Kategorie</span>
+                    <span id="mobile-active-cat-hint" style="font-size:12px; color:#cbd5e1; font-weight:500;"></span>
+                </div>
+                <button type="button" class="sidebar-toggle-btn desktop-only-toggle" onclick="toggleDesktopSidebar(true, event)" title="Zwiń boczne menu">◀ Zwiń</button>
+                <button type="button" id="mobile-sidebar-btn" class="sidebar-toggle-btn mobile-only-toggle" onclick="toggleMobileSidebar(event)">▾ Otwórz</button>
+            </div>
             <div id="category-tree-container">
                 <div class="cat-item active" onclick="selectCategory(null)">
-                    <span>Wszystkie kategorie</span>
+                    <span class="cat-label"><span class="cat-arrow">-&gt;</span> Wszystkie kategorie</span>
                 </div>
             </div>
         </div>
 
         <!-- Main Product Area -->
-        <div>
+        <div style="min-width:0;">
+            <div id="breadcrumb-bar" class="breadcrumb-bar">
+                <button type="button" class="breadcrumb-expand-btn" onclick="toggleDesktopSidebar(false)" title="Rozwiń boczne menu kategorii">📁 Menu ▸</button>
+                <div id="breadcrumb-items" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;"></div>
+            </div>
+
             <div class="controls-bar">
                 <input type="text" id="search-input" class="search-input" placeholder="🔍 Szukaj sprzętu (np. Wkręt Dew, 'Wkrętarka Bosch')..." oninput="filterProducts()">
                 <div class="layout-picker-wrapper" id="layout-picker-wrapper">
@@ -759,7 +940,9 @@
     <script>
         const APP_BASE_PATH = "{{ app_base_path|default('/wyprzedaz') }}";
         const API_BASE_PATH = "{{ api_base_path|default('/api/wyprzedaz') }}";
+        const APP_ROOT_LABEL = "{{ app_root_label|default('WYPRZEDAŻ') }}";
         const LAYOUT_STORAGE_KEY = `catalog_layout_prefs_${APP_BASE_PATH}`;
+        const SIDEBAR_STORAGE_KEY = `catalog_sidebar_collapsed_${APP_BASE_PATH}`;
         const LAYOUT_OPTIONS = {
             3: [6, 9, 12, 'all'],
             4: [8, 12, 16, 'all'],
@@ -773,6 +956,124 @@
         let gridColumns = 3;
         let itemsPerPage = 6;
 
+        function formatCatLabel(cat) {
+            if (!cat) return '';
+            const icon = (cat.icon || '').trim();
+            return icon ? `${icon} ${cat.name}` : cat.name;
+        }
+
+        function findCatById(catId, list = categoryTree) {
+            if (!catId || !list) return null;
+            for (const c of list) {
+                if (c.id === catId) return c;
+                if (c.children && c.children.length > 0) {
+                    const found = findCatById(catId, c.children);
+                    if (found) return found;
+                }
+            }
+            return null;
+        }
+
+        function getCategoryPath(catId, list = categoryTree, trail = []) {
+            if (!catId || !list) return [];
+            for (const c of list) {
+                const nextTrail = [...trail, c];
+                if (c.id === catId) return nextTrail;
+                if (c.children && c.children.length > 0) {
+                    const found = getCategoryPath(catId, c.children, nextTrail);
+                    if (found.length > 0) return found;
+                }
+            }
+            return [];
+        }
+
+        function toggleDesktopSidebar(collapse, e) {
+            if (e) e.stopPropagation();
+            const mainEl = document.getElementById('main-container');
+            if (!mainEl) return;
+            mainEl.classList.toggle('sidebar-collapsed', !!collapse);
+            try {
+                sessionStorage.setItem(SIDEBAR_STORAGE_KEY, collapse ? '1' : '0');
+            } catch (err) {}
+        }
+
+        function loadSidebarPrefs() {
+            try {
+                if (sessionStorage.getItem(SIDEBAR_STORAGE_KEY) === '1') {
+                    const mainEl = document.getElementById('main-container');
+                    if (mainEl) mainEl.classList.add('sidebar-collapsed');
+                }
+            } catch (err) {}
+        }
+
+        function isMobilePortraitView() {
+            return window.matchMedia('(max-width: 768px) and (orientation: portrait), (max-width: 540px)').matches;
+        }
+
+        function onSidebarHeaderClick(e) {
+            if (isMobilePortraitView()) {
+                toggleMobileSidebar(e);
+            }
+        }
+
+        function toggleMobileSidebar(e) {
+            if (e) e.stopPropagation();
+            const card = document.getElementById('sidebar-card');
+            const btn = document.getElementById('mobile-sidebar-btn');
+            if (!card) return;
+            const isOpen = card.classList.toggle('mobile-open');
+            if (btn) btn.textContent = isOpen ? '▴ Zamknij' : '▾ Otwórz';
+        }
+
+        function closeMobileSidebar() {
+            const card = document.getElementById('sidebar-card');
+            const btn = document.getElementById('mobile-sidebar-btn');
+            if (card) card.classList.remove('mobile-open');
+            if (btn) btn.textContent = '▾ Otwórz';
+        }
+
+        function parsePerPageToken(rawVal, allowed) {
+            if (rawVal === undefined || rawVal === null || rawVal === '') return null;
+            const norm = String(rawVal).trim().toLowerCase();
+            if (norm === 'all' || norm === 'wszystko') return 'all';
+            const num = parseInt(norm);
+            if (!isNaN(num) && allowed.includes(num)) return num;
+            return null;
+        }
+
+        function applyLayoutFromUrlParams(params) {
+            if (!params) return false;
+            let rawCols = params.get('kolumny') || params.get('cols');
+            let rawLimit = params.get('limit') || params.get('na_strone') || params.get('per_page');
+            const rawUklad = params.get('uklad');
+
+            if (rawUklad && (!rawCols || !rawLimit)) {
+                const parts = rawUklad.toLowerCase().split(/[x×_/-]/);
+                if (parts.length >= 2) {
+                    if (!rawCols) rawCols = parts[0];
+                    if (!rawLimit) rawLimit = parts[1];
+                }
+            }
+
+            let updated = false;
+            const parsedCols = parseInt(rawCols);
+            if (LAYOUT_OPTIONS[parsedCols]) {
+                gridColumns = parsedCols;
+                updated = true;
+            }
+
+            const allowed = LAYOUT_OPTIONS[gridColumns] || LAYOUT_OPTIONS[3];
+            const parsedLimit = parsePerPageToken(rawLimit, allowed);
+            if (parsedLimit !== null) {
+                itemsPerPage = parsedLimit;
+                updated = true;
+            } else if (updated && !allowed.includes(itemsPerPage)) {
+                itemsPerPage = allowed[0];
+            }
+
+            return updated;
+        }
+
         function loadLayoutPrefs() {
             try {
                 const raw = sessionStorage.getItem(LAYOUT_STORAGE_KEY) || localStorage.getItem(LAYOUT_STORAGE_KEY);
@@ -782,12 +1083,17 @@
                     if (LAYOUT_OPTIONS[cols]) {
                         gridColumns = cols;
                         const allowed = LAYOUT_OPTIONS[cols];
-                        const pp = parsed.perPage === 'all' ? 'all' : parseInt(parsed.perPage);
-                        itemsPerPage = allowed.includes(pp) ? pp : allowed[0];
+                        const pp = parsePerPageToken(parsed.perPage, allowed);
+                        itemsPerPage = pp !== null ? pp : allowed[0];
                     }
                 }
             } catch (e) {
                 console.warn("Błąd odczytu ustawień układu z sesji:", e);
+            }
+
+            const params = new URLSearchParams(window.location.search);
+            if (applyLayoutFromUrlParams(params)) {
+                saveLayoutPrefs();
             }
             renderLayoutPicker();
         }
@@ -860,6 +1166,7 @@
             currentPage = 1;
             saveLayoutPrefs();
             renderLayoutPicker();
+            updateUrlParams();
             filterProducts(true);
         }
 
@@ -871,6 +1178,7 @@
             saveLayoutPrefs();
             renderLayoutPicker();
             closeLayoutPopover();
+            updateUrlParams();
             filterProducts(true);
         }
 
@@ -878,6 +1186,10 @@
             const wrapper = document.getElementById('layout-picker-wrapper');
             if (wrapper && !wrapper.contains(e.target)) {
                 closeLayoutPopover();
+            }
+            const sidebarCard = document.getElementById('sidebar-card');
+            if (sidebarCard && !sidebarCard.contains(e.target)) {
+                closeMobileSidebar();
             }
         });
 
@@ -893,6 +1205,8 @@
             } else {
                 url.searchParams.delete('produkt');
             }
+            url.searchParams.set('kolumny', String(gridColumns));
+            url.searchParams.set('limit', itemsPerPage === 'all' ? 'wszystko' : String(itemsPerPage));
             history.replaceState(null, '', url.pathname + url.search);
         }
 
@@ -906,6 +1220,7 @@
         }
 
         async function initData() {
+            loadSidebarPrefs();
             loadLayoutPrefs();
             const params = new URLSearchParams(window.location.search);
             const catParam = params.get('kategoria');
@@ -913,6 +1228,7 @@
             if (catParam) {
                 selectedCategoryId = catParam;
             }
+            updateUrlParams(selectedCategoryId, prodParam || null);
 
             await loadCategories();
             await loadProducts();
@@ -926,6 +1242,10 @@
             const params = new URLSearchParams(window.location.search);
             selectedCategoryId = params.get('kategoria') || null;
             const prodParam = params.get('produkt');
+            if (applyLayoutFromUrlParams(params)) {
+                saveLayoutPrefs();
+                renderLayoutPicker();
+            }
             renderCategoryTree();
             filterProducts(true);
             if (prodParam) {
@@ -996,7 +1316,35 @@
             return { availableStockSum, visibleItemsCount };
         }
 
+        function renderBreadcrumb() {
+            const container = document.getElementById('breadcrumb-items');
+            if (!container) return;
+
+            const path = selectedCategoryId ? getCategoryPath(selectedCategoryId) : [];
+            let html = `<span class="breadcrumb-link ${path.length === 0 ? 'active' : ''}" onclick="selectCategory(null)">${APP_ROOT_LABEL}</span>`;
+
+            path.forEach((cat, idx) => {
+                const isLast = (idx === path.length - 1);
+                html += `
+                    <span class="breadcrumb-sep">--&gt;</span>
+                    <span class="breadcrumb-link ${isLast ? 'active' : ''}" onclick="selectCategory('${cat.id}')">${formatCatLabel(cat)}</span>
+                `;
+            });
+
+            container.innerHTML = html;
+
+            const mobileHint = document.getElementById('mobile-active-cat-hint');
+            if (mobileHint) {
+                if (path.length > 0) {
+                    mobileHint.textContent = `(${formatCatLabel(path[path.length - 1])})`;
+                } else {
+                    mobileHint.textContent = '(Wszystkie)';
+                }
+            }
+        }
+
         function renderCategoryTree() {
+            renderBreadcrumb();
             const container = document.getElementById('category-tree-container');
             const validCatIds = getValidCategoryIdsSet();
 
@@ -1007,43 +1355,63 @@
                 return sum + (qty > 0 ? qty : 0);
             }, 0);
 
-            let html = `
-                <div class="cat-item ${selectedCategoryId === null ? 'active' : ''}" onclick="selectCategory(null)" style="display:flex; justify-content:space-between; align-items:center;">
-                    <span>Wszystkie kategorie</span>
-                    <span class="count-badge">${totalValidCount}</span>
-                </div>
-            `;
+            const currentCat = selectedCategoryId ? findCatById(selectedCategoryId) : null;
+            let html = '';
 
-            function buildCatHtml(cat, depth = 0) {
-                const { availableStockSum: prodCount, visibleItemsCount } = getSubtreeStats(cat, validProducts);
-                const isSelectedPath = isAncestorOrSelf(cat, selectedCategoryId);
-
-                // Ukryj kategorie bez żadnych widocznych produktów - WYJĄTKIEM są kategorie na ścieżce wybranej z URL
-                if (visibleItemsCount === 0 && !isSelectedPath) return '';
-
-                const isActive = selectedCategoryId === cat.id;
-                const prefix = depth > 0 ? '└─ '.repeat(depth) : '';
-                let subHtml = '';
-                if (cat.children && cat.children.length > 0) {
-                    const sortedChildren = [...cat.children].sort((a,b) => a.name.localeCompare(b.name, 'pl'));
-                    const renderedChildren = sortedChildren.map(c => buildCatHtml(c, depth + 1)).join('');
-                    if (renderedChildren.trim()) {
-                        subHtml = `<div class="cat-sub-list" style="margin-left: 12px;">${renderedChildren}</div>`;
-                    }
-                }
-                return `
-                    <div class="cat-item ${isActive ? 'active' : ''}" onclick="selectCategory('${cat.id}')" style="display:flex; justify-content:space-between; align-items:center;">
-                        <span>${prefix}${cat.name}</span>
-                        <span class="count-badge">${prodCount}</span>
+            if (!currentCat) {
+                // Poziom główny: -> Wszystkie kategorie oraz --> kategorie główne
+                html += `
+                    <div class="cat-item active" onclick="selectCategory(null)">
+                        <span class="cat-label" title="Wszystkie kategorie"><span class="cat-arrow">-&gt;</span> Wszystkie kategorie</span>
+                        <span class="count-badge">${totalValidCount}</span>
                     </div>
-                    ${subHtml}
                 `;
-            }
+                const sortedRoots = [...categoryTree].sort((a,b) => a.name.localeCompare(b.name, 'pl'));
+                sortedRoots.forEach(cat => {
+                    const { availableStockSum: prodCount, visibleItemsCount } = getSubtreeStats(cat, validProducts);
+                    if (visibleItemsCount === 0) return;
+                    const labelText = formatCatLabel(cat);
+                    html += `
+                        <div class="cat-item cat-sub-item" onclick="selectCategory('${cat.id}')">
+                            <span class="cat-label" title="${labelText}"><span class="cat-arrow">--&gt;</span> ${labelText}</span>
+                            <span class="count-badge">${prodCount}</span>
+                        </div>
+                    `;
+                });
+            } else {
+                // Wybrana kategoria:
+                // Wyżej
+                // -> kategoria bieżąca
+                // --> sub kategorie
+                const parentArg = currentCat.parent_id ? `'${currentCat.parent_id}'` : 'null';
+                const { availableStockSum: currentCount } = getSubtreeStats(currentCat, validProducts);
+                const currentLabel = formatCatLabel(currentCat);
 
-            const sortedRoots = [...categoryTree].sort((a,b) => a.name.localeCompare(b.name, 'pl'));
-            sortedRoots.forEach(cat => {
-                html += buildCatHtml(cat, 0);
-            });
+                html += `
+                    <div class="cat-item cat-up-item" onclick="selectCategory(${parentArg})">
+                        <span class="cat-label">Wyżej</span>
+                    </div>
+                    <div class="cat-item active" onclick="selectCategory('${currentCat.id}')">
+                        <span class="cat-label" title="${currentLabel}"><span class="cat-arrow">-&gt;</span> ${currentLabel}</span>
+                        <span class="count-badge">${currentCount}</span>
+                    </div>
+                `;
+
+                if (currentCat.children && currentCat.children.length > 0) {
+                    const sortedChildren = [...currentCat.children].sort((a,b) => a.name.localeCompare(b.name, 'pl'));
+                    sortedChildren.forEach(child => {
+                        const { availableStockSum: childCount, visibleItemsCount } = getSubtreeStats(child, validProducts);
+                        if (visibleItemsCount === 0) return;
+                        const childLabel = formatCatLabel(child);
+                        html += `
+                            <div class="cat-item cat-sub-item" onclick="selectCategory('${child.id}')">
+                                <span class="cat-label" title="${childLabel}"><span class="cat-arrow">--&gt;</span> ${childLabel}</span>
+                                <span class="count-badge">${childCount}</span>
+                            </div>
+                        `;
+                    });
+                }
+            }
 
             container.innerHTML = html;
         }
@@ -1053,6 +1421,13 @@
             updateUrlParams(selectedCategoryId, currentModalProdId);
             renderCategoryTree();
             filterProducts(true);
+
+            if (isMobilePortraitView()) {
+                const cat = catId ? findCatById(catId) : null;
+                if (!cat || !cat.children || cat.children.length === 0) {
+                    closeMobileSidebar();
+                }
+            }
         }
 
         async function loadProducts() {
@@ -1067,17 +1442,8 @@
         }
 
         function getCategoryName(catId) {
-            function findCat(cats) {
-                for (let c of cats) {
-                    if (c.id === catId) return c.name;
-                    if (c.children && c.children.length > 0) {
-                        let f = findCat(c.children);
-                        if (f) return f;
-                    }
-                }
-                return null;
-            }
-            return findCat(categoryTree) || "Inne";
+            const cat = findCatById(catId);
+            return cat ? formatCatLabel(cat) : "Inne";
         }
 
         function getPriceInfo(cena) {

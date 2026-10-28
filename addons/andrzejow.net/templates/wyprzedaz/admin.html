@@ -646,9 +646,29 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <label>Opis Kategorii (Opcjonalnie)</label>
-                            <input type="text" id="cat-desc" class="form-control" placeholder="Krótki opis kategorii...">
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label>Ikona Kategorii (Opcjonalnie - brak = bez ikony)</label>
+                                <div style="display:flex; gap:8px; align-items:center;">
+                                    <input type="text" id="cat-icon" class="form-control" style="max-width:110px; text-align:center; font-size:18px;" placeholder="Brak">
+                                    <div style="display:flex; gap:4px; flex-wrap:wrap; align-items:center;">
+                                        <button type="button" class="btn" style="padding:4px 7px; font-size:14px;" onclick="document.getElementById('cat-icon').value='👑'">👑</button>
+                                        <button type="button" class="btn" style="padding:4px 7px; font-size:14px;" onclick="document.getElementById('cat-icon').value='🪙'">🪙</button>
+                                        <button type="button" class="btn" style="padding:4px 7px; font-size:14px;" onclick="document.getElementById('cat-icon').value='💎'">💎</button>
+                                        <button type="button" class="btn" style="padding:4px 7px; font-size:14px;" onclick="document.getElementById('cat-icon').value='🏺'">🏺</button>
+                                        <button type="button" class="btn" style="padding:4px 7px; font-size:14px;" onclick="document.getElementById('cat-icon').value='⚔️'">⚔️</button>
+                                        <button type="button" class="btn" style="padding:4px 7px; font-size:14px;" onclick="document.getElementById('cat-icon').value='📜'">📜</button>
+                                        <button type="button" class="btn" style="padding:4px 7px; font-size:14px;" onclick="document.getElementById('cat-icon').value='🔧'">🔧</button>
+                                        <button type="button" class="btn" style="padding:4px 7px; font-size:14px;" onclick="document.getElementById('cat-icon').value='📦'">📦</button>
+                                        <button type="button" class="btn" style="padding:4px 7px; font-size:14px;" onclick="document.getElementById('cat-icon').value='🏷️'">🏷️</button>
+                                        <button type="button" class="btn" style="padding:4px 8px; font-size:11px;" onclick="document.getElementById('cat-icon').value=''" title="Usuń ikonę">✕ Brak</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Opis Kategorii (Opcjonalnie)</label>
+                                <input type="text" id="cat-desc" class="form-control" placeholder="Krótki opis kategorii...">
+                            </div>
                         </div>
 
                         <div style="display:flex; gap:12px;">
@@ -679,6 +699,12 @@
         let allProducts = [];
         let currentExistingPhotos = [];
         let selectedAdminCatFilter = null; // null = all, 'INVALID_CAT' = broken category, or catId
+
+        function formatCatLabel(cat) {
+            if (!cat) return '';
+            const icon = (cat.icon || '').trim();
+            return icon ? `${icon} ${cat.name}` : cat.name;
+        }
 
         function switchAdminTab(tabName) {
             const productsView = document.getElementById('view-products');
@@ -738,16 +764,16 @@
 
             function renderNode(cat, depth = 0) {
                 const levelNum = depth + 1;
-                const prefix = depth > 0 ? '└─ '.repeat(depth) : '';
+                const prefix = depth > 0 ? '→ '.repeat(depth) : '';
                 const color = getLevelColor(levelNum);
                 const prodCount = countProductsInSubtree(cat);
-                const itemStyle = `border-left: 3px solid ${color}; margin-left: ${depth * 16}px; margin-bottom: 8px; padding: 10px 14px; background: rgba(15, 23, 42, 0.6); border-radius: var(--radius-md); display:flex; justify-content:space-between; align-items:center;`;
+                const itemStyle = `border-left: 3px solid ${color}; margin-left: ${depth * 12}px; margin-bottom: 8px; padding: 10px 14px; background: rgba(15, 23, 42, 0.6); border-radius: var(--radius-md); display:flex; justify-content:space-between; align-items:center;`;
 
                 return `
                     <div style="${itemStyle}">
                         <div style="display:flex; align-items:center; gap:10px; overflow:hidden;">
                             <span class="cat-level-badge level-${levelNum}">Poziom ${levelNum}</span>
-                            <strong style="color:#fff; font-size:14px;">${prefix}${cat.name}</strong>
+                            <strong style="color:#fff; font-size:14px;">${prefix}${formatCatLabel(cat)}</strong>
                             ${cat.description ? `<span style="color:var(--text-muted); font-size:12px;">(${cat.description})</span>` : ''}
                         </div>
                         <div style="display:flex; align-items:center; gap:12px;">
@@ -764,13 +790,13 @@
             container.innerHTML = sortedRoots.map(cat => renderNode(cat, 0)).join('');
         }
 
-        // Tworzy płaską mapę ID -> Nazwa kategorii
+        // Tworzy płaską mapę ID -> etykieta kategorii (z ikoną jeśli podana)
         function buildCategoryMap() {
             const map = {};
             function traverse(list) {
                 if (!list) return;
                 list.forEach(c => {
-                    map[c.id] = c.name;
+                    map[c.id] = formatCatLabel(c);
                     if (c.children && c.children.length > 0) {
                         traverse(c.children);
                     }
@@ -803,9 +829,10 @@
                 const sorted = [...cats].sort((a,b) => a.name.localeCompare(b.name, 'pl'));
                 sorted.forEach(c => {
                     const levelNum = depth + 1;
-                    const indentStr = '&nbsp;&nbsp;'.repeat(depth * 2) + (depth > 0 ? '└─ ' : '');
+                    const indentStr = '&nbsp;'.repeat(depth * 2) + (depth > 0 ? '→ ' : '');
+                    const labelText = formatCatLabel(c);
                     
-                    optionsHtml += `<option value="${c.id}">${indentStr}[P${levelNum}] ${c.name}</option>`;
+                    optionsHtml += `<option value="${c.id}">${indentStr}[P${levelNum}] ${labelText}</option>`;
                     
                     const isMaxDepth = (depth >= 3);
                     const isSelfOrDescendant = currentEditCatId && isDescendantOrSelf(c, currentEditCatId);
@@ -821,7 +848,7 @@
                         labelSuffix = ' (Maksymalny poziom 4 - nie można dodać podkategorii)';
                     }
 
-                    parentOptionsHtml += `<option value="${c.id}" ${disabledAttr}>${indentStr}[P${levelNum}] ${c.name}${labelSuffix}</option>`;
+                    parentOptionsHtml += `<option value="${c.id}" ${disabledAttr}>${indentStr}[P${levelNum}] ${labelText}${labelSuffix}</option>`;
                     
                     if (c.children && c.children.length > 0) {
                         addCatOptions(c.children, depth + 1);
@@ -918,20 +945,20 @@
             function renderNode(cat, depth = 0) {
                 const levelNum = depth + 1;
                 const levelBadgeClass = `level-${levelNum}`;
-                const prefix = depth > 0 ? '└─ '.repeat(depth) : '';
                 const color = getLevelColor(levelNum);
                 const isActive = selectedAdminCatFilter === cat.id;
                 const prodCount = countProductsInSubtree(cat);
+                const labelText = formatCatLabel(cat);
 
-                const itemStyle = `border-left: 3px solid ${color}; margin-left: ${depth * 12}px;`;
+                const itemStyle = `border-left: 3px solid ${color}; margin-left: ${depth * 6}px; padding: 6px 8px;`;
 
                 return `
                     <div class="sidebar-cat-item ${isActive ? 'active' : ''}" style="${itemStyle}" onclick="selectAdminCatFilter('${cat.id}')">
-                        <div style="display:flex; align-items:center; gap:6px; overflow:hidden;">
+                        <div style="display:flex; align-items:center; gap:5px; overflow:hidden; min-width:0;">
                             <span class="cat-level-badge ${levelBadgeClass}">P${levelNum}</span>
-                            <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${cat.name}">${prefix}${cat.name}</span>
+                            <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${labelText}">${labelText}</span>
                         </div>
-                        <div style="display:flex; align-items:center; gap:6px;">
+                        <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;">
                             <span class="count-badge">${prodCount}</span>
                             <div class="cat-actions-btns" onclick="event.stopPropagation()">
                                 <button style="background:none; border:none; cursor:pointer; font-size:11px;" onclick="editCategory('${cat.id}')" title="Edytuj kategorię">✏️</button>
@@ -964,7 +991,7 @@
                 indicator.style.color = '#fca5a5';
             } else {
                 const cat = findCategoryById(catId);
-                indicator.textContent = 'Filtrowanie: 📂 ' + (cat ? cat.name : catId);
+                indicator.textContent = 'Filtrowanie: ' + (cat ? formatCatLabel(cat) : catId);
                 indicator.style.color = 'var(--accent-primary)';
             }
         }
@@ -993,12 +1020,13 @@
 
             document.getElementById('cat-id').value = cat.id;
             document.getElementById('cat-name').value = cat.name;
+            document.getElementById('cat-icon').value = cat.icon || '';
             document.getElementById('cat-desc').value = cat.description || '';
 
             renderCategoryDropdowns();
             document.getElementById('cat-parent').value = cat.parent_id || '';
 
-            document.getElementById('cat-form-title').textContent = '✏️ Edytuj Kategorię: ' + cat.name;
+            document.getElementById('cat-form-title').textContent = '✏️ Edytuj Kategorię: ' + formatCatLabel(cat);
             document.getElementById('cat-submit-btn').textContent = '💾 Zapisz Zmiany Kategorii';
 
             window.scrollTo({ top: document.getElementById('category-form-card').offsetTop - 80, behavior: 'smooth' });
@@ -1009,13 +1037,14 @@
             const id = document.getElementById('cat-id').value;
             const name = document.getElementById('cat-name').value;
             const parent_id = document.getElementById('cat-parent').value;
+            const icon = document.getElementById('cat-icon').value;
             const description = document.getElementById('cat-desc').value;
 
             try {
                 const res = await fetch(`${API_BASE_PATH}/categories`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ id, name, parent_id, description })
+                    body: JSON.stringify({ id, name, parent_id, description, icon })
                 });
                 const data = await res.json();
                 if (data.success) {
@@ -1033,6 +1062,7 @@
         function resetCategoryForm() {
             document.getElementById('category-form').reset();
             document.getElementById('cat-id').value = '';
+            document.getElementById('cat-icon').value = '';
             document.getElementById('cat-form-title').textContent = '📁 Dodaj Nową Kategorię';
             document.getElementById('cat-submit-btn').textContent = '💾 Zapisz Kategorię';
             renderCategoryDropdowns();

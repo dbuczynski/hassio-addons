@@ -154,7 +154,7 @@ class WyprzedazService:
 
         return sort_tree_recursive(tree)
 
-    def add_category(self, name, parent_id=None, description=""):
+    def add_category(self, name, parent_id=None, description="", icon=""):
         cats = self.load_categories()
         parent_id_clean = parent_id if parent_id and parent_id.strip() else None
 
@@ -168,13 +168,14 @@ class WyprzedazService:
             "id": new_id,
             "name": name.strip(),
             "parent_id": parent_id_clean,
-            "description": description.strip()
+            "description": description.strip(),
+            "icon": (icon or "").strip()
         }
         cats.append(new_cat)
         self.save_categories(cats)
         return new_cat
 
-    def update_category(self, cat_id, name, parent_id=None, description=""):
+    def update_category(self, cat_id, name, parent_id=None, description="", icon=None):
         cats = self.load_categories()
         parent_id_clean = parent_id if parent_id and parent_id.strip() else None
 
@@ -204,6 +205,8 @@ class WyprzedazService:
                 c["name"] = name.strip()
                 c["parent_id"] = parent_id_clean
                 c["description"] = description.strip()
+                if icon is not None:
+                    c["icon"] = str(icon).strip()
                 updated = c
                 break
         if updated:

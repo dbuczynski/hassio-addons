@@ -1639,15 +1639,16 @@ def _handle_catalog_categories_api(svc):
         name = data.get('name')
         parent_id = data.get('parent_id')
         description = data.get('description', '')
+        icon = data.get('icon', '')
 
         if not name or not name.strip():
             return jsonify({"error": "Brak nazwy kategorii"}), 400
 
         try:
             if cat_id:
-                cat = svc.update_category(cat_id, name, parent_id, description)
+                cat = svc.update_category(cat_id, name, parent_id, description, icon=icon)
             else:
-                cat = svc.add_category(name, parent_id, description)
+                cat = svc.add_category(name, parent_id, description, icon=icon)
             return jsonify({"success": True, "category": cat})
         except ValueError as ve:
             return jsonify({"error": str(ve)}), 400
@@ -1791,6 +1792,7 @@ def wyprzedaz_public_index():
         is_admin_ip=is_client_ip_trusted(),
         app_title='Wyprzedaż Sprzętu - Galeria i Oferty',
         app_heading='🏷️ Wyprzedaż Sprzętu',
+        app_root_label='WYPRZEDAŻ',
         app_base_path='/wyprzedaz',
         api_base_path='/api/wyprzedaz'
     )
@@ -1859,6 +1861,7 @@ def zbior_public_index():
         is_admin_ip=is_client_ip_trusted(),
         app_title='Zbiór - Galeria i Katalog',
         app_heading='🏛️ Zbiór - Katalog Przedmiotów',
+        app_root_label='ZBIÓR',
         app_base_path='/zbior',
         api_base_path='/api/zbior'
     )
