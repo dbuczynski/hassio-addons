@@ -31,7 +31,8 @@ LABELS_USERS_PATH = os.path.join(DATA_DIR, "labels_users.json")
 ACTIVITY_LOGS_PATH = os.path.join(DATA_DIR, "activity_logs.json")
 
 from wyprzedaz_service import WyprzedazService
-wyprzedaz_svc = WyprzedazService(DATA_DIR)
+wyprzedaz_svc = WyprzedazService(DATA_DIR, data_subdir="wyprzedaz_data", url_prefix="/wyprzedaz")
+zbior_svc = WyprzedazService(DATA_DIR, data_subdir="zbior_data", url_prefix="/zbior")
 
 def log_activity_entry(entry_type, details=None, req=None):
     """
@@ -258,6 +259,27 @@ def is_labels_authenticated(role_required=None):
 @app.before_request
 def check_session_inactivity():
     path = request.path
+
+    # Przekierowanie niezależnie od wielkości liter oraz polskich znaków dla /wyprzedaz (/wyprzedaż) i /zbior (/zbiór)
+    parts = path.split('/')
+    if len(parts) > 1 and parts[1]:
+        first_seg = parts[1]
+        first_lower = first_seg.lower()
+        canonical_seg = None
+        if first_lower in ('zbior', 'zbiór') and first_seg != 'zbior':
+            canonical_seg = 'zbior'
+        elif first_lower in ('wyprzedaz', 'wyprzedaż') and first_seg != 'wyprzedaz':
+            canonical_seg = 'wyprzedaz'
+
+        if canonical_seg:
+            parts[1] = canonical_seg
+            new_path = '/'.join(parts)
+            if len(parts) == 2:
+                new_path += '/'
+            qs = request.query_string.decode('utf-8', errors='ignore')
+            target_url = f"{new_path}?{qs}" if qs else new_path
+            return redirect(target_url, code=302)
+
     if path.startswith('/MetaleSzlachetnePolska/etykiety'):
         refresh_labels_session_activity()
 
@@ -1601,41 +1623,12 @@ def get_draw_history():
     })
 
 # ================================================================================
-# APLIKACJA WYPRZEDAŻ (/wyprzedaz/ & /wyprzedaz/admin)
+# APLIKACJE WYPRZEDAŻ (/wyprzedaz/) ORAZ ZBIÓR (/zbior/)
 # ================================================================================
 
-@app.route('/wyprzedaz/')
-@app.route('/wyprzedaz')
-def wyprzedaz_public_index():
-    """Publiczna galeria wyprzedaży sprzętu."""
-    return render_template('wyprzedaz/index.html', is_admin_ip=is_client_ip_trusted())
-
-@app.route('/wyprzedaz/admin/')
-@app.route('/wyprzedaz/admin')
-def wyprzedaz_admin_index():
-    """Panel administracyjny wyprzedaży dostępny wyłącznie dla zaufanych adresów IP."""
-    if not is_client_ip_trusted():
-        return redirect('/wyprzedaz/')
-    return render_template('wyprzedaz/admin.html', client_ip=get_client_ip(), initial_tab='products')
-
-@app.route('/wyprzedaz/admin/kategorie/')
-@app.route('/wyprzedaz/admin/kategorie')
-def wyprzedaz_admin_kategorie():
-    """Widok zarządzania kategoriami wyprzedaży."""
-    if not is_client_ip_trusted():
-        return redirect('/wyprzedaz/')
-    return render_template('wyprzedaz/admin.html', client_ip=get_client_ip(), initial_tab='categories')
-
-@app.route('/wyprzedaz/uploads/<path:filename>')
-def wyprzedaz_serve_upload(filename):
-    """Serwuje wgrane zdjęcia produktów wyprzedaży."""
-    uploads_dir = wyprzedaz_svc.paths["uploads_dir"]
-    return send_from_directory(uploads_dir, filename)
-
-@app.route('/api/wyprzedaz/categories', methods=['GET', 'POST', 'DELETE'])
-def api_wyprzedaz_categories():
+def _handle_catalog_categories_api(svc):
     if request.method == 'GET':
-        return jsonify(wyprzedaz_svc.get_category_tree())
+        return jsonify(svc.get_category_tree())
     
     if not is_client_ip_trusted():
         return jsonify({"error": "Dostęp zabroniony - brak zaufanego adresu IP"}), 403
@@ -1652,9 +1645,9 @@ def api_wyprzedaz_categories():
 
         try:
             if cat_id:
-                cat = wyprzedaz_svc.update_category(cat_id, name, parent_id, description)
+                cat = svc.update_category(cat_id, name, parent_id, description)
             else:
-                cat = wyprzedaz_svc.add_category(name, parent_id, description)
+                cat = svc.add_category(name, parent_id, description)
             return jsonify({"success": True, "category": cat})
         except ValueError as ve:
             return jsonify({"error": str(ve)}), 400
@@ -1663,13 +1656,12 @@ def api_wyprzedaz_categories():
         cat_id = request.args.get('id')
         if not cat_id:
             return jsonify({"error": "Brak ID kategorii"}), 400
-        wyprzedaz_svc.delete_category(cat_id)
+        svc.delete_category(cat_id)
         return jsonify({"success": True})
 
-@app.route('/api/wyprzedaz/products', methods=['GET', 'POST', 'DELETE'])
-def api_wyprzedaz_products():
+def _handle_catalog_products_api(svc):
     if request.method == 'GET':
-        return jsonify(wyprzedaz_svc.load_products())
+        return jsonify(svc.load_products())
 
     if not is_client_ip_trusted():
         return jsonify({"error": "Dostęp zabroniony - brak zaufanego adresu IP"}), 403
@@ -1699,7 +1691,7 @@ def api_wyprzedaz_products():
             new_urls = []
             for f in uploaded_files:
                 if f and f.filename:
-                    url = wyprzedaz_svc.save_uploaded_file(f)
+                    url = svc.save_uploaded_file(f)
                     if url:
                         new_urls.append(url)
         else:
@@ -1727,7 +1719,7 @@ def api_wyprzedaz_products():
 
         if prod_id:
             final_photos = existing_urls + new_urls if is_form else (new_urls if new_urls else existing_urls)
-            prod = wyprzedaz_svc.update_product(
+            prod = svc.update_product(
                 prod_id, nazwa, cena, opis, kategoria_id,
                 zdjecia=final_photos,
                 waga_jednostkowa=waga_jednostkowa,
@@ -1737,7 +1729,7 @@ def api_wyprzedaz_products():
             )
         else:
             final_photos = existing_urls + new_urls
-            prod = wyprzedaz_svc.add_product(
+            prod = svc.add_product(
                 nazwa, cena, opis, kategoria_id,
                 zdjecia=final_photos,
                 waga_jednostkowa=waga_jednostkowa,
@@ -1752,16 +1744,15 @@ def api_wyprzedaz_products():
         prod_id = request.args.get('id')
         if not prod_id:
             return jsonify({"error": "Brak ID produktu"}), 400
-        res = wyprzedaz_svc.delete_product(prod_id)
+        res = svc.delete_product(prod_id)
         return jsonify({"success": res})
 
-@app.route('/api/wyprzedaz/export', methods=['GET'])
-def api_wyprzedaz_export():
+def _handle_catalog_export_api(svc, prefix="wyprzedaz"):
     if not is_client_ip_trusted():
         return jsonify({"error": "Dostęp zabroniony - brak zaufanego adresu IP"}), 403
     try:
-        mem_zip = wyprzedaz_svc.export_zip_bytes()
-        filename = f"wyprzedaz_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
+        mem_zip = svc.export_zip_bytes()
+        filename = f"{prefix}_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
         return send_file(
             mem_zip,
             mimetype='application/zip',
@@ -1771,8 +1762,7 @@ def api_wyprzedaz_export():
     except Exception as e:
         return jsonify({"error": f"Błąd eksportu bazy: {e}"}), 500
 
-@app.route('/api/wyprzedaz/import', methods=['POST'])
-def api_wyprzedaz_import():
+def _handle_catalog_import_api(svc):
     if not is_client_ip_trusted():
         return jsonify({"error": "Dostęp zabroniony - brak zaufanego adresu IP"}), 403
     if 'file' not in request.files:
@@ -1786,10 +1776,146 @@ def api_wyprzedaz_import():
         mode = 'add'
 
     try:
-        summary = wyprzedaz_svc.import_zip(f.stream, mode=mode)
+        summary = svc.import_zip(f.stream, mode=mode)
         return jsonify({"success": True, "summary": summary})
     except Exception as e:
         return jsonify({"error": f"Błąd importu archiwum ZIP: {e}"}), 400
+
+# --- TRASY WYPRZEDAŻ ---
+@app.route('/wyprzedaz/')
+@app.route('/wyprzedaz')
+def wyprzedaz_public_index():
+    """Publiczna galeria wyprzedaży sprzętu."""
+    return render_template(
+        'wyprzedaz/index.html',
+        is_admin_ip=is_client_ip_trusted(),
+        app_title='Wyprzedaż Sprzętu - Galeria i Oferty',
+        app_heading='🏷️ Wyprzedaż Sprzętu',
+        app_base_path='/wyprzedaz',
+        api_base_path='/api/wyprzedaz'
+    )
+
+@app.route('/wyprzedaz/admin/')
+@app.route('/wyprzedaz/admin')
+def wyprzedaz_admin_index():
+    """Panel administracyjny wyprzedaży dostępny wyłącznie dla zaufanych adresów IP."""
+    if not is_client_ip_trusted():
+        return redirect('/wyprzedaz/')
+    return render_template(
+        'wyprzedaz/admin.html',
+        client_ip=get_client_ip(),
+        initial_tab='products',
+        admin_title='Panel Admina - Wyprzedaż Sprzętu',
+        admin_heading='🔒 Panel Administracyjny - Wyprzedaż',
+        app_base_path='/wyprzedaz',
+        api_base_path='/api/wyprzedaz'
+    )
+
+@app.route('/wyprzedaz/admin/kategorie/')
+@app.route('/wyprzedaz/admin/kategorie')
+def wyprzedaz_admin_kategorie():
+    """Widok zarządzania kategoriami wyprzedaży."""
+    if not is_client_ip_trusted():
+        return redirect('/wyprzedaz/')
+    return render_template(
+        'wyprzedaz/admin.html',
+        client_ip=get_client_ip(),
+        initial_tab='categories',
+        admin_title='Panel Admina - Wyprzedaż Sprzętu',
+        admin_heading='🔒 Panel Administracyjny - Wyprzedaż',
+        app_base_path='/wyprzedaz',
+        api_base_path='/api/wyprzedaz'
+    )
+
+@app.route('/wyprzedaz/uploads/<path:filename>')
+def wyprzedaz_serve_upload(filename):
+    """Serwuje wgrane zdjęcia produktów wyprzedaży."""
+    uploads_dir = wyprzedaz_svc.paths["uploads_dir"]
+    return send_from_directory(uploads_dir, filename)
+
+@app.route('/api/wyprzedaz/categories', methods=['GET', 'POST', 'DELETE'])
+def api_wyprzedaz_categories():
+    return _handle_catalog_categories_api(wyprzedaz_svc)
+
+@app.route('/api/wyprzedaz/products', methods=['GET', 'POST', 'DELETE'])
+def api_wyprzedaz_products():
+    return _handle_catalog_products_api(wyprzedaz_svc)
+
+@app.route('/api/wyprzedaz/export', methods=['GET'])
+def api_wyprzedaz_export():
+    return _handle_catalog_export_api(wyprzedaz_svc, prefix="wyprzedaz")
+
+@app.route('/api/wyprzedaz/import', methods=['POST'])
+def api_wyprzedaz_import():
+    return _handle_catalog_import_api(wyprzedaz_svc)
+
+# --- TRASY ZBIÓR (/zbior/ & /zbiór/) ---
+@app.route('/zbior/')
+@app.route('/zbior')
+def zbior_public_index():
+    """Publiczna galeria zbioru."""
+    return render_template(
+        'wyprzedaz/index.html',
+        is_admin_ip=is_client_ip_trusted(),
+        app_title='Zbiór - Galeria i Katalog',
+        app_heading='🏛️ Zbiór - Katalog Przedmiotów',
+        app_base_path='/zbior',
+        api_base_path='/api/zbior'
+    )
+
+@app.route('/zbior/admin/')
+@app.route('/zbior/admin')
+def zbior_admin_index():
+    """Panel administracyjny zbioru dostępny wyłącznie dla zaufanych adresów IP."""
+    if not is_client_ip_trusted():
+        return redirect('/zbior/')
+    return render_template(
+        'wyprzedaz/admin.html',
+        client_ip=get_client_ip(),
+        initial_tab='products',
+        admin_title='Panel Admina - Zbiór',
+        admin_heading='🔒 Panel Administracyjny - Zbiór',
+        app_base_path='/zbior',
+        api_base_path='/api/zbior'
+    )
+
+@app.route('/zbior/admin/kategorie/')
+@app.route('/zbior/admin/kategorie')
+def zbior_admin_kategorie():
+    """Widok zarządzania kategoriami zbioru."""
+    if not is_client_ip_trusted():
+        return redirect('/zbior/')
+    return render_template(
+        'wyprzedaz/admin.html',
+        client_ip=get_client_ip(),
+        initial_tab='categories',
+        admin_title='Panel Admina - Zbiór',
+        admin_heading='🔒 Panel Administracyjny - Zbiór',
+        app_base_path='/zbior',
+        api_base_path='/api/zbior'
+    )
+
+@app.route('/zbior/uploads/<path:filename>')
+def zbior_serve_upload(filename):
+    """Serwuje wgrane zdjęcia przedmiotów ze zbioru."""
+    uploads_dir = zbior_svc.paths["uploads_dir"]
+    return send_from_directory(uploads_dir, filename)
+
+@app.route('/api/zbior/categories', methods=['GET', 'POST', 'DELETE'])
+def api_zbior_categories():
+    return _handle_catalog_categories_api(zbior_svc)
+
+@app.route('/api/zbior/products', methods=['GET', 'POST', 'DELETE'])
+def api_zbior_products():
+    return _handle_catalog_products_api(zbior_svc)
+
+@app.route('/api/zbior/export', methods=['GET'])
+def api_zbior_export():
+    return _handle_catalog_export_api(zbior_svc, prefix="zbior")
+
+@app.route('/api/zbior/import', methods=['POST'])
+def api_zbior_import():
+    return _handle_catalog_import_api(zbior_svc)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)

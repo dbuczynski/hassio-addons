@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Admina - Wyprzedaż Sprzętu</title>
+    <title>{{ admin_title|default('Panel Admina - Wyprzedaż Sprzętu') }}</title>
     <!-- Google Fonts Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -440,12 +440,12 @@
 
     <nav class="navbar">
         <div class="brand-title">
-            <span>🔒 Panel Administracyjny - Wyprzedaż</span>
+            <span>{{ admin_heading|default('🔒 Panel Administracyjny - Wyprzedaż') }}</span>
         </div>
         <div class="nav-actions" style="flex-wrap:wrap;">
-            <a href="/api/wyprzedaz/export" class="btn" style="background:rgba(16,185,129,0.2); border-color:var(--accent-green); color:#6ee7b7;" title="Pobierz pełną kopię bazy JSON wraz ze zdjęciami (ZIP)">⬇️ Eksport Danych (ZIP)</a>
+            <a href="{{ api_base_path|default('/api/wyprzedaz') }}/export" class="btn" style="background:rgba(16,185,129,0.2); border-color:var(--accent-green); color:#6ee7b7;" title="Pobierz pełną kopię bazy JSON wraz ze zdjęciami (ZIP)">⬇️ Eksport Danych (ZIP)</a>
             <button type="button" class="btn" style="background:rgba(245,158,11,0.2); border-color:var(--accent-gold); color:#fef08a;" onclick="openImportModal()" title="Wgraj bazę JSON oraz zdjęcia z archiwum ZIP">⬆️ Import Danych (ZIP)</button>
-            <a href="/wyprzedaz/" class="btn">🛒 Podgląd Galerii</a>
+            <a href="{{ app_base_path|default('/wyprzedaz') }}/" class="btn">🛒 Podgląd Galerii</a>
             <a href="/" class="btn">🏠 Strona Główna</a>
         </div>
     </nav>
@@ -673,6 +673,8 @@
     </div>
 
     <script>
+        const APP_BASE_PATH = "{{ app_base_path|default('/wyprzedaz') }}";
+        const API_BASE_PATH = "{{ api_base_path|default('/api/wyprzedaz') }}";
         let allCategories = [];
         let allProducts = [];
         let currentExistingPhotos = [];
@@ -715,7 +717,7 @@
 
         async function loadCategories() {
             try {
-                const res = await fetch('/api/wyprzedaz/categories');
+                const res = await fetch(`${API_BASE_PATH}/categories`);
                 allCategories = await res.json();
                 renderCategoryDropdowns();
                 renderSidebarCategoryTree();
@@ -1010,7 +1012,7 @@
             const description = document.getElementById('cat-desc').value;
 
             try {
-                const res = await fetch('/api/wyprzedaz/categories', {
+                const res = await fetch(`${API_BASE_PATH}/categories`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ id, name, parent_id, description })
@@ -1039,7 +1041,7 @@
         async function deleteCategory(catId) {
             if (!confirm("Czy na pewno chcesz usunąć tę kategorię? Podkategorie staną się kategoriami głównymi.")) return;
             try {
-                const res = await fetch(`/api/wyprzedaz/categories?id=${catId}`, { method: 'DELETE' });
+                const res = await fetch(`${API_BASE_PATH}/categories?id=${catId}`, { method: 'DELETE' });
                 const data = await res.json();
                 if (data.success) {
                     await loadCategories();
@@ -1053,7 +1055,7 @@
         /* PRODUCTS */
         async function loadProducts() {
             try {
-                const res = await fetch('/api/wyprzedaz/products');
+                const res = await fetch(`${API_BASE_PATH}/products`);
                 allProducts = await res.json();
                 renderSidebarCategoryTree();
                 renderProductsTable();
@@ -1268,7 +1270,7 @@
             formData.append('existing_zdjecia', JSON.stringify(targetProd.zdjecia || []));
 
             try {
-                const res = await fetch('/api/wyprzedaz/products', {
+                const res = await fetch(`${API_BASE_PATH}/products`, {
                     method: 'POST',
                     body: formData
                 });
@@ -1437,7 +1439,7 @@
             }
 
             try {
-                const res = await fetch('/api/wyprzedaz/products', {
+                const res = await fetch(`${API_BASE_PATH}/products`, {
                     method: 'POST',
                     body: formData
                 });
@@ -1659,7 +1661,7 @@
         async function deleteProduct(prodId) {
             if (!confirm("Czy na pewno chcesz usunąć ten produkt oraz jego zdjęcia z bazy?")) return;
             try {
-                const res = await fetch(`/api/wyprzedaz/products?id=${prodId}`, { method: 'DELETE' });
+                const res = await fetch(`${API_BASE_PATH}/products?id=${prodId}`, { method: 'DELETE' });
                 const data = await res.json();
                 if (data.success) {
                     await loadProducts();
@@ -1707,7 +1709,7 @@
             formData.append('mode', mode);
 
             try {
-                const res = await fetch('/api/wyprzedaz/import', {
+                const res = await fetch(`${API_BASE_PATH}/import`, {
                     method: 'POST',
                     body: formData
                 });

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wyprzedaż Sprzętu - Galeria i Oferty</title>
+    <title>{{ app_title|default('Wyprzedaż Sprzętu - Galeria i Oferty') }}</title>
     <!-- Google Fonts Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -195,6 +195,103 @@
             font-size: 14px;
             outline: none;
             cursor: pointer;
+        }
+
+        /* Compact Layout Picker */
+        .layout-picker-wrapper {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+        .layout-picker-trigger {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 8px 11px;
+            color: #e2e8f0;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            height: 100%;
+        }
+        .layout-picker-trigger:hover,
+        .layout-picker-trigger.open {
+            border-color: var(--accent-primary);
+            color: #fff;
+            background: rgba(99, 102, 241, 0.14);
+        }
+        .layout-picker-badge {
+            background: rgba(99, 102, 241, 0.22);
+            color: #c7d2fe;
+            padding: 2px 6px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+        }
+        .layout-popover {
+            position: absolute;
+            top: calc(100% + 6px);
+            right: 0;
+            background: #131c31;
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            border-radius: var(--radius-md);
+            padding: 10px 12px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65);
+            z-index: 200;
+            display: none;
+            min-width: 220px;
+            backdrop-filter: blur(12px);
+        }
+        .layout-popover.open {
+            display: block;
+        }
+        .layout-popover-section + .layout-popover-section {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .layout-popover-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 5px;
+        }
+        .layout-pills {
+            display: flex;
+            gap: 5px;
+            flex-wrap: nowrap;
+        }
+        .layout-pill-btn {
+            flex: 1;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 5px 8px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+        .layout-pill-btn:hover {
+            border-color: var(--accent-primary);
+            color: #fff;
+        }
+        .layout-pill-btn.active {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: #fff;
+            font-weight: 700;
         }
 
         /* Product Grid */
@@ -570,11 +667,11 @@
 
     <nav class="navbar">
         <div class="brand-title">
-            <span>🏷️ Wyprzedaż Sprzętu</span>
+            <span>{{ app_heading|default('🏷️ Wyprzedaż Sprzętu') }}</span>
         </div>
         <div class="nav-actions">
             {% if is_admin_ip %}
-            <a href="/wyprzedaz/admin" class="btn btn-gold">🔒 Panel Admina</a>
+            <a href="{{ app_base_path|default('/wyprzedaz') }}/admin" class="btn btn-gold">🔒 Panel Admina</a>
             {% endif %}
             <a href="/" class="btn">🏠 Strona Główna</a>
         </div>
@@ -595,11 +692,23 @@
         <div>
             <div class="controls-bar">
                 <input type="text" id="search-input" class="search-input" placeholder="🔍 Szukaj sprzętu (np. Wkręt Dew, 'Wkrętarka Bosch')..." oninput="filterProducts()">
-                <select id="per-page-select" class="sort-select" onchange="changePerPage(this.value)" title="Ilość wyświetlanych elementów na stronie">
-                    <option value="6" selected>Na stronę: 6 (2x3)</option>
-                    <option value="12">Na stronę: 12 (3x4)</option>
-                    <option value="all">Na stronę: Wszystko (po 5 w rzędzie)</option>
-                </select>
+                <div class="layout-picker-wrapper" id="layout-picker-wrapper">
+                    <button type="button" id="layout-picker-trigger" class="layout-picker-trigger" onclick="toggleLayoutPopover(event)" title="Układ wyświetlania (elementów w rzędzie / na stronę)">
+                        <span>⊞</span>
+                        <span id="layout-picker-summary" class="layout-picker-badge">3 / 6</span>
+                        <span style="font-size:10px; opacity:0.7;">▾</span>
+                    </button>
+                    <div id="layout-popover" class="layout-popover" onclick="event.stopPropagation()">
+                        <div class="layout-popover-section">
+                            <div class="layout-popover-label">W rzędzie (kolumny)</div>
+                            <div class="layout-pills" id="layout-cols-pills"></div>
+                        </div>
+                        <div class="layout-popover-section">
+                            <div class="layout-popover-label">Ilość (maks. na stronę)</div>
+                            <div class="layout-pills" id="layout-rows-pills"></div>
+                        </div>
+                    </div>
+                </div>
                 <select id="sort-select" class="sort-select" onchange="filterProducts()">
                     <option value="newest">Najnowsze wpisy</option>
                     <option value="price_asc">Cena: rosnąco</option>
@@ -648,12 +757,129 @@
     </div>
 
     <script>
+        const APP_BASE_PATH = "{{ app_base_path|default('/wyprzedaz') }}";
+        const API_BASE_PATH = "{{ api_base_path|default('/api/wyprzedaz') }}";
+        const LAYOUT_STORAGE_KEY = `catalog_layout_prefs_${APP_BASE_PATH}`;
+        const LAYOUT_OPTIONS = {
+            3: [6, 9, 12, 'all'],
+            4: [8, 12, 16, 'all'],
+            5: [10, 15, 20, 'all']
+        };
         let allProducts = [];
         let categoryTree = [];
         let selectedCategoryId = null;
         let currentModalProdId = null;
         let currentPage = 1;
+        let gridColumns = 3;
         let itemsPerPage = 6;
+
+        function loadLayoutPrefs() {
+            try {
+                const raw = sessionStorage.getItem(LAYOUT_STORAGE_KEY) || localStorage.getItem(LAYOUT_STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    const cols = parseInt(parsed.cols);
+                    if (LAYOUT_OPTIONS[cols]) {
+                        gridColumns = cols;
+                        const allowed = LAYOUT_OPTIONS[cols];
+                        const pp = parsed.perPage === 'all' ? 'all' : parseInt(parsed.perPage);
+                        itemsPerPage = allowed.includes(pp) ? pp : allowed[0];
+                    }
+                }
+            } catch (e) {
+                console.warn("Błąd odczytu ustawień układu z sesji:", e);
+            }
+            renderLayoutPicker();
+        }
+
+        function saveLayoutPrefs() {
+            try {
+                const payload = JSON.stringify({ cols: gridColumns, perPage: itemsPerPage });
+                sessionStorage.setItem(LAYOUT_STORAGE_KEY, payload);
+                localStorage.setItem(LAYOUT_STORAGE_KEY, payload);
+            } catch (e) {
+                console.warn("Błąd zapisu ustawień układu w sesji:", e);
+            }
+        }
+
+        function renderLayoutPicker() {
+            const summaryEl = document.getElementById('layout-picker-summary');
+            if (summaryEl) {
+                const ppLabel = itemsPerPage === 'all' ? 'wszystko' : itemsPerPage;
+                summaryEl.textContent = `${gridColumns} / ${ppLabel}`;
+            }
+
+            const colsContainer = document.getElementById('layout-cols-pills');
+            if (colsContainer) {
+                colsContainer.innerHTML = [3, 4, 5].map(c => `
+                    <button type="button" class="layout-pill-btn ${gridColumns === c ? 'active' : ''}" onclick="selectGridCols(${c})">${c}</button>
+                `).join('');
+            }
+
+            const rowsContainer = document.getElementById('layout-rows-pills');
+            if (rowsContainer) {
+                const opts = LAYOUT_OPTIONS[gridColumns] || LAYOUT_OPTIONS[3];
+                rowsContainer.innerHTML = opts.map(opt => {
+                    const label = opt === 'all' ? 'wszystko' : opt;
+                    const isActive = itemsPerPage === opt;
+                    const arg = opt === 'all' ? "'all'" : opt;
+                    return `<button type="button" class="layout-pill-btn ${isActive ? 'active' : ''}" onclick="selectGridPerPage(${arg})">${label}</button>`;
+                }).join('');
+            }
+        }
+
+        function toggleLayoutPopover(e) {
+            if (e) e.stopPropagation();
+            const pop = document.getElementById('layout-popover');
+            const trig = document.getElementById('layout-picker-trigger');
+            if (!pop) return;
+            const isOpen = pop.classList.toggle('open');
+            if (trig) trig.classList.toggle('open', isOpen);
+        }
+
+        function closeLayoutPopover() {
+            const pop = document.getElementById('layout-popover');
+            const trig = document.getElementById('layout-picker-trigger');
+            if (pop) pop.classList.remove('open');
+            if (trig) trig.classList.remove('open');
+        }
+
+        function selectGridCols(cols) {
+            if (!LAYOUT_OPTIONS[cols]) return;
+            const prevOpts = LAYOUT_OPTIONS[gridColumns] || LAYOUT_OPTIONS[3];
+            const prevIdx = prevOpts.indexOf(itemsPerPage);
+            gridColumns = cols;
+            const nextOpts = LAYOUT_OPTIONS[cols];
+            if (itemsPerPage === 'all') {
+                itemsPerPage = 'all';
+            } else if (prevIdx >= 0 && prevIdx < nextOpts.length) {
+                itemsPerPage = nextOpts[prevIdx];
+            } else {
+                itemsPerPage = nextOpts[0];
+            }
+            currentPage = 1;
+            saveLayoutPrefs();
+            renderLayoutPicker();
+            filterProducts(true);
+        }
+
+        function selectGridPerPage(val) {
+            const allowed = LAYOUT_OPTIONS[gridColumns] || LAYOUT_OPTIONS[3];
+            const parsed = val === 'all' ? 'all' : parseInt(val);
+            itemsPerPage = allowed.includes(parsed) ? parsed : allowed[0];
+            currentPage = 1;
+            saveLayoutPrefs();
+            renderLayoutPicker();
+            closeLayoutPopover();
+            filterProducts(true);
+        }
+
+        document.addEventListener('click', (e) => {
+            const wrapper = document.getElementById('layout-picker-wrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                closeLayoutPopover();
+            }
+        });
 
         function updateUrlParams(catId = selectedCategoryId, prodId = currentModalProdId) {
             const url = new URL(window.location);
@@ -680,6 +906,7 @@
         }
 
         async function initData() {
+            loadLayoutPrefs();
             const params = new URLSearchParams(window.location.search);
             const catParam = params.get('kategoria');
             const prodParam = params.get('produkt');
@@ -710,7 +937,7 @@
 
         async function loadCategories() {
             try {
-                const res = await fetch('/api/wyprzedaz/categories');
+                const res = await fetch(`${API_BASE_PATH}/categories`);
                 categoryTree = await res.json();
                 renderCategoryTree();
             } catch(e) {
@@ -753,22 +980,27 @@
             return set;
         }
 
-        function countVisibleProductsInSubtree(cat, validProducts) {
+        function getSubtreeStats(cat, validProducts) {
             const subIds = getSubtreeCatIds(cat.id);
-            return validProducts.reduce((sum, p) => {
+            let availableStockSum = 0;
+            let visibleItemsCount = 0;
+            for (const p of validProducts) {
                 if (p.kategoria_id && subIds.has(p.kategoria_id)) {
+                    visibleItemsCount++;
                     const qty = (p.ilosc !== undefined && p.ilosc !== null) ? parseInt(p.ilosc) : 1;
-                    return sum + (qty > 0 ? qty : 0);
+                    if (qty > 0) {
+                        availableStockSum += qty;
+                    }
                 }
-                return sum;
-            }, 0);
+            }
+            return { availableStockSum, visibleItemsCount };
         }
 
         function renderCategoryTree() {
             const container = document.getElementById('category-tree-container');
             const validCatIds = getValidCategoryIdsSet();
 
-            // Filtrujemy widoczne produkty, które posiadają PRAWIDŁOWĄ kategorię oraz sztuki > 0
+            // Filtrujemy widoczne produkty, które posiadają PRAWIDŁOWĄ kategorię
             const validProducts = allProducts.filter(p => p.widocznosc !== false && p.kategoria_id && validCatIds.has(p.kategoria_id));
             const totalValidCount = validProducts.reduce((sum, p) => {
                 const qty = (p.ilosc !== undefined && p.ilosc !== null) ? parseInt(p.ilosc) : 1;
@@ -783,11 +1015,11 @@
             `;
 
             function buildCatHtml(cat, depth = 0) {
-                const prodCount = countVisibleProductsInSubtree(cat, validProducts);
+                const { availableStockSum: prodCount, visibleItemsCount } = getSubtreeStats(cat, validProducts);
                 const isSelectedPath = isAncestorOrSelf(cat, selectedCategoryId);
 
-                // Ukryj kategorie z 0 produktów - WYJĄTKIEM są kategorie na ścieżce wybranej z URL
-                if (prodCount === 0 && !isSelectedPath) return '';
+                // Ukryj kategorie bez żadnych widocznych produktów - WYJĄTKIEM są kategorie na ścieżce wybranej z URL
+                if (visibleItemsCount === 0 && !isSelectedPath) return '';
 
                 const isActive = selectedCategoryId === cat.id;
                 const prefix = depth > 0 ? '└─ '.repeat(depth) : '';
@@ -825,7 +1057,7 @@
 
         async function loadProducts() {
             try {
-                const res = await fetch('/api/wyprzedaz/products');
+                const res = await fetch(`${API_BASE_PATH}/products`);
                 allProducts = await res.json();
                 renderCategoryTree();
                 filterProducts(true);
@@ -937,7 +1169,7 @@
                 filtered.sort((a,b) => (b.created_at || '').localeCompare(a.created_at || ''));
             }
 
-            // Stronnicowanie (6 = 2x3, 12 = 3x4, all = po 5 w rzędzie)
+            // Stronnicowanie wg wybranej liczby kolumn (3, 4, 5) oraz limitu na stronę
             const totalItems = filtered.length;
             let pageProducts = [];
             let totalPages = 1;
@@ -945,13 +1177,7 @@
             const gridEl = document.getElementById('products-grid');
             if (gridEl) {
                 gridEl.classList.remove('grid-cols-3', 'grid-cols-4', 'grid-cols-5');
-                if (itemsPerPage === 'all') {
-                    gridEl.classList.add('grid-cols-5');
-                } else if (itemsPerPage === 12) {
-                    gridEl.classList.add('grid-cols-4');
-                } else {
-                    gridEl.classList.add('grid-cols-3');
-                }
+                gridEl.classList.add(`grid-cols-${gridColumns}`);
             }
 
             if (itemsPerPage === 'all') {
@@ -970,16 +1196,6 @@
             renderProductsGrid(pageProducts);
             renderPagination(totalItems);
             renderCategoryTree();
-        }
-
-        function changePerPage(val) {
-            if (val === 'all') {
-                itemsPerPage = 'all';
-            } else {
-                itemsPerPage = parseInt(val) || 6;
-            }
-            currentPage = 1;
-            filterProducts(true);
         }
 
         function buildPaginationHtml(totalItems) {

@@ -7,21 +7,25 @@ import zipfile
 from datetime import datetime
 from werkzeug.utils import secure_filename
 
-def get_wyprzedaz_paths(data_dir_base):
-    data_dir = os.path.join(data_dir_base, "wyprzedaz_data")
+def get_wyprzedaz_paths(data_dir_base, data_subdir="wyprzedaz_data"):
+    data_dir = os.path.join(data_dir_base, data_subdir)
     uploads_dir = os.path.join(data_dir, "uploads")
+    archive_dir = os.path.join(uploads_dir, "images-archive")
     os.makedirs(data_dir, exist_ok=True)
     os.makedirs(uploads_dir, exist_ok=True)
+    os.makedirs(archive_dir, exist_ok=True)
     return {
         "data_dir": data_dir,
         "uploads_dir": uploads_dir,
+        "archive_dir": archive_dir,
         "products_file": os.path.join(data_dir, "products.json"),
         "categories_file": os.path.join(data_dir, "categories.json")
     }
 
 class WyprzedazService:
-    def __init__(self, data_dir_base):
-        self.paths = get_wyprzedaz_paths(data_dir_base)
+    def __init__(self, data_dir_base, data_subdir="wyprzedaz_data", url_prefix="/wyprzedaz"):
+        self.url_prefix = url_prefix.rstrip("/")
+        self.paths = get_wyprzedaz_paths(data_dir_base, data_subdir=data_subdir)
         self._ensure_defaults()
 
     def _ensure_defaults(self):
@@ -37,6 +41,34 @@ class WyprzedazService:
 
         if not os.path.exists(self.paths["products_file"]):
             self.save_products([])
+
+    def _archive_image_if_unused(self, img_path, remaining_products):
+        """
+        Przenosi plik zdjęcia do podfolderu 'images-archive', jeśli żadna inna pozycja w bazie już z niego nie korzysta.
+        """
+        if not img_path:
+            return
+        filename = os.path.basename(img_path)
+        if not filename:
+            return
+
+        # Sprawdź czy jakikolwiek inny produkt nadal odwołuje się do tego pliku zdjęcia
+        for p in remaining_products:
+            for z in p.get("zdjecia", []):
+                if os.path.basename(z) == filename:
+                    return
+
+        src_path = os.path.join(self.paths["uploads_dir"], filename)
+        if os.path.exists(src_path) and os.path.isfile(src_path):
+            archive_dir = self.paths["archive_dir"]
+            os.makedirs(archive_dir, exist_ok=True)
+            dst_path = os.path.join(archive_dir, filename)
+            if os.path.exists(dst_path):
+                dst_path = os.path.join(archive_dir, f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{filename}")
+            try:
+                shutil.move(src_path, dst_path)
+            except Exception as e:
+                print(f"Błąd przenoszenia zdjęcia {filename} do images-archive: {e}", flush=True)
 
     # --- KATEGORIE ---
     def load_categories(self):
@@ -247,6 +279,7 @@ class WyprzedazService:
     def update_product(self, prod_id, nazwa, cena, opis, kategoria_id=None, zdjecia=None, waga_jednostkowa=None, ilosc=None, widocznosc=None, lokalizacja=None):
         prods = self.load_products()
         updated = None
+        removed_images = []
         for p in prods:
             if p["id"] == prod_id:
                 p["nazwa"] = nazwa.strip()
@@ -266,6 +299,9 @@ class WyprzedazService:
                 if widocznosc is not None:
                     p["widocznosc"] = bool(widocznosc)
                 if zdjecia is not None:
+                    old_photos = p.get("zdjecia", []) or []
+                    new_basenames = {os.path.basename(z) for z in zdjecia if z}
+                    removed_images = [old_z for old_z in old_photos if os.path.basename(old_z) not in new_basenames]
                     p["zdjecia"] = zdjecia
                     
                 p["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -273,6 +309,8 @@ class WyprzedazService:
                 break
         if updated:
             self.save_products(prods)
+            for img_path in removed_images:
+                self._archive_image_if_unused(img_path, prods)
         return updated
 
     def delete_product(self, prod_id):
@@ -287,15 +325,9 @@ class WyprzedazService:
 
         if to_delete:
             self.save_products(new_prods)
-            # Usuń pliki zdjęć powiązane z tym produktem
+            # Przenieś pliki zdjęć powiązane z tym produktem do podfolderu 'images-archive'
             for img_path in to_delete.get("zdjecia", []):
-                filename = os.path.basename(img_path)
-                full_path = os.path.join(self.paths["uploads_dir"], filename)
-                if os.path.exists(full_path):
-                    try:
-                        os.remove(full_path)
-                    except Exception as e:
-                        print(f"Błąd usuwania pliku zdjęcia {filename}: {e}", flush=True)
+                self._archive_image_if_unused(img_path, new_prods)
             return True
         return False
 
@@ -306,7 +338,18 @@ class WyprzedazService:
         unique_name = f"img_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{str(uuid.uuid4())[:6]}_{orig_filename}"
         save_path = os.path.join(self.paths["uploads_dir"], unique_name)
         file_obj.save(save_path)
-        return f"/wyprzedaz/uploads/{unique_name}"
+        return f"{self.url_prefix}/uploads/{unique_name}"
+
+    def _normalize_imported_image_urls(self, prods):
+        """Przekształca ścieżki zdjęć przy imporcie tak, aby pasowały do bieżącego url_prefix (np. /zbior/uploads/...)."""
+        for p in prods:
+            if "zdjecia" in p and isinstance(p["zdjecia"], list):
+                normalized = []
+                for z in p["zdjecia"]:
+                    fname = os.path.basename(z)
+                    if fname:
+                        normalized.append(f"{self.url_prefix}/uploads/{fname}")
+                p["zdjecia"] = normalized
 
     def export_zip_bytes(self):
         """Tworzy w pamięci archiwum ZIP z plikami categories.json, products.json oraz katalogiem uploads/."""
@@ -347,9 +390,11 @@ class WyprzedazService:
                 raw_prods = json.loads(zf.read("products.json").decode("utf-8"))
                 if isinstance(raw_prods, list):
                     imported_prods = raw_prods
+                    self._normalize_imported_image_urls(imported_prods)
 
             uploads_dir = self.paths["uploads_dir"]
             os.makedirs(uploads_dir, exist_ok=True)
+            os.makedirs(self.paths["archive_dir"], exist_ok=True)
 
             if mode == "overwrite":
                 # Usuń wszystkie dotychczasowe pliki zdjęć z uploads_dir

@@ -2,6 +2,25 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [1.14.1] - 2026-10-28
+
+### Dodano / Zmieniono
+- **Nowa Aplikacja Zbiór (`/zbior/` & `/zbior/admin`)**:
+  - Powielono aplikację katalogową `wyprzedaz` na niezależną aplikację `zbior` korzystającą z osobnej bazy danych (`zbior_data/categories.json`, `zbior_data/products.json`, `zbior_data/uploads/`) oraz własnego eksportu/importu ZIP (`/api/zbior/export`, `/api/zbior/import`).
+  - Dodano automatyczne przekierowania (`302`) niezależnie od wielkości liter i polskich znaków diakrytycznych dla `/zbior` (`/zbiór`, `/Zbiór`, `/ZBIÓR` itd.) oraz `/wyprzedaz` (`/wyprzedaż`, `/Wyprzedaz` itd.).
+- **Archiwizacja Usuwanych Zdjęć (`images-archive`)**:
+  - W obu aplikacjach (`wyprzedaz` oraz `zbior`) usunięcie zdjęcia z produktu podczas edycji lub całkowite usunięcie produktu przenosi nieużywane pliki graficzne do podfolderu `uploads/images-archive/` zamiast ich trwałego kasowania.
+- **Kompaktowy Selektor Układu Wyświetlania (z zapisem w sesji)**:
+  - W obu aplikacjach dodano zminimalizowany wizualnie selektor liczby elementów w rzędzie (`3`, `4`, `5`) oraz maksymalnej liczby elementów na stronie:
+    - dla `3`: `6`, `9`, `12`, `wszystko`,
+    - dla `4`: `8`, `12`, `16`, `wszystko`,
+    - dla `5`: `10`, `15`, `20`, `wszystko`.
+  - Wybór układu jest zapamiętywany w sesji przeglądarki (`sessionStorage` / `localStorage`), dzięki czemu zostaje zachowany po odświeżeniu strony.
+- **Drzewo Kategorii dla Produktów z Zerowym Stanem**:
+  - W drzewie kategorii w obu aplikacjach wyświetlane są również kategorie posiadające widoczne produkty ze stanem `0 szt.` (bez wliczania ich do sumy dostępnych sztuk w licznikach).
+
+---
+
 ## [1.14.0] - 2026-10-28
 
 ### Dodano / Zmieniono
