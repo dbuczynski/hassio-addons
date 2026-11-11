@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zarządzanie Zdjęciami - Kolekcja Monet</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: rgba(30, 41, 59, 0.78);
+            --bg-glass: rgba(15, 23, 42, 0.88);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-gold: #f59e0b;
+            --accent-red: #ef4444;
+            --border-color: rgba(255, 255, 255, 0.12);
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: radial-gradient(circle at top right, #1e1b4b, #0f172a 60%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: var(--bg-glass);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 28px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .brand-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-title {
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, #cbd5e1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.4px;
+        }
+
+        .brand-subtitle {
+            font-size: 12px;
+            color: var(--accent-gold);
+            font-weight: 600;
+            background: rgba(245, 158, 11, 0.12);
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            padding: 3px 9px;
+            border-radius: 999px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 15px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-main);
+            text-decoration: none;
+            font-family: inherit;
+        }
+        .btn:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-1px);
+        }
+        .btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-color: transparent;
+            color: #fff;
+        }
+        .btn-primary:hover:not(:disabled) {
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+        .btn-green {
+            background: rgba(16, 185, 129, 0.18);
+            border-color: rgba(16, 185, 129, 0.45);
+            color: #6ee7b7;
+        }
+        .btn-green:hover:not(:disabled) {
+            background: rgba(16, 185, 129, 0.28);
+        }
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+        }
+        .btn-danger:hover:not(:disabled) {
+            background: rgba(239, 68, 68, 0.28);
+        }
+
+        .container {
+            max-width: 1180px;
+            width: 100%;
+            margin: 26px auto;
+            padding: 0 20px 48px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 22px;
+            backdrop-filter: blur(12px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        /* Upload / Drag & Drop Zone */
+        .upload-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 18px;
+            align-items: stretch;
+        }
+        @media (max-width: 780px) {
+            .upload-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .dropzone {
+            border: 2px dashed rgba(99, 102, 241, 0.5);
+            border-radius: var(--radius-md);
+            background: rgba(15, 23, 42, 0.55);
+            padding: 28px 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .dropzone:hover,
+        .dropzone.dragover {
+            border-color: #818cf8;
+            background: rgba(99, 102, 241, 0.14);
+            transform: translateY(-1px);
+        }
+        .dropzone-icon {
+            font-size: 36px;
+            line-height: 1;
+        }
+        .dropzone-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #e2e8f0;
+        }
+        .dropzone-sub {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .upload-actions-col {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 12px;
+            background: rgba(15, 23, 42, 0.45);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 18px;
+        }
+
+        .upload-status-bar {
+            display: none;
+            margin-top: 14px;
+            padding: 11px 15px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 600;
+            background: rgba(99, 102, 241, 0.16);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            color: #c7d2fe;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Stats pills */
+        .stats-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .stat-pill {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 5px 11px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-color);
+            color: #cbd5e1;
+        }
+        .stat-pill.unlinked {
+            background: rgba(245, 158, 11, 0.15);
+            border-color: rgba(245, 158, 11, 0.4);
+            color: #fcd34d;
+        }
+        .stat-pill.linked-hidden {
+            background: rgba(16, 185, 129, 0.12);
+            border-color: rgba(16, 185, 129, 0.35);
+            color: #6ee7b7;
+        }
+
+        /* Photo List */
+        .photos-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .photo-list-item {
+            display: grid;
+            grid-template-columns: 110px 1fr auto;
+            gap: 16px;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.65);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            transition: border-color 0.2s ease, background 0.2s ease;
+        }
+        .photo-list-item:hover {
+            border-color: rgba(99, 102, 241, 0.5);
+            background: rgba(15, 23, 42, 0.85);
+        }
+
+        @media (max-width: 720px) {
+            .photo-list-item {
+                grid-template-columns: 88px 1fr;
+            }
+            .photo-item-actions {
+                grid-column: 1 / -1;
+                justify-content: flex-end;
+                border-top: 1px solid rgba(255, 255, 255, 0.07);
+                padding-top: 10px;
+            }
+        }
+
+        .photo-thumb-box {
+            width: 110px;
+            height: 82px;
+            border-radius: var(--radius-sm);
+            background: #090d16;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            cursor: zoom-in;
+            position: relative;
+        }
+        @media (max-width: 720px) {
+            .photo-thumb-box {
+                width: 88px;
+                height: 72px;
+            }
+        }
+        .photo-thumb-box img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            transition: transform 0.2s ease;
+        }
+        .photo-thumb-box:hover img {
+            transform: scale(1.06);
+        }
+        .photo-thumb-zoom-hint {
+            position: absolute;
+            bottom: 3px;
+            right: 4px;
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 4px;
+            padding: 1px 4px;
+            font-size: 10px;
+            color: #cbd5e1;
+            pointer-events: none;
+        }
+
+        .photo-info-col {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            min-width: 0;
+        }
+
+        .photo-meta-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .photo-filename {
+            font-size: 14px;
+            font-weight: 700;
+            color: #f8fafc;
+            word-break: break-all;
+        }
+
+        .photo-meta-sub {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .symlink-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .symlink-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--accent-gold);
+            letter-spacing: 0.4px;
+            white-space: nowrap;
+        }
+
+        .symlink-input {
+            flex: 1;
+            min-width: 0;
+            background: rgba(2, 6, 23, 0.75);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            color: #e2e8f0;
+            padding: 7px 10px;
+            border-radius: 6px;
+            font-size: 12.5px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            outline: none;
+        }
+        .symlink-input:focus {
+            border-color: var(--accent-primary);
+        }
+
+        .photo-item-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 38px 20px;
+            color: var(--text-muted);
+            font-size: 14px;
+            border: 1px dashed var(--border-color);
+            border-radius: var(--radius-md);
+            background: rgba(15, 23, 42, 0.35);
+        }
+
+        /* Camera Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 23, 0.85);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1500;
+            padding: 16px;
+        }
+        .modal-content {
+            background: #1e293b;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            max-width: 680px;
+            width: 100%;
+            padding: 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+        }
+        .form-control {
+            width: 100%;
+            padding: 9px 12px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: #fff;
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        /* Fullscreen Lightbox */
+        .fullscreen-lightbox {
+            position: fixed;
+            inset: 0;
+            background: rgba(5, 8, 18, 0.96);
+            backdrop-filter: blur(10px);
+            z-index: 2500;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .fullscreen-lightbox.open {
+            display: flex;
+        }
+        .fullscreen-lightbox-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: rgba(255, 255, 255, 0.14);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: #fff;
+            font-size: 22px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        .fullscreen-lightbox-close:hover {
+            background: rgba(239, 68, 68, 0.6);
+        }
+        .fullscreen-lightbox-img {
+            width: 96vw;
+            max-width: 1200px;
+            max-height: 82vh;
+            object-fit: contain;
+            border-radius: var(--radius-sm);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+        }
+        .fullscreen-lightbox-caption {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #cbd5e1;
+            text-align: center;
+            word-break: break-all;
+            max-width: 92vw;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="brand-box">
+            <span style="font-size: 24px;">📷</span>
+            <div>
+                <div class="brand-title">ZARZĄDZANIE ZDJĘCIAMI WALORÓW</div>
+                <div style="font-size: 11px; color: var(--text-muted);">KOLEKCJA WEEKENDOWY DETEKTORYSTA • Zaufane IP: {{ client_ip }}</div>
+            </div>
+            <span class="brand-subtitle">/katalog/photos</span>
+        </div>
+        <div class="header-actions">
+            <span id="sync-status-badge" class="stat-pill" title="Data ostatniego odświeżenia lokalnej kopii pliku CSV z Google Sheets">
+                ⏳ Ładowanie statusu CSV...
+            </span>
+            <button type="button" class="btn btn-green" id="sync-sheet-btn" onclick="loadPhotos(true)">
+                🔄 Odśwież bazę CSV
+            </button>
+            <a href="{{ app_base_path }}" class="btn">
+                ← Powrót do katalogu
+            </a>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- SEKCJA DODAWANIA ZDJĘĆ -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <span>➕ Dodaj nowe zdjęcia walorów</span>
+                </div>
+                <span style="font-size: 12px; color: var(--text-muted);">
+                    Wgrane zdjęcia otrzymują bezpośredni link (symlink) do wklejenia w kolumnie <strong>Zdjęcia</strong> w arkuszu wzorcowym
+                </span>
+            </div>
+
+            <div class="upload-grid">
+                <!-- Drag & Drop -->
+                <div id="dropzone" class="dropzone" onclick="document.getElementById('file-input').click()">
+                    <div class="dropzone-icon">📥</div>
+                    <div class="dropzone-title">Przeciągnij i upuść zdjęcia tutaj (Drag &amp; Drop)</div>
+                    <div class="dropzone-sub">lub kliknij w to pole, aby wybrać pliki z dysku / galerii telefonu (JPG, PNG, WEBP)</div>
+                </div>
+
+                <!-- Przyciski wyboru pliku / kamery -->
+                <div class="upload-actions-col">
+                    <input type="file" id="file-input" accept="image/*" multiple style="display: none;" onchange="handleFileInputChange(this)">
+                    
+                    <button type="button" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px;" onclick="document.getElementById('file-input').click()">
+                        📁 Wybierz zdjęcie z komputera / galerii
+                    </button>
+
+                    <button type="button" class="btn btn-green" style="width: 100%; justify-content: center; padding: 12px;" onclick="openCameraModal()">
+                        📸 Zrób zdjęcie lokalną kamerą
+                    </button>
+                </div>
+            </div>
+
+            <div id="upload-status-bar" class="upload-status-bar">
+                <span id="upload-status-text">⏳ Przesyłanie zdjęć na serwer...</span>
+            </div>
+        </div>
+
+        <!-- LISTA NIEZLINKOWANYCH ZDJĘĆ -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <span>🔗 Zdjęcia niezlinkowane w bazie wzorcowej</span>
+                </div>
+                <div class="stats-bar">
+                    <span class="stat-pill unlinked" id="stat-unlinked">Do podpięcia: 0</span>
+                    <span class="stat-pill linked-hidden" id="stat-linked-hidden" title="Zdjęcia już przypisane do walorów w bazie CSV są automatycznie ukrywane">Ukryte (zlinkowane w bazie): 0</span>
+                </div>
+            </div>
+
+            <div id="photos-list-container" class="photos-list">
+                <div class="empty-state">Ładowanie listy zdjęć...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL KAMERY LOKALNEJ -->
+    <div id="camera-modal" class="modal-overlay" onclick="if(event.target.id==='camera-modal') closeCameraModal()">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                <div class="card-title" style="font-size: 16px;">📸 Zrób zdjęcie waloru kamerą</div>
+                <button type="button" class="btn btn-danger" style="padding: 5px 10px;" onclick="closeCameraModal()">✕</button>
+            </div>
+
+            <!-- Wybór kamery / zmiana kamery (widoczne gdy wykryto > 1 kamerę) -->
+            <div id="camera-controls-bar" style="display: none; align-items: center; gap: 10px; flex-wrap: wrap; background: rgba(15, 23, 42, 0.6); padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                <label for="camera-select" style="font-size: 12px; font-weight: 600; color: #cbd5e1; white-space: nowrap;">📷 Aktywna kamera:</label>
+                <select id="camera-select" class="form-control" style="flex: 1; min-width: 180px;" onchange="switchCameraById(this.value)"></select>
+                <button type="button" class="btn" onclick="cycleNextCamera()" title="Przełącz na następną dostępną kamerę">
+                    🔄 Zmień kamerę
+                </button>
+            </div>
+
+            <div style="position: relative; width: 100%; aspect-ratio: 4/3; background: #000; border-radius: var(--radius-md); overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color);">
+                <video id="camera-video" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: contain;"></video>
+                <div id="camera-error" style="display: none; position: absolute; inset: 0; padding: 24px; text-align: center; color: #fca5a5; font-size: 14px; background: rgba(15, 23, 42, 0.92); align-items: center; justify-content: center;">
+                    ⚠️ Brak dostępu do kamery lub brak podłączonego urządzenia wideo. Zezwól przeglądarce na dostęp do aparatu.
+                </div>
+            </div>
+
+            <canvas id="camera-canvas" style="display: none;"></canvas>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <button type="button" class="btn btn-green" id="camera-capture-btn" style="flex: 1; justify-content: center; padding: 12px; font-size: 14px;" onclick="captureAndUploadFromCamera()">
+                    📸 Zrób zdjęcie i zapisz
+                </button>
+                <button type="button" class="btn" onclick="closeCameraModal()">Zamknij</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PEŁNOEKRANOWY PODGLĄD ZDJĘCIA (LIGHTBOX) -->
+    <div id="fullscreen-lightbox" class="fullscreen-lightbox" onclick="handleLightboxBackdropClick(event)">
+        <button type="button" class="fullscreen-lightbox-close" onclick="closeFullscreenLightbox()" title="Zamknij pełny ekran (Esc)">✕</button>
+        <img id="fullscreen-lightbox-img" class="fullscreen-lightbox-img" src="" alt="Pełny podgląd zdjęcia">
+        <div id="fullscreen-lightbox-caption" class="fullscreen-lightbox-caption"></div>
+    </div>
+
+    <script>
+        const API_PHOTOS_URL = "{{ api_base_path }}/photos";
+        let allPhotos = [];
+        let videoDevicesList = [];
+        let currentVideoDeviceIndex = 0;
+        let currentCameraStream = null;
+
+        function escapeHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function buildSymlinkUrl(photo) {
+            if (photo && photo.relative_url) {
+                return photo.relative_url;
+            }
+            return (photo && photo.filename) ? `/katalog/uploads/${photo.filename}` : '';
+        }
+
+        async function loadPhotos(forceSync = false) {
+            const syncBtn = document.getElementById('sync-sheet-btn');
+            if (forceSync && syncBtn) {
+                syncBtn.disabled = true;
+                syncBtn.textContent = '⏳ Synchronizacja z CSV...';
+            }
+
+            try {
+                const url = forceSync ? `${API_PHOTOS_URL}?force_sync=1` : API_PHOTOS_URL;
+                const res = await fetch(url);
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.error || 'Błąd pobierania listy zdjęć');
+                }
+                allPhotos = data.photos || [];
+                renderPhotosList(data);
+            } catch (err) {
+                console.error(err);
+                document.getElementById('photos-list-container').innerHTML = `
+                    <div class="empty-state" style="color: #fca5a5;">
+                        ⚠️ Nie udało się pobrać listy zdjęć: ${escapeHtml(err.message)}
+                    </div>
+                `;
+            } finally {
+                if (syncBtn) {
+                    syncBtn.disabled = false;
+                    syncBtn.textContent = '🔄 Odśwież bazę CSV';
+                }
+            }
+        }
+
+        function renderPhotosList(data) {
+            const container = document.getElementById('photos-list-container');
+            const unlinkedPhotos = (allPhotos || []).filter(p => !p.is_linked);
+            const linkedCount = (allPhotos || []).filter(p => p.is_linked).length;
+
+            const sync = (data && data.sync) ? data.sync : {};
+            const syncBadge = document.getElementById('sync-status-badge');
+            if (syncBadge) {
+                const statusIcon = sync.refreshed ? '🔄' : '💾';
+                const timeStr = sync.last_modified_iso || 'teraz';
+                syncBadge.innerHTML = `${statusIcon} Odświeżenie CSV: <strong style="color:#fff;">${escapeHtml(timeStr)}</strong>`;
+            }
+
+            document.getElementById('stat-unlinked').textContent = `Do podpięcia: ${unlinkedPhotos.length}`;
+            document.getElementById('stat-linked-hidden').textContent = `Ukryte (zlinkowane w bazie): ${linkedCount}`;
+
+            if (unlinkedPhotos.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        ✅ Brak niezlinkowanych zdjęć. Wszystkie wgrane zdjęcia zostały już podpięte w bazie wzorcowej lub nie dodano jeszcze nowych zdjęć.
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = unlinkedPhotos.map((p, idx) => {
+                const symlinkUrl = buildSymlinkUrl(p);
+                const safeFilename = escapeHtml(p.filename);
+                const safeUrl = escapeHtml(symlinkUrl);
+                const inputId = `symlink-input-${idx}`;
+                const copyBtnId = `copy-btn-${idx}`;
+
+                return `
+                    <div class="photo-list-item">
+                        <div class="photo-thumb-box" onclick="openFullscreenLightbox('${safeUrl}', '${safeFilename}')" title="Kliknij, aby otworzyć zdjęcie na pełnym ekranie">
+                            <img src="${safeUrl}" alt="${safeFilename}" loading="lazy">
+                            <span class="photo-thumb-zoom-hint">🔍</span>
+                        </div>
+
+                        <div class="photo-info-col">
+                            <div class="photo-meta-row">
+                                <span class="photo-filename">${safeFilename}</span>
+                                <span class="photo-meta-sub">• ${escapeHtml(p.created_at)} • ${p.size_kb} KB</span>
+                            </div>
+                            <div class="symlink-row">
+                                <span class="symlink-label">URL (Symlink):</span>
+                                <input type="text" id="${inputId}" class="symlink-input" value="${safeUrl}" readonly onclick="this.select()">
+                                <button type="button" id="${copyBtnId}" class="btn btn-primary" style="padding: 6px 12px; font-size: 12px; white-space: nowrap;" onclick="copySymlinkUrl('${inputId}', '${copyBtnId}')">
+                                    📋 Kopiuj URL
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="photo-item-actions">
+                            <button type="button" class="btn" style="padding: 6px 10px; font-size: 12px;" onclick="openFullscreenLightbox('${safeUrl}', '${safeFilename}')" title="Powiększ na cały ekran">
+                                🔍 Pełny ekran
+                            </button>
+                            <button type="button" class="btn" style="padding: 6px 10px; font-size: 12px;" onclick="promptRenamePhoto('${safeFilename}')" title="Zmień nazwę pliku">
+                                ✏️ Nazwa
+                            </button>
+                            <button type="button" class="btn btn-danger" style="padding: 6px 10px; font-size: 12px;" onclick="deletePhoto('${safeFilename}')" title="Usuń zdjęcie z serwera">
+                                🗑️ Usuń
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function copySymlinkUrl(inputId, btnId) {
+            const input = document.getElementById(inputId);
+            const btn = document.getElementById(btnId);
+            if (!input) return;
+
+            const text = input.value;
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(text);
+                } else {
+                    input.select();
+                    document.execCommand('copy');
+                }
+                if (btn) {
+                    const orig = btn.innerHTML;
+                    btn.innerHTML = '✅ Skopiowano!';
+                    setTimeout(() => { btn.innerHTML = orig; }, 1600);
+                }
+            } catch (e) {
+                input.select();
+            }
+        }
+
+        /* --- WGRYWANIE PLIKÓW (DRAG & DROP ORAZ INPUT) --- */
+        async function uploadFilesList(fileList) {
+            if (!fileList || fileList.length === 0) return;
+
+            const statusBar = document.getElementById('upload-status-bar');
+            const statusText = document.getElementById('upload-status-text');
+            statusBar.style.display = 'flex';
+            statusText.textContent = `⏳ Przesyłanie zdjęć (${fileList.length})...`;
+
+            const formData = new FormData();
+            Array.from(fileList).forEach(file => {
+                formData.append('photos', file);
+            });
+
+            try {
+                const res = await fetch(API_PHOTOS_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Błąd przesyłania zdjęć');
+                }
+                statusText.textContent = `✅ Pomyślnie dodano zdjęć: ${data.count}`;
+                setTimeout(() => { statusBar.style.display = 'none'; }, 2500);
+                await loadPhotos(false);
+            } catch (err) {
+                alert('⚠️ Błąd wgrywania zdjęć: ' + err.message);
+                statusBar.style.display = 'none';
+            }
+        }
+
+        function handleFileInputChange(input) {
+            if (input.files && input.files.length > 0) {
+                uploadFilesList(input.files);
+                input.value = '';
+            }
+        }
+
+        function initDragAndDrop() {
+            const dz = document.getElementById('dropzone');
+            if (!dz) return;
+
+            ['dragenter', 'dragover'].forEach(evtName => {
+                dz.addEventListener(evtName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dz.classList.add('dragover');
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(evtName => {
+                dz.addEventListener(evtName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dz.classList.remove('dragover');
+                });
+            });
+
+            dz.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                if (dt && dt.files && dt.files.length > 0) {
+                    uploadFilesList(dt.files);
+                }
+            });
+        }
+
+        /* --- ZARZĄDZANIE ISTNIEJĄCYMI ZDJĘCIAMI (USUWANIE / ZMIANA NAZWY) --- */
+        async function deletePhoto(filename) {
+            if (!confirm(`Czy na pewno chcesz usunąć zdjęcie "${filename}"?`)) return;
+            try {
+                const res = await fetch(`${API_PHOTOS_URL}?filename=${encodeURIComponent(filename)}`, {
+                    method: 'DELETE'
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Nie udało się usunąć zdjęcia');
+                }
+                await loadPhotos(false);
+            } catch (err) {
+                alert('⚠️ ' + err.message);
+            }
+        }
+
+        async function promptRenamePhoto(oldFilename) {
+            const newName = prompt('Podaj nową nazwę pliku zdjęcia:', oldFilename);
+            if (!newName || newName.trim() === '' || newName.trim() === oldFilename) return;
+
+            try {
+                const res = await fetch(API_PHOTOS_URL, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        old_filename: oldFilename,
+                        new_filename: newName.trim()
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Błąd zmiany nazwy pliku');
+                }
+                await loadPhotos(false);
+            } catch (err) {
+                alert('⚠️ ' + err.message);
+            }
+        }
+
+        /* --- LOKALNA KAMERA Z OBSŁUGĄ PRZEŁĄCZANIA WIELU KAMER --- */
+        function openCameraModal() {
+            document.getElementById('camera-modal').style.display = 'flex';
+            document.getElementById('camera-error').style.display = 'none';
+            initCameraDevices();
+        }
+
+        function closeCameraModal() {
+            stopCameraStream();
+            document.getElementById('camera-modal').style.display = 'none';
+        }
+
+        function stopCameraStream() {
+            if (currentCameraStream) {
+                currentCameraStream.getTracks().forEach(t => t.stop());
+                currentCameraStream = null;
+            }
+            const video = document.getElementById('camera-video');
+            if (video) video.srcObject = null;
+        }
+
+        async function initCameraDevices() {
+            stopCameraStream();
+            const controlsBar = document.getElementById('camera-controls-bar');
+            const selectEl = document.getElementById('camera-select');
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                document.getElementById('camera-error').style.display = 'flex';
+                return;
+            }
+
+            try {
+                await startCameraStream(null);
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                videoDevicesList = devices.filter(d => d.kind === 'videoinput');
+
+                if (videoDevicesList.length > 1) {
+                    controlsBar.style.display = 'flex';
+                    selectEl.innerHTML = videoDevicesList.map((d, idx) => {
+                        const label = d.label || `Kamera ${idx + 1}`;
+                        return `<option value="${escapeHtml(d.deviceId)}">${escapeHtml(label)}</option>`;
+                    }).join('');
+
+                    if (currentCameraStream) {
+                        const track = currentCameraStream.getVideoTracks()[0];
+                        const activeId = track && track.getSettings ? track.getSettings().deviceId : null;
+                        if (activeId) {
+                            selectEl.value = activeId;
+                            const foundIdx = videoDevicesList.findIndex(d => d.deviceId === activeId);
+                            if (foundIdx >= 0) currentVideoDeviceIndex = foundIdx;
+                        }
+                    }
+                } else {
+                    controlsBar.style.display = 'none';
+                }
+            } catch (err) {
+                console.error('Błąd inicjalizacji kamery:', err);
+                document.getElementById('camera-error').style.display = 'flex';
+            }
+        }
+
+        async function startCameraStream(deviceId) {
+            stopCameraStream();
+            const video = document.getElementById('camera-video');
+            const errorDiv = document.getElementById('camera-error');
+            errorDiv.style.display = 'none';
+
+            const constraints = {
+                video: deviceId
+                    ? { deviceId: { exact: deviceId }, width: { ideal: 1920 }, height: { ideal: 1080 } }
+                    : { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }
+            };
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                currentCameraStream = stream;
+                video.srcObject = stream;
+            } catch (err) {
+                try {
+                    const fallback = await navigator.mediaDevices.getUserMedia({ video: true });
+                    currentCameraStream = fallback;
+                    video.srcObject = fallback;
+                } catch (fallbackErr) {
+                    console.error('Brak dostępu do kamery:', fallbackErr);
+                    errorDiv.style.display = 'flex';
+                }
+            }
+        }
+
+        async function switchCameraById(deviceId) {
+            if (!deviceId) return;
+            const idx = videoDevicesList.findIndex(d => d.deviceId === deviceId);
+            if (idx >= 0) currentVideoDeviceIndex = idx;
+            await startCameraStream(deviceId);
+        }
+
+        async function cycleNextCamera() {
+            if (!videoDevicesList || videoDevicesList.length <= 1) return;
+            currentVideoDeviceIndex = (currentVideoDeviceIndex + 1) % videoDevicesList.length;
+            const nextDevice = videoDevicesList[currentVideoDeviceIndex];
+            const selectEl = document.getElementById('camera-select');
+            if (selectEl && nextDevice) {
+                selectEl.value = nextDevice.deviceId;
+            }
+            if (nextDevice) {
+                await startCameraStream(nextDevice.deviceId);
+            }
+        }
+
+        function captureAndUploadFromCamera() {
+            const video = document.getElementById('camera-video');
+            const canvas = document.getElementById('camera-canvas');
+
+            if (!video || !video.videoWidth) {
+                alert('⚠️ Brak aktywnego obrazu z kamery.');
+                return;
+            }
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const captureBtn = document.getElementById('camera-capture-btn');
+            if (captureBtn) {
+                captureBtn.disabled = true;
+                captureBtn.textContent = '⏳ Zapisywanie zdjęcia...';
+            }
+
+            canvas.toBlob(async (blob) => {
+                if (!blob) {
+                    if (captureBtn) {
+                        captureBtn.disabled = false;
+                        captureBtn.textContent = '📸 Zrób zdjęcie i zapisz';
+                    }
+                    return;
+                }
+                const filename = `kamera_${Date.now()}.jpg`;
+                const file = new File([blob], filename, { type: 'image/jpeg' });
+                await uploadFilesList([file]);
+                if (captureBtn) {
+                    captureBtn.disabled = false;
+                    captureBtn.textContent = '📸 Zrób zdjęcie i zapisz';
+                }
+                closeCameraModal();
+            }, 'image/jpeg', 0.93);
+        }
+
+        /* --- PEŁNOEKRANOWY PODGLĄD ZDJĘCIA (LIGHTBOX) --- */
+        function openFullscreenLightbox(url, caption) {
+            const lb = document.getElementById('fullscreen-lightbox');
+            const img = document.getElementById('fullscreen-lightbox-img');
+            const cap = document.getElementById('fullscreen-lightbox-caption');
+            img.src = url;
+            cap.textContent = caption || url;
+            lb.classList.add('open');
+        }
+
+        function closeFullscreenLightbox() {
+            const lb = document.getElementById('fullscreen-lightbox');
+            const img = document.getElementById('fullscreen-lightbox-img');
+            lb.classList.remove('open');
+            img.src = '';
+        }
+
+        function handleLightboxBackdropClick(e) {
+            if (e.target.id === 'fullscreen-lightbox') {
+                closeFullscreenLightbox();
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const lb = document.getElementById('fullscreen-lightbox');
+                if (lb && lb.classList.contains('open')) {
+                    closeFullscreenLightbox();
+                    return;
+                }
+                const cam = document.getElementById('camera-modal');
+                if (cam && cam.style.display === 'flex') {
+                    closeCameraModal();
+                }
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initDragAndDrop();
+            loadPhotos(false);
+        });
+    </script>
+</body>
+</html>

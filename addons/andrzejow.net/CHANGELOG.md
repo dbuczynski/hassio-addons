@@ -2,6 +2,20 @@
 
 Wszystkie istotne zmiany w projekcie będą dokumentowane w tym pliku.
 
+## [2.0.0] - 2026-11-11
+
+### Dodano / Zmieniono
+- **Nowa Aplikacja Katalog Monet (`/katalog/` & `/katalog/photos`)**:
+  - **Synchronizacja Bazy z Google Sheets (`KatalogService`)**: Automatyczne pobieranie i cachowanie bazy CSV (`katalog_cache.csv`, odświeżanie nie częściej niż co 5 minut lub ręcznie przyciskiem `🔄`) wraz z mrugającym komunikatem `⏳ Oczekiwanie na synchronizację...` w górnej belce podczas ładowania bazy.
+  - **Zaawansowana Wyszukiwarka i Filtry Tagowe**: Dwukierunkowa synchronizacja pola wyszukiwania z panelem filtrów zaawansowanych (`kolekcja:`, `zdjęcie:`, `próba:`/`Proba:`/`Trial:`, `typ:`, `nominał:`, `waluta:`, `rok:`, `waga:`, `średnica:`, `kraj:`, `stop:`), obsługa fraz w cudzysłowach, zakresów liczbowych oraz podpowiedzi na żywo (pierwsze 5 wyników).
+  - **Oznaczenie i Filtrowanie Prób (`Próba: Tak / Nie`)**: Automatyczne rozpoznawanie prób (`próba` / `proba` / `trial` w nazwie waloru), wyświetlanie pigułki `🔨 Próba: Tak / Nie` na kartach walorów oraz w szczegółach, a także obsługa tagów `Trial:`, `Proba:` i `próba:` z opcjami `<Tak/Yes/True/Nie/No/False>` (domyślnie `Wszystko`).
+  - **Weryfikacja Istnienia Zdjęć na Serwerze**: Automatyczne odfiltrowywanie z galerii i kart walorów zadeklarowanych ścieżek `/katalog/uploads/...`, które nie istnieją fizycznie na dysku serwera (z dodatkowym zabezpieczeniem `onerror` po stronie przeglądarki).
+  - **Zarządzanie Zdjęciami Walorów (`/katalog/photos`)**: Dedykowany panel dla zaufanych adresów IP umożliwiający wgrywanie, zmianę nazwy, usuwanie, filtrowanie (wszystkie / niepowiązane / powiązane) oraz kopiowanie ścieżek zdjęć do schowka.
+  - **Podgląd Pełnego Wpisu JSON z Bazy (Tylko Zaufane IP)**: Na dole okna szczegółów waloru wyświetlane jest dodatkowe pole z pełnym wpisem JSON z bazy (w tym surowymi kolumnami `raw_db_row` oraz `zdjecia_zadeklarowane`) wraz ze znacznikami czasu odczytu i synchronizacji bazy (`baza_odczytana_at`, `baza_zsynchronizowana_at`, `baza_zaladowana_do_pamieci_at`).
+  - **Przekierowanie `/zbior` dla Niezaufanych IP**: Dostęp do `/zbior` ograniczony wyłącznie do zaufanych adresów IP z automatycznym przekierowaniem pozostałych użytkowników na `/katalog/`.
+
+---
+
 ## [1.14.2] - 2026-10-28
 
 ### Dodano / Zmieniono

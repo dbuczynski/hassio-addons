@@ -14,7 +14,7 @@ import youtube_service
 app = Flask(__name__)
 app.secret_key = "andrzejow_net_secret_key_metale_szlachetne"
 
-APP_VERSION = "1.14.0"
+APP_VERSION = "2.0.0"
 
 DEFAULT_ALLOWED_CHANNELS = [
     {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
@@ -31,8 +31,10 @@ LABELS_USERS_PATH = os.path.join(DATA_DIR, "labels_users.json")
 ACTIVITY_LOGS_PATH = os.path.join(DATA_DIR, "activity_logs.json")
 
 from wyprzedaz_service import WyprzedazService
+from katalog_service import KatalogService
 wyprzedaz_svc = WyprzedazService(DATA_DIR, data_subdir="wyprzedaz_data", url_prefix="/wyprzedaz")
 zbior_svc = WyprzedazService(DATA_DIR, data_subdir="zbior_data", url_prefix="/zbior")
+katalog_svc = KatalogService(DATA_DIR, data_subdir="katalog_data")
 
 def log_activity_entry(entry_type, details=None, req=None):
     """
@@ -206,11 +208,17 @@ def get_admin_password():
 def get_trusted_ips():
     cfg = load_all_config_data()
     ips = cfg.get("admin_trusted_ips")
+    result = ["127.0.0.1", "195.74.49.211"]
     if ips and isinstance(ips, list) and len(ips) > 0:
-        return [str(ip).strip() for ip in ips if str(ip).strip()]
-    return ["127.0.0.1"]
+        for ip in ips:
+            s = str(ip).strip()
+            if s and s not in result:
+                result.append(s)
+    return result
 
 def get_client_ip():
+    if request.headers.get("CF-Connecting-IP"):
+        return request.headers.get("CF-Connecting-IP").strip()
     if request.headers.get("X-Forwarded-For"):
         return request.headers.get("X-Forwarded-For").split(",")[0].strip()
     return request.remote_addr or "127.0.0.1"
@@ -224,9 +232,9 @@ def is_client_ip_trusted():
         trusted = get_trusted_ips()
         if ip in trusted:
             return True
-        if ip in ["127.0.0.1", "::1", "localhost"]:
+        if ip in ["127.0.0.1", "::1", "localhost", "195.74.49.211"]:
             return True
-        if ip.startswith("192.168.") or ip.startswith("10.") or ip.startswith("172."):
+        if ip.startswith("192.168.") or ip.startswith("10."):
             return True
         return False
     except Exception:
@@ -260,16 +268,34 @@ def is_labels_authenticated(role_required=None):
 def check_session_inactivity():
     path = request.path
 
-    # Przekierowanie niezależnie od wielkości liter oraz polskich znaków dla /wyprzedaz (/wyprzedaż) i /zbior (/zbiór)
+    # Przekierowanie niezależnie od wielkości liter oraz polskich znaków dla /wyprzedaz (/wyprzedaż), /zbior (/zbiór) i /katalog
     parts = path.split('/')
     if len(parts) > 1 and parts[1]:
         first_seg = parts[1]
         first_lower = first_seg.lower()
+        
+        # Dezaktywacja aplikacji zbiór dla adresów innych niż zaufany -> przekierowanie na /katalog/
+        if first_lower in ('zbior', 'zbiór'):
+            if not is_client_ip_trusted():
+                return redirect('/katalog/', code=302)
+
+        # Zmiana nazwy aplikacji 'kolekcja' na 'katalog' -> przekierowanie
+        if first_lower == 'kolekcja':
+            parts[1] = 'katalog'
+            new_path = '/'.join(parts)
+            if len(parts) == 2:
+                new_path += '/'
+            qs = request.query_string.decode('utf-8', errors='ignore')
+            target_url = f"{new_path}?{qs}" if qs else new_path
+            return redirect(target_url, code=302)
+
         canonical_seg = None
         if first_lower in ('zbior', 'zbiór') and first_seg != 'zbior':
             canonical_seg = 'zbior'
         elif first_lower in ('wyprzedaz', 'wyprzedaż') and first_seg != 'wyprzedaz':
             canonical_seg = 'wyprzedaz'
+        elif first_lower == 'katalog' and first_seg != 'katalog':
+            canonical_seg = 'katalog'
 
         if canonical_seg:
             parts[1] = canonical_seg
@@ -1855,10 +1881,12 @@ def api_wyprzedaz_import():
 @app.route('/zbior/')
 @app.route('/zbior')
 def zbior_public_index():
-    """Publiczna galeria zbioru."""
+    """Publiczna galeria zbioru - dostępna wyłącznie dla zaufanych adresów IP, dla innych przekierowanie na /katalog/."""
+    if not is_client_ip_trusted():
+        return redirect('/katalog/')
     return render_template(
         'wyprzedaz/index.html',
-        is_admin_ip=is_client_ip_trusted(),
+        is_admin_ip=True,
         app_title='Zbiór - Galeria i Katalog',
         app_heading='🏛️ Zbiór - Katalog Przedmiotów',
         app_root_label='ZBIÓR',
@@ -1871,7 +1899,7 @@ def zbior_public_index():
 def zbior_admin_index():
     """Panel administracyjny zbioru dostępny wyłącznie dla zaufanych adresów IP."""
     if not is_client_ip_trusted():
-        return redirect('/zbior/')
+        return redirect('/katalog/')
     return render_template(
         'wyprzedaz/admin.html',
         client_ip=get_client_ip(),
@@ -1887,7 +1915,7 @@ def zbior_admin_index():
 def zbior_admin_kategorie():
     """Widok zarządzania kategoriami zbioru."""
     if not is_client_ip_trusted():
-        return redirect('/zbior/')
+        return redirect('/katalog/')
     return render_template(
         'wyprzedaz/admin.html',
         client_ip=get_client_ip(),
@@ -1900,25 +1928,128 @@ def zbior_admin_kategorie():
 
 @app.route('/zbior/uploads/<path:filename>')
 def zbior_serve_upload(filename):
-    """Serwuje wgrane zdjęcia przedmiotów ze zbioru."""
+    """Serwuje wgrane zdjęcia przedmiotów ze zbioru (tylko zaufany IP)."""
+    if not is_client_ip_trusted():
+        return redirect('/katalog/')
     uploads_dir = zbior_svc.paths["uploads_dir"]
     return send_from_directory(uploads_dir, filename)
 
 @app.route('/api/zbior/categories', methods=['GET', 'POST', 'DELETE'])
 def api_zbior_categories():
+    if not is_client_ip_trusted():
+        return jsonify({"error": "Dostęp zabroniony - zbiór jest aktywny tylko dla zaufanych IP"}), 403
     return _handle_catalog_categories_api(zbior_svc)
 
 @app.route('/api/zbior/products', methods=['GET', 'POST', 'DELETE'])
 def api_zbior_products():
+    if not is_client_ip_trusted():
+        return jsonify({"error": "Dostęp zabroniony - zbiór jest aktywny tylko dla zaufanych IP"}), 403
     return _handle_catalog_products_api(zbior_svc)
 
 @app.route('/api/zbior/export', methods=['GET'])
 def api_zbior_export():
+    if not is_client_ip_trusted():
+        return jsonify({"error": "Dostęp zabroniony"}), 403
     return _handle_catalog_export_api(zbior_svc, prefix="zbior")
 
 @app.route('/api/zbior/import', methods=['POST'])
 def api_zbior_import():
+    if not is_client_ip_trusted():
+        return jsonify({"error": "Dostęp zabroniony"}), 403
     return _handle_catalog_import_api(zbior_svc)
+
+# --- TRASY KATALOG (/katalog/) ---
+@app.route('/katalog/')
+@app.route('/katalog')
+def katalog_public_index():
+    """Publiczny katalog monet bazujący na synchronizowanym pliku CSV z Google Sheets."""
+    return render_template(
+        'katalog/index.html',
+        is_admin_ip=is_client_ip_trusted(),
+        app_title='Katalog Monet - Weekendowy Detektorysta',
+        app_heading='🪙 Katalog Monet',
+        app_root_label='KATALOG WEEKENDOWY DETEKTORYSTA',
+        app_base_path='/katalog',
+        api_base_path='/api/katalog'
+    )
+
+@app.route('/katalog/photos/')
+@app.route('/katalog/photos')
+def katalog_photos_admin():
+    """Zarządzanie zdjęciami walorów katalogu (dostępne wyłącznie z zaufanego adresu IP)."""
+    if not is_client_ip_trusted():
+        return "Brak uprawnień. Dostęp do /katalog/photos jest dozwolony wyłącznie z zaufanego adresu IP.", 403
+    return render_template(
+        'katalog/photos.html',
+        client_ip=get_client_ip(),
+        app_base_path='/katalog',
+        api_base_path='/api/katalog'
+    )
+
+@app.route('/katalog/uploads/<path:filename>')
+@app.route('/kolekcja/uploads/<path:filename>')
+def katalog_serve_upload(filename):
+    """Serwuje wgrane zdjęcia walorów z katalogu katalog_data/uploads (oraz zachowuje zgodność wsteczną dla /kolekcja/uploads/)."""
+    uploads_dir = katalog_svc.paths["uploads_dir"]
+    return send_from_directory(uploads_dir, filename)
+
+@app.route('/api/katalog/items', methods=['GET'])
+def api_katalog_items():
+    """Zwraca pozycje katalogu z lokalnej kopii CSV (odświeżanej z Google Sheets nie częściej niż co 5 minut)."""
+    force_sync = request.args.get('force_sync') == '1'
+    data = katalog_svc.get_items(is_trusted=is_client_ip_trusted(), force_sync=force_sync)
+    return jsonify(data)
+
+def _get_public_host_url():
+    proto = request.headers.get('X-Forwarded-Proto', request.scheme)
+    host = request.headers.get('X-Forwarded-Host', request.host)
+    if ',' in proto:
+        proto = proto.split(',')[0].strip()
+    if ',' in host:
+        host = host.split(',')[0].strip()
+    return f"{proto}://{host}".rstrip('/')
+
+@app.route('/api/katalog/photos', methods=['GET', 'POST', 'DELETE', 'PATCH'])
+def api_katalog_photos():
+    """API zarządzania zdjęciami walorów dla /katalog/photos (tylko zaufany adres IP)."""
+    if not is_client_ip_trusted():
+        return jsonify({"error": "Dostęp zabroniony - wymagany zaufany adres IP"}), 403
+
+    host_url = _get_public_host_url()
+
+    if request.method == 'GET':
+        force_sync = request.args.get('force_sync') == '1'
+        return jsonify(katalog_svc.list_photos(host_url=host_url, force_sync=force_sync))
+
+    if request.method == 'POST':
+        uploaded_files = request.files.getlist('photos') or request.files.getlist('zdjecia') or request.files.getlist('file')
+        if not uploaded_files:
+            return jsonify({"error": "Nie przesłano żadnych plików graficznych"}), 400
+        saved = katalog_svc.save_uploaded_photos(uploaded_files, host_url=host_url)
+        return jsonify({"success": True, "uploaded": saved, "count": len(saved)})
+
+    if request.method == 'DELETE':
+        filename = request.args.get('filename')
+        if not filename:
+            data = request.get_json(silent=True) or {}
+            filename = data.get('filename')
+        if not filename:
+            return jsonify({"error": "Brak nazwy pliku do usunięcia"}), 400
+        ok = katalog_svc.delete_photo(filename)
+        if not ok:
+            return jsonify({"error": "Nie znaleziono pliku lub nieprawidłowa nazwa"}), 404
+        return jsonify({"success": True, "filename": filename})
+
+    if request.method == 'PATCH':
+        data = request.get_json(silent=True) or {}
+        old_name = data.get('old_filename')
+        new_name = data.get('new_filename')
+        try:
+            final_name = katalog_svc.rename_photo(old_name, new_name)
+            return jsonify({"success": True, "filename": final_name})
+        except ValueError as ve:
+            return jsonify({"error": str(ve)}), 400
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
+

@@ -1,0 +1,3336 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ app_title|default('Kolekcja Monet - Katalog Numizmatyczny') }}</title>
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: rgba(30, 41, 59, 0.85);
+            --bg-card-hover: rgba(30, 41, 59, 0.98);
+            --accent-primary: #6366f1;
+            --accent-gold: #f59e0b;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --glass-blur: blur(16px);
+            --radius-lg: 18px;
+            --radius-md: 10px;
+            --radius-sm: 6px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(245, 158, 11, 0.1) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar {
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: var(--glass-blur);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand-title {
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff 40%, var(--accent-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sync-badge {
+            font-size: 11.5px;
+            color: var(--text-muted);
+            background: rgba(15, 23, 42, 0.75);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: var(--radius-md);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sync-badge-icon {
+            padding: 6px 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: default;
+            user-select: none;
+            line-height: 1;
+        }
+
+        .btn {
+            background: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+        .btn-icon {
+            padding: 8px 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes blinkSyncWait {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.22; }
+        }
+        .sync-waiting-banner {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(245, 158, 11, 0.18);
+            border: 1px solid rgba(245, 158, 11, 0.55);
+            color: #fde68a;
+            font-size: 12.5px;
+            font-weight: 700;
+            padding: 6px 12px;
+            border-radius: var(--radius-md);
+            animation: blinkSyncWait 1.1s ease-in-out infinite;
+            white-space: nowrap;
+            user-select: none;
+        }
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .main-container {
+            max-width: 1440px;
+            width: 96%;
+            margin: 20px auto;
+            display: block;
+            flex: 1;
+            position: relative;
+        }
+
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 12px 10px;
+        }
+
+        /* Header Bar above search */
+        .breadcrumb-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding: 8px 14px;
+            background: rgba(30, 41, 59, 0.65);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            flex-wrap: wrap;
+            font-size: 13px;
+        }
+        .breadcrumb-link {
+            color: var(--accent-gold);
+            font-weight: 800;
+            letter-spacing: 0.4px;
+            padding: 2px 4px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+
+        /* Filter Controls & Search Suggestions */
+        .controls-bar {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            align-items: stretch;
+        }
+
+        .search-wrapper {
+            flex: 1;
+            min-width: 240px;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-input {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 10px 38px 10px 16px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .search-input:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
+        }
+
+        .search-clear-btn {
+            position: absolute;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border: none;
+            color: var(--text-muted);
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            font-size: 12px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+        }
+        .search-clear-btn:hover {
+            background: rgba(239, 68, 68, 0.35);
+            color: #fff;
+        }
+
+        /* Dropdown z pierwszymi 5 podpowiedziami */
+        .search-suggestions {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            background: #111827;
+            border: 1px solid rgba(99, 102, 241, 0.5);
+            border-radius: var(--radius-md);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.78);
+            z-index: 250;
+            display: none;
+            overflow: hidden;
+            backdrop-filter: blur(16px);
+        }
+        .search-suggestions.open {
+            display: block;
+        }
+        .suggestions-header {
+            padding: 7px 14px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            background: rgba(15, 23, 42, 0.9);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .suggestion-item {
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            transition: background 0.15s ease;
+        }
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+        .suggestion-item:hover,
+        .suggestion-item.active {
+            background: rgba(99, 102, 241, 0.2);
+        }
+        .suggestion-main {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            min-width: 0;
+            flex: 1;
+        }
+        .suggestion-title {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .suggestion-sub {
+            font-size: 11.5px;
+            color: var(--text-muted);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .suggestion-badges {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .sug-badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 5px;
+            background: rgba(99, 102, 241, 0.22);
+            color: #c7d2fe;
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            white-space: nowrap;
+        }
+        .sug-badge-gold {
+            background: rgba(245, 158, 11, 0.18);
+            color: #fde68a;
+            border-color: rgba(245, 158, 11, 0.35);
+        }
+
+        /* Przycisk ikony filtrów przed wyszukiwarką oraz rozwijany panel filtrów pod wyszukiwarką */
+        .filter-icon-btn {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            width: 42px;
+            height: 42px;
+            color: #e2e8f0;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+        .filter-icon-btn:hover,
+        .filter-icon-btn.open,
+        .filter-icon-btn.has-active {
+            border-color: var(--accent-primary);
+            color: #fff;
+            background: rgba(99, 102, 241, 0.16);
+        }
+        .filter-active-dot {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-gold);
+            box-shadow: 0 0 6px rgba(245, 158, 11, 0.8);
+            display: none;
+        }
+        .filter-icon-btn.has-active .filter-active-dot {
+            display: block;
+        }
+
+        .filters-panel {
+            display: none;
+            background: rgba(19, 28, 49, 0.95);
+            border: 1px solid rgba(99, 102, 241, 0.38);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            margin-bottom: 18px;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(10px);
+        }
+        .filters-panel.open {
+            display: block;
+        }
+        .filters-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .filters-panel-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #cbd5e1;
+        }
+        .filters-reset-btn {
+            background: rgba(239, 68, 68, 0.14);
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            color: #fca5a5;
+            font-size: 11.5px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .filters-reset-btn:hover {
+            background: rgba(239, 68, 68, 0.28);
+            color: #fff;
+        }
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+            gap: 12px;
+        }
+        .filter-field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .filter-field-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .filter-field-tag {
+            font-family: monospace;
+            font-size: 10.5px;
+            color: #818cf8;
+            text-transform: none;
+            font-weight: 600;
+        }
+        .filter-input {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 7px 10px;
+            color: #fff;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.15s ease;
+            width: 100%;
+        }
+        .filter-input:focus {
+            border-color: var(--accent-primary);
+        }
+        .filter-kolekcja-pills {
+            display: flex;
+            gap: 5px;
+        }
+        .filter-kolekcja-btn {
+            flex: 1;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 6px 6px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s ease;
+        }
+        .filter-kolekcja-btn:hover {
+            border-color: var(--accent-primary);
+            color: #fff;
+        }
+        .filter-kolekcja-btn.active {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .sort-select {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 10px 16px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        /* Compact Layout Picker */
+        .layout-picker-wrapper {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+        .layout-picker-trigger {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 8px 11px;
+            color: #e2e8f0;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            height: 100%;
+        }
+        .layout-picker-trigger:hover,
+        .layout-picker-trigger.open {
+            border-color: var(--accent-primary);
+            color: #fff;
+            background: rgba(99, 102, 241, 0.14);
+        }
+        .layout-picker-badge {
+            background: rgba(99, 102, 241, 0.22);
+            color: #c7d2fe;
+            padding: 2px 6px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+        }
+        .layout-popover {
+            position: absolute;
+            top: calc(100% + 6px);
+            right: 0;
+            background: #131c31;
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            border-radius: var(--radius-md);
+            padding: 10px 12px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65);
+            z-index: 200;
+            display: none;
+            min-width: 220px;
+            backdrop-filter: blur(12px);
+        }
+        .layout-popover.open {
+            display: block;
+        }
+        .layout-popover-section + .layout-popover-section {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .layout-popover-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 5px;
+        }
+        .layout-pills {
+            display: flex;
+            gap: 5px;
+            flex-wrap: nowrap;
+        }
+        .layout-pill-btn {
+            flex: 1;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 5px 8px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+        .layout-pill-btn:hover {
+            border-color: var(--accent-primary);
+            color: #fff;
+        }
+        .layout-pill-btn.active {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: #fff;
+            font-weight: 700;
+        }
+
+        /* Product Grid: 5 kolumn na desktopie, 3 kolumny na telefonie w poziomie, 1 kolumna na telefonie w pionie */
+        .products-grid,
+        .products-grid.grid-cols-5 {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 20px;
+        }
+        @media (max-width: 960px) and (orientation: landscape) {
+            .products-grid,
+            .products-grid.grid-cols-5 {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 14px;
+            }
+        }
+        @media (max-width: 768px) and (orientation: portrait) {
+            .products-grid,
+            .products-grid.grid-cols-5 {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+        }
+        @media (max-width: 540px) {
+            .products-grid,
+            .products-grid.grid-cols-5 {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+        }
+
+        .product-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.25s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+            border-color: var(--accent-primary);
+        }
+
+        .product-img-wrapper {
+            width: 100%;
+            height: 175px;
+            background: radial-gradient(circle at 50% 45%, rgba(51, 65, 85, 0.55) 0%, rgba(15, 23, 42, 0.92) 75%);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+        }
+
+        .coin-emblem {
+            width: 106px;
+            height: 106px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 8px;
+            border: 3px double rgba(255, 255, 255, 0.28);
+            box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.55), 0 8px 20px rgba(0, 0, 0, 0.45);
+            transition: transform 0.3s ease;
+            user-select: none;
+        }
+        .product-card:hover .coin-emblem {
+            transform: scale(1.06);
+        }
+        .coin-emblem.metal-ag {
+            background: radial-gradient(circle at 30% 30%, #f1f5f9, #94a3b8 55%, #475569 100%);
+            color: #0f172a;
+            border-color: rgba(255, 255, 255, 0.65);
+        }
+        .coin-emblem.metal-au {
+            background: radial-gradient(circle at 30% 30%, #fef08a, #f59e0b 55%, #92400e 100%);
+            color: #1e1b4b;
+            border-color: rgba(254, 240, 138, 0.75);
+        }
+        .coin-emblem.metal-cu {
+            background: radial-gradient(circle at 30% 30%, #fed7aa, #ea580c 55%, #7c2d12 100%);
+            color: #fff;
+            border-color: rgba(254, 215, 170, 0.55);
+        }
+        .coin-emblem.metal-other {
+            background: radial-gradient(circle at 30% 30%, #cbd5e1, #64748b 60%, #334155 100%);
+            color: #0f172a;
+            border-color: rgba(226, 232, 240, 0.5);
+        }
+        .coin-emblem-nominal {
+            font-size: 13px;
+            font-weight: 800;
+            line-height: 1.15;
+            max-width: 90px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+        .coin-emblem-year {
+            font-size: 11px;
+            font-weight: 700;
+            opacity: 0.82;
+            margin-top: 3px;
+        }
+
+        .product-img-wrapper.not-owned .coin-emblem {
+            filter: grayscale(85%);
+            opacity: 0.45;
+        }
+        .product-card-img {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            border-radius: var(--radius-sm);
+            transition: transform 0.3s ease;
+        }
+        .product-card:hover .product-card-img {
+            transform: scale(1.05);
+        }
+
+        .badge-category {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: rgba(99, 102, 241, 0.85);
+            backdrop-filter: blur(4px);
+            padding: 3px 10px;
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            font-weight: 700;
+            color: #fff;
+            max-width: 65%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .badge-stop {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(4px);
+            padding: 3px 8px;
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            font-weight: 700;
+            color: #fde68a;
+            border: 1px solid rgba(245, 158, 11, 0.35);
+        }
+
+        .badge-stock {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            padding: 3px 8px;
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            font-weight: 700;
+            backdrop-filter: blur(4px);
+        }
+        .badge-stock.in-collection {
+            background: rgba(16, 185, 129, 0.22);
+            color: #6ee7b7;
+            border: 1px solid rgba(16, 185, 129, 0.45);
+        }
+        .badge-stock.missing {
+            background: rgba(15, 23, 42, 0.82);
+            color: var(--text-muted);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .badge-emitent {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            background: rgba(15, 23, 42, 0.85);
+            padding: 3px 8px;
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            font-weight: 600;
+            color: #cbd5e1;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .product-info {
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            gap: 8px;
+        }
+        .product-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.35;
+        }
+        .product-price {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: var(--accent-gold);
+            line-height: 1.45;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            background: rgba(15, 23, 42, 0.45);
+            padding: 6px 10px;
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+        .price-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 8px;
+        }
+        .price-line-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+        .price-line-val {
+            font-size: 13.5px;
+            font-weight: 800;
+            color: #fff;
+            text-align: right;
+        }
+        .price-line-val.highlight {
+            color: var(--accent-gold);
+        }
+        .modal-price-block {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: var(--radius-md);
+            padding: 10px 14px;
+            min-width: 260px;
+        }
+        .modal-price-block .price-line-label {
+            font-size: 13px;
+        }
+        .modal-price-block .price-line-val {
+            font-size: 16px;
+        }
+        .product-specs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: auto;
+            padding-top: 6px;
+        }
+        .spec-pill {
+            font-size: 11.5px;
+            color: var(--text-muted);
+            background: rgba(15, 23, 42, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            padding: 2px 7px;
+            border-radius: 5px;
+        }
+        .spec-pill.spec-pill-trial {
+            color: #fde68a;
+            background: rgba(245, 158, 11, 0.16);
+            border-color: rgba(245, 158, 11, 0.4);
+            font-weight: 700;
+        }
+
+        /* Pagination Controls */
+        .pagination-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+        .page-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 14px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .page-btn:hover:not(:disabled) {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: var(--accent-primary);
+            color: #fff;
+        }
+        .page-btn.active {
+            background: var(--accent-primary);
+            color: #fff;
+            border-color: var(--accent-primary);
+            font-weight: 700;
+        }
+        .page-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .page-info {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin: 0 4px;
+        }
+        @media (max-width: 640px) {
+            .pagination-wrapper {
+                gap: 5px;
+            }
+            .page-btn {
+                padding: 7px 11px;
+                font-size: 12.5px;
+            }
+            .page-info.page-summary-text {
+                flex-basis: 100%;
+                text-align: center;
+                margin-top: 2px;
+                font-size: 12px;
+            }
+        }
+
+        /* Modal Details */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            max-width: 860px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 26px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #fff;
+            font-size: 20px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        .modal-close-btn:hover { background: rgba(239, 68, 68, 0.4); }
+
+        .modal-top-layout {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 22px;
+            align-items: start;
+        }
+        @media (max-width: 680px) {
+            .modal-top-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+        .modal-photo-col {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .modal-photo-box {
+            width: 100%;
+            height: 220px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        .modal-photo-img {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            border-radius: var(--radius-sm);
+            cursor: zoom-in;
+            transition: transform 0.2s ease;
+        }
+        .modal-photo-img:hover {
+            transform: scale(1.03);
+        }
+        .modal-photo-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .modal-photo-nav-btn {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--border-color);
+            color: #e2e8f0;
+            padding: 5px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .modal-photo-nav-btn:hover:not(:disabled) {
+            border-color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.2);
+            color: #fff;
+        }
+        .modal-photo-nav-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+        .modal-photo-counter {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+        .modal-header-col {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-width: 0;
+            padding-right: 28px;
+        }
+
+        /* Pełnoekranowy podgląd zdjęcia (Lightbox dostosowany do szerokości okna i telefonów) */
+        .fullscreen-img-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(5, 10, 22, 0.96);
+            backdrop-filter: blur(10px);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2500;
+            padding: 16px;
+            gap: 14px;
+        }
+        .fullscreen-img-overlay.open {
+            display: flex;
+        }
+        .fullscreen-img-main {
+            max-width: 94vw;
+            max-height: 82vh;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            border-radius: var(--radius-md);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85);
+        }
+        @media (max-width: 640px) {
+            .fullscreen-img-overlay {
+                padding: 10px;
+            }
+            .fullscreen-img-main {
+                width: 94vw;
+                max-width: 94vw;
+                max-height: 76vh;
+            }
+        }
+        .fullscreen-close-btn {
+            position: fixed;
+            top: 16px;
+            right: 18px;
+            background: rgba(239, 68, 68, 0.88);
+            color: #fff;
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            font-size: 20px;
+            font-weight: 800;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2510;
+            transition: all 0.2s ease;
+        }
+        .fullscreen-close-btn:hover {
+            background: #ef4444;
+            transform: scale(1.06);
+        }
+        .fullscreen-nav-bar {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            z-index: 2510;
+        }
+
+        .modal-details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        .detail-box {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 10px 12px;
+        }
+        .detail-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+        .detail-val {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            word-break: break-word;
+        }
+        .modal-raw-json-box {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            border-radius: var(--radius-md);
+            padding: 12px 14px;
+            margin-top: 2px;
+        }
+        .modal-raw-json-pre {
+            margin: 6px 0 0 0;
+            padding: 10px 12px;
+            background: rgba(5, 10, 22, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius-sm);
+            color: #a5f3fc;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 12px;
+            line-height: 1.45;
+            max-height: 260px;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="brand-title">
+            <span>{{ app_heading|default('🪙 Katalog Monet') }}</span>
+        </div>
+        <div class="nav-actions">
+            <span id="sync-waiting-banner" class="sync-waiting-banner" title="Trwa ładowanie i synchronizacja bazy danych katalogu...">
+                ⏳ Oczekiwanie na synchronizację...
+            </span>
+            <span id="sync-status-badge" class="sync-badge sync-badge-icon" title="Baza CSV: oczekiwanie na synchronizację...">
+                <span id="sync-csv-icon">📄<span style="font-size:11px;">⏳</span></span>
+            </span>
+            <button type="button" class="btn btn-icon" id="sync-csv-btn" onclick="syncCsvDatabase()" title="Odśwież bazę CSV (pobierz najnowszą wersję)">
+                🔄
+            </button>
+            {% if is_admin_ip %}
+            <a href="{{ app_base_path }}/photos" class="btn" title="Zarządzaj zdjęciami walorów">
+                📷 Zdjęcia
+            </a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="main-container" id="main-container">
+        <!-- Main Content Area -->
+        <div style="min-width:0;">
+            <div id="breadcrumb-bar" class="breadcrumb-bar">
+                <span class="breadcrumb-link">KOLEKCJA WEEKENDOWY DETEKTORYSTA</span>
+                <div id="active-filter-summary" style="font-size:12px; color:var(--text-muted);"></div>
+            </div>
+
+            <div class="controls-bar">
+                <button type="button" id="filter-toggle-btn" class="filter-icon-btn" onclick="toggleFiltersPanel()" title="Zaawansowane">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    <span id="filter-active-dot" class="filter-active-dot"></span>
+                </button>
+
+                <div class="search-wrapper" id="search-wrapper">
+                    <input
+                        type="text"
+                        id="search-input"
+                        class="search-input"
+                        autocomplete="off"
+                        placeholder="🔍 Szukaj monet (np. oksydowana nike, &quot;1 grosz&quot;, {% if is_admin_ip %}kolekcja:TRUE {% endif %}próba:Tak kraj:PL stop:srebro waga:29-32 rok:1995-2002)..."
+                        oninput="onSearchInput()"
+                        onfocus="onSearchFocus()"
+                    >
+                    <button type="button" id="search-clear-btn" class="search-clear-btn" onclick="clearSearchInput()" title="Wyczyść wyszukiwanie">✕</button>
+                    <div id="search-suggestions" class="search-suggestions"></div>
+                </div>
+            </div>
+
+            <div id="filters-panel" class="filters-panel">
+                <div class="filters-panel-header">
+                    <span class="filters-panel-title">Zaawansowane</span>
+                    <button type="button" class="filters-reset-btn" onclick="resetTagFilters()">Wyczyść filtry</button>
+                </div>
+                <div class="filters-grid">
+                    <div class="filter-field">
+                        <label class="filter-field-label">
+                            <span>Ilość wyświetlanych elementów</span>
+                        </label>
+                        <div class="layout-pills" id="layout-rows-pills"></div>
+                    </div>
+
+                    {% if is_admin_ip %}
+                    <div class="filter-field">
+                        <label class="filter-field-label" for="flt-kolekcja">
+                            <span>W kolekcji</span>
+                            <span class="filter-field-tag">kolekcja:</span>
+                        </label>
+                        <select id="flt-kolekcja" class="filter-input" onchange="onFilterPanelChange('kolekcja', this.value)" style="cursor:pointer;">
+                            <option value="">Wszystkie</option>
+                            <option value="TRUE">TAK</option>
+                            <option value="FALSE">NIE</option>
+                        </select>
+                    </div>
+                    {% endif %}
+
+                    <div class="filter-field">
+                        <label class="filter-field-label" for="flt-zdjecie">
+                            <span>Zdjęcie</span>
+                            <span class="filter-field-tag">zdjęcie:</span>
+                        </label>
+                        <select id="flt-zdjecie" class="filter-input" onchange="onFilterPanelChange('zdjecie', this.value)" style="cursor:pointer;">
+                            <option value="">Wszystkie</option>
+                            <option value="TAK">TAK</option>
+                            <option value="NIE">NIE</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-field">
+                        <label class="filter-field-label" for="flt-proba">
+                            <span>Próba / Trial</span>
+                            <span class="filter-field-tag">próba: / Proba: / Trial:</span>
+                        </label>
+                        <select id="flt-proba" class="filter-input" onchange="onFilterPanelChange('proba', this.value)" style="cursor:pointer;">
+                            <option value="">Wszystko</option>
+                            <option value="Tak">Tak</option>
+                            <option value="Yes">Yes</option>
+                            <option value="True">True</option>
+                            <option value="Nie">Nie</option>
+                            <option value="No">No</option>
+                            <option value="False">False</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-field">
+                        <label class="filter-field-label" for="flt-typ">
+                            <span>Sekcja / Typ</span>
+                            <span class="filter-field-tag">typ:</span>
+                        </label>
+                        <input type="text" id="flt-typ" class="filter-input" list="flt-typ-datalist" placeholder="Wybierz lub wpisz sekcję..." oninput="onFilterPanelChange('typ', this.value)">
+                        <datalist id="flt-typ-datalist"></datalist>
+                    </div>
+
+                    <div class="filter-field">
+                        <label class="filter-field-label" for="flt-nominal">
+                            <span>Nominał (pełne słowo)</span>
+                            <span class="filter-field-tag">nominał:</span>
+                        </label>
+                        <input type="text" id="flt-nominal" class="filter-input" placeholder="np. 10, 20, 1/2" oninput="onFilterPanelChange('nominal', this.value)">
+                    </div>
+
+                    <div class="filter-field">
+                        <label class="filter-field-label" for="flt-waluta">
+                            <span>Waluta (częściowe)</span>
+                            <span class="filter-field-tag">waluta:</span>
+                        </label>
+                        <input type="text" id="flt-waluta" class="filter-input" placeholder="np. dol, zł, mark" oninput="onFilterPanelChange('waluta', this.value)">
+                    </div>
+
+                    <div class="filter-field">
+                        <label class="filter-field-label" for="flt-rok">
+                            <span>Rok / zakres</span>
+                            <span class="filter-field-tag">rok:</span>
+                        </label>
+                        <input type="text" id="flt-rok" class="filter-input" placeholder="np. 199 lub 1995-2004" oninput="onFilterPanelChange('rok', this.value)">
+                    </div>
+
+                    <div class="filter-field">
+                        <label class="filter-field-label" for="flt-waga">
+                            <span>Waga [g] / zakres</span>
+                            <span class="filter-field-tag">waga:</span>
+                        </label>
+                        <input type="text" id="flt-waga" class="filter-input" placeholder="np. 31,1 lub 29-32" oninput="onFilterPanelChange('waga', this.value)">
+                    </div>
+
+                    <div class="filter-field">
+                        <label class="filter-field-label" for="flt-srednica">
+                            <span>Średnica [mm] / zakres</span>
+                            <span class="filter-field-tag">średnica:</span>
+                        </label>
+                        <input type="text" id="flt-srednica" class="filter-input" placeholder="np. 32 lub 29-31" oninput="onFilterPanelChange('srednica', this.value)">
+                    </div>
+
+                    <div class="filter-field">
+                        <label class="filter-field-label" for="flt-kraj">
+                            <span>Kraj (kod 2-zn. / nazwa)</span>
+                            <span class="filter-field-tag">kraj:</span>
+                        </label>
+                        <input type="text" id="flt-kraj" class="filter-input" list="flt-kraj-datalist" placeholder="np. PL, Polska, DE, US" oninput="onFilterPanelChange('kraj', this.value)">
+                        <datalist id="flt-kraj-datalist"></datalist>
+                    </div>
+
+                    <div class="filter-field">
+                        <label class="filter-field-label" for="flt-stop">
+                            <span>Materiał bazowy</span>
+                            <span class="filter-field-tag">stop:</span>
+                        </label>
+                        <input type="text" id="flt-stop" class="filter-input" list="flt-stop-datalist" placeholder="np. srebro, złoto, Ag925, MN" oninput="onFilterPanelChange('stop', this.value)">
+                        <datalist id="flt-stop-datalist">
+                            <option value="srebro">Srebro (Ag*)</option>
+                            <option value="złoto">Złoto (Au*)</option>
+                            <option value="miedź">Miedź (Cu*)</option>
+                            <option value="miedzionikiel">Miedzionikiel (CuNi* / MN*)</option>
+                            <option value="MN">MN (Miedzionikiel)</option>
+                            <option value="Ag999">Ag999</option>
+                            <option value="Ag925">Ag925</option>
+                            <option value="Ag900">Ag900</option>
+                            <option value="Ag625">Ag625</option>
+                            <option value="Ag500">Ag500</option>
+                            <option value="Au999">Au999</option>
+                            <option value="Au900">Au900</option>
+                            <option value="Au585">Au585</option>
+                            <option value="CuNi25">CuNi25</option>
+                            <option value="BiMetal">BiMetal</option>
+                        </datalist>
+                    </div>
+                </div>
+            </div>
+
+            <div id="pagination-container-top" class="pagination-wrapper" style="margin-bottom:16px;"></div>
+
+            <div id="products-grid" class="products-grid grid-cols-5">
+                <div style="grid-column: 1/-1; text-align:center; padding:40px; color:var(--text-muted);">
+                    ⏳ Oczekiwanie na synchronizację bazy danych...
+                </div>
+            </div>
+
+            <div id="pagination-container-bottom" class="pagination-wrapper" style="margin-top:24px;"></div>
+        </div>
+    </div>
+
+    <!-- Coin Details Modal -->
+    <div id="product-modal" class="modal-overlay" onclick="closeModalOnOverlay(event)">
+        <div class="modal-content">
+            <button class="modal-close-btn" onclick="closeModal()">✕</button>
+            <div class="modal-top-layout">
+                <div class="modal-photo-col">
+                    <div id="modal-photo-box" class="modal-photo-box"></div>
+                    <div id="modal-photo-nav" class="modal-photo-nav" style="display:none;">
+                        <button type="button" id="modal-photo-prev" class="modal-photo-nav-btn" onclick="changeModalPhoto(-1)">◀ Lewo</button>
+                        <span id="modal-photo-counter" class="modal-photo-counter">1 / 1</span>
+                        <button type="button" id="modal-photo-next" class="modal-photo-nav-btn" onclick="changeModalPhoto(1)">Prawo ▶</button>
+                    </div>
+                </div>
+                <div class="modal-header-col">
+                    <div>
+                        <span id="modal-category" style="font-size:12px; font-weight:700; color:var(--accent-primary); text-transform:uppercase;"></span>
+                        <h2 id="modal-title" style="font-size:22px; font-weight:800; color:#fff; margin-top:4px;"></h2>
+                    </div>
+                    <div id="modal-price-container"></div>
+                    <div id="modal-indeks-container"></div>
+                </div>
+            </div>
+            <div id="modal-details-grid" class="modal-details-grid"></div>
+            {% if is_admin_ip %}
+            <div id="modal-raw-json-box" class="modal-raw-json-box" style="display:none;">
+                <div class="detail-label" id="modal-raw-json-label">Pełny wpis z bazy (JSON):</div>
+                <pre id="modal-raw-json-pre" class="modal-raw-json-pre"></pre>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Fullscreen Image Lightbox -->
+    <div id="fullscreen-lightbox" class="fullscreen-img-overlay" onclick="closeFullscreenOnOverlay(event)">
+        <button type="button" class="fullscreen-close-btn" onclick="closeFullscreenLightbox()" title="Zamknij pełny ekran (Esc)">✕</button>
+        <img id="fullscreen-img-main" class="fullscreen-img-main" src="" alt="Powiększone zdjęcie monety">
+        <div id="fullscreen-nav-bar" class="fullscreen-nav-bar" style="display:none;" onclick="event.stopPropagation()">
+            <button type="button" class="modal-photo-nav-btn" onclick="changeModalPhoto(-1)">◀ Lewo</button>
+            <span id="fullscreen-photo-counter" class="modal-photo-counter" style="color:#fff;">1 / 1</span>
+            <button type="button" class="modal-photo-nav-btn" onclick="changeModalPhoto(1)">Prawo ▶</button>
+        </div>
+    </div>
+
+    <script>
+        const APP_BASE_PATH = "{{ app_base_path|default('/katalog') }}";
+        const API_BASE_PATH = "{{ api_base_path|default('/api/katalog') }}";
+        const IS_ADMIN_IP = {{ 'true' if is_admin_ip else 'false' }};
+        const LAYOUT_STORAGE_KEY = `catalog_layout_prefs_${APP_BASE_PATH}`;
+        const ALLOWED_PER_PAGE = IS_ADMIN_IP ? [10, 20, 50, 'all'] : [10, 20, 50];
+
+        let allCoins = [];
+        let lastSyncInfo = {};
+        let isDatabaseLoaded = false;
+        let currentPage = 1;
+        let gridColumns = 5;
+        let itemsPerPage = 10;
+        let currentModalCoinId = null;
+
+        function setSyncWaitingVisible(visible) {
+            const waitBanner = document.getElementById('sync-waiting-banner');
+            if (waitBanner) {
+                waitBanner.style.display = visible ? 'inline-flex' : 'none';
+            }
+        }
+
+        function renderSyncStatusIcon(sync, isError = false) {
+            const badge = document.getElementById('sync-status-badge');
+            const isLoadedOk = isDatabaseLoaded && Array.isArray(allCoins) && allCoins.length > 0 && !isError;
+            setSyncWaitingVisible(!isLoadedOk);
+
+            if (!badge) return;
+            if (isError || (sync && sync.error)) {
+                badge.innerHTML = `<span style="display:inline-flex; align-items:center; gap:2px; font-size:14px; font-weight:800; color:#ef4444;" title="Błąd synchronizacji CSV (${escapeHtml((sync && sync.error) || 'błąd połączenia')})">📄<span style="font-size:12px; color:#ef4444; line-height:1;">❌</span></span>`;
+                badge.title = `Błąd synchronizacji CSV: ${(sync && sync.error) || 'błąd'}`;
+            } else {
+                const timeStr = (sync && sync.last_modified_iso) || 'teraz';
+                badge.innerHTML = `<span style="display:inline-flex; align-items:center; gap:2px; font-size:14px; font-weight:800; color:#10b981;" title="Baza CSV zsynchronizowana (${timeStr}, ${allCoins.length} monet)">📄<span style="font-size:12px; color:#10b981; line-height:1;">✔️</span></span>`;
+                badge.title = `Baza CSV zsynchronizowana (${timeStr}, ${allCoins.length} monet)`;
+            }
+        }
+
+        async function syncCsvDatabase() {
+            const btn = document.getElementById('sync-csv-btn');
+            const badge = document.getElementById('sync-status-badge');
+            setSyncWaitingVisible(true);
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<span style="display:inline-block; animation:spin 1s linear infinite;">🔄</span>`;
+            }
+            if (badge) {
+                badge.innerHTML = `<span style="display:inline-flex; align-items:center; gap:2px; font-size:14px;">📄<span style="font-size:11px;">⏳</span></span>`;
+                badge.title = 'Trwa synchronizacja pliku CSV...';
+            }
+            try {
+                const res = await fetch(`${API_BASE_PATH}/items?force_sync=1`);
+                const data = await res.json();
+                allCoins = data.items || [];
+                isDatabaseLoaded = allCoins.length > 0;
+                prepareCoinsIndex(allCoins);
+
+                const sync = data.sync || {};
+                lastSyncInfo = sync;
+                renderSyncStatusIcon(sync, Boolean(sync.error));
+                filterProducts(false, false);
+            } catch (err) {
+                console.error("Błąd synchronizacji CSV:", err);
+                renderSyncStatusIcon(null, true);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '🔄';
+                }
+            }
+        }
+
+        // =====================================================================
+        // PEŁNA LISTA KODÓW DWUZNAKOWYCH ISO 3166-1 ALPHA-2 WSZYSTKICH KRAJÓW
+        // ORAZ KRAJÓW HISTORYCZNYCH / NIEISTNIEJĄCYCH
+        // =====================================================================
+        const COUNTRY_DEFINITIONS = [
+            // Wszystkie współczesne państwa i terytoria (ISO 3166-1 alpha-2)
+            { code: "AF", names: ["Afganistan", "Afghanistan"] },
+            { code: "AL", names: ["Albania"] },
+            { code: "DZ", names: ["Algieria", "Algeria"] },
+            { code: "AD", names: ["Andora", "Andorra"] },
+            { code: "AO", names: ["Angola"] },
+            { code: "AI", names: ["Anguilla"] },
+            { code: "AQ", names: ["Antarktyda", "Antarctica"] },
+            { code: "AG", names: ["Antigua i Barbuda", "Antigua and Barbuda"] },
+            { code: "SA", names: ["Arabia Saudyjska", "Saudi Arabia"] },
+            { code: "AR", names: ["Argentyna", "Argentina"] },
+            { code: "AM", names: ["Armenia"] },
+            { code: "AW", names: ["Aruba"] },
+            { code: "AU", names: ["Australia", "Związek Australijski"] },
+            { code: "AT", names: ["Austria", "Österreich"] },
+            { code: "AZ", names: ["Azerbejdżan", "Azerbaijan"] },
+            { code: "BS", names: ["Bahamy", "Bahamas"] },
+            { code: "BH", names: ["Bahrajn", "Bahrain"] },
+            { code: "BD", names: ["Bangladesz", "Bangladesh"] },
+            { code: "BB", names: ["Barbados"] },
+            { code: "BE", names: ["Belgia", "Belgium", "België", "Belgique"] },
+            { code: "BZ", names: ["Belize"] },
+            { code: "BJ", names: ["Benin"] },
+            { code: "BM", names: ["Bermudy", "Bermuda"] },
+            { code: "BT", names: ["Bhutan"] },
+            { code: "BY", names: ["Białoruś", "Bialorus", "Belarus"] },
+            { code: "BO", names: ["Boliwia", "Bolivia"] },
+            { code: "BA", names: ["Bośnia i Hercegowina", "Bosnia i Hercegowina", "Bośnia", "Bosnia", "Bosnia and Herzegovina", "BiH"] },
+            { code: "BW", names: ["Botswana"] },
+            { code: "BR", names: ["Brazylia", "Brazil", "Brasil"] },
+            { code: "BN", names: ["Brunei"] },
+            { code: "BG", names: ["Bułgaria", "Bulgaria"] },
+            { code: "BF", names: ["Burkina Faso"] },
+            { code: "BI", names: ["Burundi"] },
+            { code: "CL", names: ["Chile"] },
+            { code: "CN", names: ["Chiny", "China", "ChRL", "PRC"] },
+            { code: "HR", names: ["Chorwacja", "Croatia", "Hrvatska"] },
+            { code: "CY", names: ["Cypr", "Cyprus"] },
+            { code: "TD", names: ["Czad", "Chad"] },
+            { code: "ME", names: ["Czarnogóra", "Czarnogora", "Montenegro"] },
+            { code: "CZ", names: ["Czechy", "Czechia", "Czech Republic", "Česká republika"] },
+            { code: "DK", names: ["Dania", "Denmark", "Danmark"] },
+            { code: "CD", names: ["Demokratyczna Republika Konga", "DR Konga", "DR Congo"] },
+            { code: "DM", names: ["Dominika", "Dominica"] },
+            { code: "DO", names: ["Dominikana", "Dominican Republic"] },
+            { code: "DJ", names: ["Dżibuti", "Djibouti"] },
+            { code: "EG", names: ["Egipt", "Egypt"] },
+            { code: "EC", names: ["Ekwador", "Ecuador"] },
+            { code: "ER", names: ["Erytrea", "Eritrea"] },
+            { code: "EE", names: ["Estonia"] },
+            { code: "SZ", names: ["Eswatini", "Suazi", "Swaziland"] },
+            { code: "ET", names: ["Etiopia", "Ethiopia"] },
+            { code: "FK", names: ["Falklandy", "Falkland Islands"] },
+            { code: "FJ", names: ["Fidżi", "Fiji"] },
+            { code: "PH", names: ["Filipiny", "Philippines"] },
+            { code: "FI", names: ["Finlandia", "Finland", "Suomi"] },
+            { code: "FR", names: ["Francja", "France"] },
+            { code: "GA", names: ["Gabon"] },
+            { code: "GM", names: ["Gambia"] },
+            { code: "GH", names: ["Ghana"] },
+            { code: "GI", names: ["Gibraltar", "Giblartar"] },
+            { code: "GR", names: ["Grecja", "Greece", "Hellada"] },
+            { code: "GD", names: ["Grenada"] },
+            { code: "GL", names: ["Grenlandia", "Greenland"] },
+            { code: "GE", names: ["Gruzja", "Georgia"] },
+            { code: "GU", names: ["Guam"] },
+            { code: "GG", names: ["Guernsey"] },
+            { code: "GY", names: ["Gujana", "Guyana"] },
+            { code: "GF", names: ["Gujana Francuska", "French Guiana"] },
+            { code: "GP", names: ["Gwadelupa", "Guadeloupe"] },
+            { code: "GT", names: ["Gwatemala", "Guatemala"] },
+            { code: "GW", names: ["Gwinea Bissau", "Guinea-Bissau"] },
+            { code: "GQ", names: ["Gwinea Równikowa", "Equatorial Guinea"] },
+            { code: "GN", names: ["Gwinea", "Guinea"] },
+            { code: "HT", names: ["Haiti"] },
+            { code: "ES", names: ["Hiszpania", "Spain", "España"] },
+            { code: "NL", names: ["Holandia", "Niderlandy", "Netherlands", "Nederland"] },
+            { code: "HN", names: ["Honduras"] },
+            { code: "HK", names: ["Hongkong", "Hong Kong"] },
+            { code: "IN", names: ["Indie", "India"] },
+            { code: "ID", names: ["Indonezja", "Indonesia"] },
+            { code: "IQ", names: ["Irak", "Iraq"] },
+            { code: "IR", names: ["Iran", "Persja", "Persia"] },
+            { code: "IE", names: ["Irlandia", "Ireland", "Eire"] },
+            { code: "IS", names: ["Islandia", "Iceland"] },
+            { code: "IL", names: ["Izrael", "Israel"] },
+            { code: "JM", names: ["Jamajka", "Jamaica"] },
+            { code: "JP", names: ["Japonia", "Japan"] },
+            { code: "YE", names: ["Jemen", "Yemen"] },
+            { code: "JE", names: ["Jersey"] },
+            { code: "JO", names: ["Jordania", "Jordan"] },
+            { code: "KY", names: ["Kajmany", "Cayman Islands"] },
+            { code: "KH", names: ["Kambodża", "Cambodia"] },
+            { code: "CM", names: ["Kamerun", "Cameroon"] },
+            { code: "CA", names: ["Kanada", "Canada"] },
+            { code: "QA", names: ["Katar", "Qatar"] },
+            { code: "KZ", names: ["Kazachstan", "Kazakhstan"] },
+            { code: "KE", names: ["Kenia", "Kenya"] },
+            { code: "KG", names: ["Kirgistan", "Kyrgyzstan"] },
+            { code: "KI", names: ["Kiribati"] },
+            { code: "CO", names: ["Kolumbia", "Colombia"] },
+            { code: "KM", names: ["Komory", "Comoros"] },
+            { code: "CG", names: ["Kongo", "Congo"] },
+            { code: "KR", names: ["Korea Południowa", "South Korea", "Korea"] },
+            { code: "KP", names: ["Korea Północna", "North Korea", "KRLD"] },
+            { code: "CR", names: ["Kostaryka", "Costa Rica"] },
+            { code: "CU", names: ["Kuba", "Cuba"] },
+            { code: "KW", names: ["Kuwejt", "Kuwait"] },
+            { code: "LA", names: ["Laos"] },
+            { code: "LS", names: ["Lesotho"] },
+            { code: "LB", names: ["Liban", "Lebanon"] },
+            { code: "LR", names: ["Liberia"] },
+            { code: "LY", names: ["Libia", "Libya"] },
+            { code: "LI", names: ["Liechtenstein"] },
+            { code: "LT", names: ["Litwa", "Lithuania", "Lietuva"] },
+            { code: "LU", names: ["Luksemburg", "Luxembourg"] },
+            { code: "LV", names: ["Łotwa", "Lotwa", "Latvia", "Latvija"] },
+            { code: "MK", names: ["Macedonia Północna", "Macedonia", "North Macedonia"] },
+            { code: "MG", names: ["Madagaskar", "Madagascar"] },
+            { code: "YT", names: ["Majotta", "Mayotte"] },
+            { code: "MO", names: ["Makau", "Macau", "Macao"] },
+            { code: "MW", names: ["Malawi"] },
+            { code: "MV", names: ["Malediwy", "Maldives"] },
+            { code: "MY", names: ["Malezja", "Malaysia"] },
+            { code: "ML", names: ["Mali"] },
+            { code: "MT", names: ["Malta"] },
+            { code: "MP", names: ["Mariany Północne", "Northern Mariana Islands"] },
+            { code: "MA", names: ["Maroko", "Morocco"] },
+            { code: "MQ", names: ["Martynika", "Martinique"] },
+            { code: "MR", names: ["Mauretania", "Mauritania"] },
+            { code: "MU", names: ["Mauritius"] },
+            { code: "MX", names: ["Meksyk", "Mexico", "México"] },
+            { code: "FM", names: ["Mikronezja", "Micronesia"] },
+            { code: "MM", names: ["Mjanma", "Birma", "Myanmar", "Burma"] },
+            { code: "MD", names: ["Mołdawia", "Moldawia", "Moldova"] },
+            { code: "MC", names: ["Monako", "Monaco"] },
+            { code: "MN", names: ["Mongolia", "Mongol Bank"] },
+            { code: "MS", names: ["Montserrat"] },
+            { code: "MZ", names: ["Mozambik", "Mozambique"] },
+            { code: "NA", names: ["Namibia"] },
+            { code: "NR", names: ["Nauru"] },
+            { code: "NP", names: ["Nepal"] },
+            { code: "DE", names: ["Niemcy", "Germany", "Deutschland", "Germania", "GermaniaMint", "Germania Mint"] },
+            { code: "NE", names: ["Niger"] },
+            { code: "NG", names: ["Nigeria"] },
+            { code: "NI", names: ["Nikaragua", "Nicaragua"] },
+            { code: "NU", names: ["Niue"] },
+            { code: "NF", names: ["Norfolk"] },
+            { code: "NO", names: ["Norwegia", "Norway", "Norge"] },
+            { code: "NC", names: ["Nowa Kaledonia", "New Caledonia"] },
+            { code: "NZ", names: ["Nowa Zelandia", "New Zealand"] },
+            { code: "OM", names: ["Oman"] },
+            { code: "PK", names: ["Pakistan"] },
+            { code: "PW", names: ["Palau"] },
+            { code: "PS", names: ["Palestyna", "Palestine"] },
+            { code: "PA", names: ["Panama"] },
+            { code: "PG", names: ["Papua-Nowa Gwinea", "Papua New Guinea"] },
+            { code: "PY", names: ["Paragwaj", "Paraguay"] },
+            { code: "PE", names: ["Peru"] },
+            { code: "PN", names: ["Pitcairn"] },
+            { code: "PF", names: ["Polinezja Francuska", "French Polynesia"] },
+            { code: "PL", names: ["Polska", "Poland", "NBP", "Mennica Polska", "Srebrna Uncja", "Rzeczpospolita Polska", "III RP", "II RP", "PRL"] },
+            { code: "PR", names: ["Portoryko", "Puerto Rico"] },
+            { code: "PT", names: ["Portugalia", "Portugal"] },
+            { code: "ZA", names: ["Republika Południowej Afryki", "RPA", "Afryka Południowa", "Południowa Afryka", "South Africa", "ZAR"] },
+            { code: "CF", names: ["Republika Środkowoafrykańska", "Central African Republic"] },
+            { code: "CV", names: ["Republika Zielonego Przylądka", "Cabo Verde", "Cape Verde"] },
+            { code: "RE", names: ["Reunion"] },
+            { code: "RU", names: ["Rosja", "Russia", "Federacja Rosyjska"] },
+            { code: "RO", names: ["Rumunia", "Romania"] },
+            { code: "RW", names: ["Rwanda"] },
+            { code: "EH", names: ["Sahara Zachodnia", "Western Sahara"] },
+            { code: "KN", names: ["Saint Kitts i Nevis", "Saint Kitts and Nevis"] },
+            { code: "LC", names: ["Saint Lucia"] },
+            { code: "VC", names: ["Saint Vincent i Grenadyny", "Saint Vincent and the Grenadines"] },
+            { code: "BL", names: ["Saint-Barthélemy"] },
+            { code: "MF", names: ["Saint-Martin"] },
+            { code: "PM", names: ["Saint-Pierre i Miquelon"] },
+            { code: "SV", names: ["Salwador", "El Salvador"] },
+            { code: "WS", names: ["Samoa"] },
+            { code: "AS", names: ["Samoa Amerykańskie", "American Samoa"] },
+            { code: "SM", names: ["San Marino"] },
+            { code: "SN", names: ["Senegal"] },
+            { code: "RS", names: ["Serbia"] },
+            { code: "SC", names: ["Seszele", "Seychelles"] },
+            { code: "SL", names: ["Sierra Leone"] },
+            { code: "SG", names: ["Singapur", "Singapore"] },
+            { code: "SX", names: ["Sint Maarten"] },
+            { code: "SK", names: ["Słowacja", "Slowacja", "Slovakia", "Slovensko"] },
+            { code: "SI", names: ["Słowenia", "Slowenia", "Slovenia", "Slovenija"] },
+            { code: "SO", names: ["Somalia"] },
+            { code: "LK", names: ["Sri Lanka", "Cejlon", "Ceylon"] },
+            { code: "US", names: ["Stany Zjednoczone", "USA", "United States", "United States of America", "Ameryka"] },
+            { code: "SD", names: ["Sudan"] },
+            { code: "SS", names: ["Sudan Południowy", "South Sudan"] },
+            { code: "SR", names: ["Surinam", "Suriname"] },
+            { code: "SY", names: ["Syria"] },
+            { code: "CH", names: ["Szwajcaria", "Switzerland", "Schweiz", "Helvetia", "Confoederatio Helvetica"] },
+            { code: "SE", names: ["Szwecja", "Sweden", "Sverige"] },
+            { code: "TJ", names: ["Tadżykistan", "Tajikistan"] },
+            { code: "TH", names: ["Tajlandia", "Thailand", "Syjam"] },
+            { code: "TW", names: ["Tajwan", "Taiwan", "Republika Chińska"] },
+            { code: "TZ", names: ["Tanzania"] },
+            { code: "TL", names: ["Timor Wschodni", "Timor-Leste", "East Timor"] },
+            { code: "TG", names: ["Togo"] },
+            { code: "TK", names: ["Tokelau"] },
+            { code: "TO", names: ["Tonga"] },
+            { code: "TT", names: ["Trynidad i Tobago", "Trinidad and Tobago"] },
+            { code: "TN", names: ["Tunezja", "Tunisia"] },
+            { code: "TR", names: ["Turcja", "Turkey", "Türkiye"] },
+            { code: "TM", names: ["Turkmenistan"] },
+            { code: "TC", names: ["Turks i Caicos", "Turks and Caicos"] },
+            { code: "TV", names: ["Tuvalu"] },
+            { code: "UG", names: ["Uganda"] },
+            { code: "UA", names: ["Ukraina", "Ukraine"] },
+            { code: "UY", names: ["Urugwaj", "Uruguay"] },
+            { code: "UZ", names: ["Uzbekistan"] },
+            { code: "VU", names: ["Vanuatu"] },
+            { code: "WF", names: ["Wallis i Futuna"] },
+            { code: "VA", names: ["Watykan", "Vatican", "Vatican City", "Stolica Apostolska"] },
+            { code: "VE", names: ["Wenezuela", "Venezuela"] },
+            { code: "HU", names: ["Węgry", "Wegry", "Hungary", "Magyarország"] },
+            { code: "GB", names: ["Wielka Brytania", "UK", "United Kingdom", "Great Britain", "Anglia", "England", "Brytania"] },
+            { code: "VN", names: ["Wietnam", "Vietnam"] },
+            { code: "IT", names: ["Włochy", "Wlochy", "Italy", "Italia"] },
+            { code: "CI", names: ["Wybrzeże Kości Słoniowej", "Ivory Coast", "Côte d'Ivoire"] },
+            { code: "BV", names: ["Wyspa Bouveta"] },
+            { code: "CX", names: ["Wyspa Bożego Narodzenia", "Christmas Island"] },
+            { code: "IM", names: ["Wyspa Man", "Isle of Man"] },
+            { code: "SH", names: ["Wyspa Świętej Heleny", "Saint Helena"] },
+            { code: "AX", names: ["Wyspy Alandzkie", "Åland Islands"] },
+            { code: "CK", names: ["Wyspy Cooka", "Cook Islands"] },
+            { code: "VI", names: ["Wyspy Dziewicze Stanów Zjednoczonych", "US Virgin Islands"] },
+            { code: "VG", names: ["Brytyjskie Wyspy Dziewicze", "British Virgin Islands"] },
+            { code: "HM", names: ["Wyspy Heard i McDonalda"] },
+            { code: "CC", names: ["Wyspy Kokosowe", "Cocos Islands"] },
+            { code: "MH", names: ["Wyspy Marshalla", "Marshall Islands"] },
+            { code: "FO", names: ["Wyspy Owcze", "Faroe Islands"] },
+            { code: "SB", names: ["Wyspy Salomona", "Solomon Islands"] },
+            { code: "ST", names: ["Wyspy Świętego Tomasza i Książęca", "Sao Tome and Principe"] },
+            { code: "ZM", names: ["Zambia"] },
+            { code: "ZW", names: ["Zimbabwe"] },
+            { code: "AE", names: ["Zjednoczone Emiraty Arabskie", "ZEA", "United Arab Emirates", "UAE"] },
+
+            // Państwa historyczne / nieistniejące (często bez oficjalnego 2-znakowego kodu ISO lub z kodem dawnym)
+            { code: "CS", names: ["Czechosłowacja", "Czechoslowacja", "Czechosłowacka", "Czechoslowacka", "Czechoslovakia", "CSK", "CSR", "ČSSR", "ČSR"] },
+            { code: "YU", names: ["Jugosławia", "Jugoslawia", "Yugoslavia", "YUG", "SFRJ", "SHS"] },
+            { code: "SU", names: ["ZSRR", "Związek Radziecki", "Zwiazek Radziecki", "USSR", "CCCP", "SSSR", "SUN", "Rosja Radziecka"] },
+            { code: "DD", names: ["NRD", "Niemiecka Republika Demokratyczna", "DDR", "GDR", "East Germany"] },
+            { code: "IIRP", names: ["II RP", "II Rzeczpospolita", "Druga Rzeczpospolita", "Międzywojnie"] },
+            { code: "PRL", names: ["PRL", "Polska Rzeczpospolita Ludowa"] },
+            { code: "IIRP_RON", names: ["I RP", "Rzeczpospolita Obojga Narodów", "Królestwo Polskie", "Korona"] },
+            { code: "WGM", names: ["Wolne Miasto Gdańsk", "Gdańsk", "Gdansk", "Freie Stadt Danzig", "Danzig"] },
+            { code: "AH", names: ["Austro-Węgry", "Austro-Wegry", "Austro-Hungary", "Monarchia Austro-Węgierska", "Cesarstwo Austriackie"] },
+            { code: "PRU", names: ["Prusy", "Królestwo Prus", "Preussen", "Preußen", "Prussia"] },
+            { code: "DR", names: ["Cesarstwo Niemieckie", "III Rzesza", "Rzesza Niemiecka", "Republika Weimarska", "Deutsches Reich"] },
+            { code: "IMP_RU", names: ["Cesarstwo Rosyjskie", "Rosja Carska", "Imperium Rosyjskie"] },
+            { code: "RH", names: ["Rodezja", "Rhodesia"] },
+            { code: "ZR", names: ["Zair", "Zaire"] },
+            { code: "SCG", names: ["Serbia i Czarnogóra", "Serbia and Montenegro"] }
+        ];
+
+        function normalizeStr(s) {
+            if (!s) return '';
+            return String(s)
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/ł/g, 'l')
+                .trim();
+        }
+
+        // Wyznacz do jakich kodów krajów należy dana moneta na podstawie kolumn Emitent, Typ i Nazwa
+        function getCoinCountryCodes(coin) {
+            const codes = new Set();
+            const emitentRaw = (coin.emitent || '').trim();
+            const typRaw = (coin.typ || '').trim();
+            const emitentNorm = normalizeStr(emitentRaw);
+            const typNorm = normalizeStr(typRaw);
+
+            // Dopasowanie po definicjach krajów
+            for (const def of COUNTRY_DEFINITIONS) {
+                const codeNorm = normalizeStr(def.code);
+                if (emitentNorm === codeNorm || typNorm === codeNorm) {
+                    codes.add(def.code);
+                }
+                for (const name of def.names) {
+                    const nameNorm = normalizeStr(name);
+                    if (emitentNorm === nameNorm || typNorm === nameNorm) {
+                        codes.add(def.code);
+                    } else if (nameNorm.length >= 4 && (emitentNorm.includes(nameNorm) || typNorm.includes(nameNorm))) {
+                        codes.add(def.code);
+                    }
+                }
+            }
+
+            // Specjalne reguły dla danych w arkuszu:
+            // Jeśli Emitent to NIUE, to mimo że jest w sekcji III RP - 2005, emitentem jest Niue (NU), a nie PL
+            if (emitentNorm === 'niue') {
+                codes.delete('PL');
+                codes.add('NU');
+            }
+            // W sekcji Litwa jest moneta "2 Lati 1926" (Łotwa - LV)
+            if (normalizeStr(coin.nazwa).includes('2 lati')) {
+                codes.add('LV');
+            }
+            // Wolne Miasto Gdańsk w falsach/replikach
+            if (normalizeStr(coin.nazwa).includes('danzig') || normalizeStr(coin.nazwa).includes('gdansk')) {
+                codes.add('WGM');
+            }
+
+            return codes;
+        }
+
+        // Rozwiąż zapytanie kraj:<query> na zbiór pasujących kodów z COUNTRY_DEFINITIONS
+        function resolveCountryQuery(queryVal) {
+            const qNorm = normalizeStr(queryVal);
+            if (!qNorm) return new Set();
+
+            const matchedCodes = new Set();
+
+            // 1. Dokładne dopasowanie po 2-znakowym kodzie (np. PL, DE, US, UK/GB, CS, YU) lub pełnej nazwie
+            for (const def of COUNTRY_DEFINITIONS) {
+                const codeNorm = normalizeStr(def.code);
+                if (codeNorm === qNorm) {
+                    matchedCodes.add(def.code);
+                }
+                for (const name of def.names) {
+                    const nameNorm = normalizeStr(name);
+                    if (nameNorm === qNorm) {
+                        matchedCodes.add(def.code);
+                    }
+                }
+            }
+
+            if (matchedCodes.size > 0) {
+                return matchedCodes;
+            }
+
+            // 2. Jeśli nie znaleziono dokładnego kodu/nazwy, dopasowanie częściowe po nazwie kraju (min. 3 znaki)
+            if (qNorm.length >= 3) {
+                for (const def of COUNTRY_DEFINITIONS) {
+                    for (const name of def.names) {
+                        const nameNorm = normalizeStr(name);
+                        if (nameNorm.includes(qNorm)) {
+                            matchedCodes.add(def.code);
+                        }
+                    }
+                }
+            }
+
+            return matchedCodes;
+        }
+
+        // =====================================================================
+        // PARSER ZAPYTAŃ WYSZUKIWARKI I TAGÓW SPECJALNYCH
+        // =====================================================================
+        function parseSearchTokens(rawQuery) {
+            if (!rawQuery || !rawQuery.trim()) return [];
+            // Obsługuje:
+            // 1) tag:"wartość ze spacją" lub tag:'wartość ze spacją' lub tag:wartość
+            // 2) "fraza w podwójnym cudzysłowie"
+            // 3) 'fraza w pojedynczym cudzysłowie'
+            // 4) pojedyncze słowo
+            const regex = /([a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ]+):(?:"([^"]+)"|'([^']+)'|(\S+))|"([^"]+)"|'([^']+)'|(\S+)/g;
+            const tokens = [];
+            let m;
+            while ((m = regex.exec(rawQuery)) !== null) {
+                if (m[1]) {
+                    const tagKey = normalizeStr(m[1]);
+                    const tagVal = (m[2] || m[3] || m[4] || '').trim();
+                    if (tagVal) {
+                        tokens.push({ type: 'tag', tag: tagKey, value: tagVal });
+                    }
+                } else if (m[5] !== undefined || m[6] !== undefined) {
+                    const phrase = (m[5] !== undefined ? m[5] : m[6]).trim();
+                    if (phrase) {
+                        tokens.push({ type: 'phrase', value: phrase.toLowerCase(), norm: normalizeStr(phrase) });
+                    }
+                } else if (m[7]) {
+                    const word = m[7].trim();
+                    if (word) {
+                        tokens.push({ type: 'word', value: word.toLowerCase(), norm: normalizeStr(word) });
+                    }
+                }
+            }
+            return tokens;
+        }
+
+        // Sprawdzenie tagu nominał: (pełne słowo w polu Nominał, np. 10 -> tylko 10, pomija 100, 1000, 10 000, 1/10)
+        function matchNominalTag(coin, val) {
+            const nomRaw = (coin.nominal || '').trim();
+            if (!nomRaw || nomRaw === '-') return false;
+
+            // Złącz spacje wewnątrz liczb wielocyfrowych (np. "10\u00a0000 zł" -> "10000 zł"),
+            // żeby "10 000" nie było rozbijane na osobne słowo "10" i "000"!
+            const compactThousands = nomRaw.replace(/(\d)[\s\u00a0\u202f]+(?=\d{3}\b)/g, '$1');
+
+            // Rozdziel sklejone symbole waluty od liczby (np. "$10" -> "$ 10", "$1" -> "$ 1"),
+            // ale zachowaj ułamki typu "1/10" czy "2½" jako pojedyncze tokeny
+            const separatedSymbols = compactThousands.replace(/([$£€])(\d)/g, '$1 $2');
+
+            // Wyciągnij pełne słowa / tokeny liczbowe
+            const wordsRaw = separatedSymbols
+                .toLowerCase()
+                .split(/[\s,;()]+/)
+                .filter(Boolean);
+            const wordsNorm = wordsRaw.map(w => normalizeStr(w));
+
+            const targetRaw = val.trim().toLowerCase().replace(/(\d)[\s\u00a0\u202f]+(?=\d{3}\b)/g, '$1');
+            const targetNorm = normalizeStr(targetRaw);
+
+            // Jeśli użytkownik wpisał frazę wielowyrazową np. nominał:"10 zł"
+            if (targetRaw.includes(' ')) {
+                const normField = normalizeStr(separatedSymbols.replace(/\s+/g, ' '));
+                return normField === targetNorm || wordsRaw.join(' ') === targetRaw;
+            }
+
+            return wordsRaw.includes(targetRaw) || wordsNorm.includes(targetNorm);
+        }
+
+        // Sprawdzenie tagu waluta: (częściowe przypisanie w pozycji Nominał + obsługa symboli walut np. $ -> dolar/dollar)
+        function matchWalutaTag(coin, val) {
+            const nomRaw = (coin.nominal || '').trim();
+            if (!nomRaw || nomRaw === '-') return false;
+
+            const qLower = val.toLowerCase();
+            const qNorm = normalizeStr(val);
+
+            // Rozszerz tekst waluty o nazwy symboli występujących w polu Nominał
+            let currencySearchable = nomRaw.toLowerCase();
+            if (nomRaw.includes('$')) {
+                currencySearchable += ' dolar dollar usd';
+            }
+            if (nomRaw.includes('zł') || nomRaw.toLowerCase().includes('grosz')) {
+                currencySearchable += ' złoty zloty pln';
+            }
+            if (nomRaw.includes('£') || nomRaw.toLowerCase().includes('pound') || nomRaw.toLowerCase().includes('shilling')) {
+                currencySearchable += ' funt pound szyling gbp';
+            }
+            if (nomRaw.includes('€') || nomRaw.toLowerCase().includes('euro')) {
+                currencySearchable += ' euro eur';
+            }
+            if (/\bdm\b/i.test(nomRaw) || nomRaw.toLowerCase().includes('mark')) {
+                currencySearchable += ' marka deutsche mark';
+            }
+
+            return currencySearchable.includes(qLower) || normalizeStr(currencySearchable).includes(qNorm);
+        }
+
+        // Sprawdzenie tagu waga: lub średnica: (dokładna lub zakres np. 31,1 albo 29-32)
+        function matchNumericOrRange(coinValueNum, coinRawText, queryVal) {
+            const cleanQ = queryVal.trim().replace(/\s+/g, '');
+            const rangeMatch = cleanQ.match(/^(\d+(?:[.,]\d+)?)-(\d+(?:[.,]\d+)?)$/);
+
+            // Wyciągnij wszystkie liczby z pola (np. dla wymiarów sztabki "40mm x 56mm" -> [40, 56])
+            const nums = [];
+            if (coinValueNum !== null && coinValueNum !== undefined && !isNaN(coinValueNum)) {
+                nums.push(coinValueNum);
+            }
+            if (coinRawText) {
+                const cleanedRaw = String(coinRawText).replace(/[\s\u00a0\u202f]+/g, '');
+                const rx = /(\d+(?:[.,]\d+)?)/g;
+                let m;
+                while ((m = rx.exec(cleanedRaw)) !== null) {
+                    const n = parseFloat(m[1].replace(',', '.'));
+                    if (!isNaN(n) && !nums.includes(n)) nums.push(n);
+                }
+            }
+            if (nums.length === 0) return false;
+
+            if (rangeMatch) {
+                const a = parseFloat(rangeMatch[1].replace(',', '.'));
+                const b = parseFloat(rangeMatch[2].replace(',', '.'));
+                const minVal = Math.min(a, b);
+                const maxVal = Math.max(a, b);
+                return nums.some(n => n >= minVal - 1e-6 && n <= maxVal + 1e-6);
+            } else {
+                const target = parseFloat(cleanQ.replace(',', '.'));
+                if (isNaN(target)) return false;
+                return nums.some(n => Math.abs(n - target) < 0.005);
+            }
+        }
+
+        // Sprawdzenie tagu rok: (przypisanie częściowe np. 199 -> 1990..1999 lub zakres np. 1995-2002)
+        function matchRokTag(coin, queryVal) {
+            const q = queryVal.trim();
+            if (!q) return false;
+
+            const rokStr = (coin.rok || '').trim();
+            // Jeśli pole Rok jest puste, a Typ to np. "III RP - 2007", wspomóżmy się rokiem z Typu
+            const fallbackSource = rokStr || ((coin.typ || '').startsWith('III RP -') ? coin.typ : '');
+            if (!fallbackSource || fallbackSource === '-' || fallbackSource === 'złom') return false;
+
+            const rangeMatch = q.match(/^(\d{3,4})-(\d{3,4})$/);
+            if (rangeMatch) {
+                const minYear = Math.min(parseInt(rangeMatch[1], 10), parseInt(rangeMatch[2], 10));
+                const maxYear = Math.max(parseInt(rangeMatch[1], 10), parseInt(rangeMatch[2], 10));
+
+                // Sprawdź czy w komórce jest przedział lat (np. "1577-1595") lub pojedynczy rok (np. "1932 MW")
+                const cellRange = rokStr.match(/(\d{4})\s*-\s*(\d{4})/);
+                if (cellRange) {
+                    const cStart = parseInt(cellRange[1], 10);
+                    const cEnd = parseInt(cellRange[2], 10);
+                    return cStart <= maxYear && cEnd >= minYear;
+                }
+
+                const yearMatches = fallbackSource.match(/\b(\d{4})\b/g);
+                if (!yearMatches) return false;
+                return yearMatches.some(yStr => {
+                    const y = parseInt(yStr, 10);
+                    return y >= minYear && y <= maxYear;
+                });
+            }
+
+            // Przypisanie częściowe (np. "199" -> 1990..1999)
+            if (rokStr.toLowerCase().includes(q.toLowerCase())) {
+                return true;
+            }
+            // Jeśli w komórce jest przedział lat np. "1577-1595", sprawdź czy którykolwiek rok z przedziału zaczyna się od q
+            const cellRange = fallbackSource.match(/(\d{4})\s*-\s*(\d{4})/);
+            if (cellRange && /^\d+$/.test(q)) {
+                const cStart = parseInt(cellRange[1], 10);
+                const cEnd = parseInt(cellRange[2], 10);
+                if (cEnd - cStart <= 100) {
+                    for (let y = cStart; y <= cEnd; y++) {
+                        if (String(y).includes(q)) return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        // Sprawdzenie tagu stop: (dokładne np. Ag625 albo słowne: srebro -> Ag*, złoto -> Au*, miedź -> Cu*, miedzionikiel / MN -> CuNi* lub MN*)
+        function matchStopTag(coin, queryVal) {
+            const stopRaw = (coin.stop || '').trim();
+            if (!stopRaw || stopRaw === '-' || stopRaw === '1') return false;
+
+            const stopLower = stopRaw.toLowerCase();
+            const stopNorm = normalizeStr(stopRaw);
+            const qLower = queryVal.trim().toLowerCase();
+            const qNorm = normalizeStr(queryVal);
+
+            // Grupy słowne / skrótowe:
+            if (qNorm === 'srebro' || qNorm === 'silver' || qNorm === 'ag') {
+                return stopLower.startsWith('ag');
+            }
+            if (qNorm === 'zloto' || qNorm === 'gold' || qNorm === 'au') {
+                return stopLower.startsWith('au');
+            }
+            if (qNorm === 'miedz' || qNorm === 'copper' || qNorm === 'cu') {
+                // Czysta miedź / stopy miedzi bez miedzioniklu (CuNi)
+                return stopLower === 'cu' || stopLower.startsWith('cu9') || stopLower.startsWith('cu/');
+            }
+            if (
+                qNorm === 'miedzionikiel' ||
+                qNorm === 'miedzioniklu' ||
+                qNorm === 'mn' ||
+                qNorm === 'cuni'
+            ) {
+                return stopLower.startsWith('cuni') || stopLower.startsWith('cuznni') || stopLower.startsWith('mn');
+            }
+            if (qNorm === 'nikiel' || qNorm === 'ni') {
+                return stopLower === 'ni' || stopLower === 'feni';
+            }
+            if (qNorm === 'tytan' || qNorm === 'ti') {
+                return stopLower.startsWith('ti');
+            }
+            if (qNorm === 'mosiadz' || qNorm === 'brass') {
+                return stopNorm.includes('mosiadz');
+            }
+            if (qNorm === 'bimetal') {
+                return stopNorm === 'bimetal';
+            }
+
+            // Dokładne dopasowanie (np. Ag625, CuNi25, Ag999, MN000)
+            return stopLower === qLower || stopNorm === qNorm;
+        }
+
+        function isTrialCoin(coin) {
+            if (!coin) return false;
+            if (typeof coin.proba === 'boolean') return coin.proba;
+            return /pr[óo]ba|trial/i.test(coin.nazwa || '');
+        }
+
+        // Sprawdzenie tagu próba: / proba: / trial: (<Tak/Yes/True/Nie/No/False>)
+        function matchProbaTag(coin, queryVal) {
+            const qNorm = normalizeStr(queryVal);
+            if (!qNorm || qNorm === 'wszystko' || qNorm === 'wszystkie' || qNorm === 'all') {
+                return true;
+            }
+            const trial = isTrialCoin(coin);
+            if (qNorm === 'tak' || qNorm === 'yes' || qNorm === 'true' || qNorm === '1') {
+                return trial;
+            }
+            if (qNorm === 'nie' || qNorm === 'no' || qNorm === 'false' || qNorm === '0') {
+                return !trial;
+            }
+            return false;
+        }
+
+        // Sprawdzenie tagu zdjecie: (TAK / NIE / TRUE / FALSE)
+        function matchZdjecieTag(coin, queryVal) {
+            const qNorm = normalizeStr(queryVal);
+            const hasPhotos = Array.isArray(coin.zdjecia) && coin.zdjecia.some(u => Boolean(u && u.trim()));
+            if (qNorm === 'tak' || qNorm === 'true' || qNorm === '1' || qNorm === 'jest') {
+                return hasPhotos;
+            }
+            if (qNorm === 'nie' || qNorm === 'false' || qNorm === '0' || qNorm === 'brak') {
+                return !hasPhotos;
+            }
+            return true;
+        }
+
+        // Sprawdzenie tagu kolekcja: (dostępne tylko dla zaufanego IP)
+        function matchKolekcjaTag(coin, queryVal) {
+            if (!IS_ADMIN_IP) return true;
+            const qNorm = normalizeStr(queryVal);
+            const isOwned = Boolean(coin.posiadana && (coin.ilosc || 0) >= 1);
+            if (qNorm === 'true' || qNorm === '1' || qNorm === 'tak' || qNorm === 'jest') {
+                return isOwned;
+            }
+            if (qNorm === 'false' || qNorm === '0' || qNorm === 'nie' || qNorm === 'brak') {
+                return !isOwned;
+            }
+            return false;
+        }
+
+        // Sprawdzenie tagu typ: / sekcja: (przypisanie do Sekcja / Typ)
+        function matchTypTag(coin, queryVal) {
+            const typRaw = (coin.typ || '').trim();
+            if (!typRaw || typRaw === '-') return false;
+            const qNorm = normalizeStr(queryVal);
+            const typNorm = normalizeStr(typRaw);
+            return typNorm.includes(qNorm) || typRaw.toLowerCase().includes(queryVal.trim().toLowerCase());
+        }
+
+        function matchSingleToken(coin, token) {
+            if (token.type === 'phrase') {
+                // Cudzysłów pojedynczy lub podwójny -> traktowany jako jeden ciąg znaków
+                return coin._searchTextLower.includes(token.value) || coin._searchTextNorm.includes(token.norm);
+            }
+
+            if (token.type === 'word') {
+                if (coin._searchTextLower.includes(token.value) || coin._searchTextNorm.includes(token.norm)) {
+                    return true;
+                }
+                // Obsługa odmiany przymiotnikowej "oksydowana" / "oksydowany" / "oksydowane" <-> "oksyda"
+                if (token.norm.startsWith('oksyd') && coin._searchTextNorm.includes('oksyd')) {
+                    return true;
+                }
+                return false;
+            }
+
+            if (token.type === 'tag') {
+                const t = token.tag;
+                const v = token.value;
+                if (t === 'proba' || t === 'trial') {
+                    return matchProbaTag(coin, v);
+                }
+                if (t === 'zdjecie' || t === 'zdjecia' || t === 'foto') {
+                    return matchZdjecieTag(coin, v);
+                }
+                if (t === 'kolekcja') {
+                    return matchKolekcjaTag(coin, v);
+                }
+                if (t === 'typ' || t === 'sekcja') {
+                    return matchTypTag(coin, v);
+                }
+                if (t === 'nominal') {
+                    return matchNominalTag(coin, v);
+                }
+                if (t === 'waluta') {
+                    return matchWalutaTag(coin, v);
+                }
+                if (t === 'waga') {
+                    return matchNumericOrRange(coin.waga_num, coin.waga, v);
+                }
+                if (t === 'srednica') {
+                    return matchNumericOrRange(coin.srednica_num, coin.srednica, v);
+                }
+                if (t === 'rok') {
+                    return matchRokTag(coin, v);
+                }
+                if (t === 'kraj') {
+                    const targetCodes = resolveCountryQuery(v);
+                    if (targetCodes.size === 0) return false;
+                    for (const c of targetCodes) {
+                        if (coin._countryCodes.has(c)) return true;
+                    }
+                    return false;
+                }
+                if (t === 'stop' || t === 'material') {
+                    return matchStopTag(coin, v);
+                }
+                // Nieznany tag -> szukaj jako tekst
+                const fallback = normalizeStr(`${t}:${v}`);
+                return coin._searchTextNorm.includes(fallback);
+            }
+
+            return true;
+        }
+
+        function prepareCoinsIndex(coins) {
+            const uniqueTypes = new Set();
+            const uniqueStops = new Set();
+
+            for (const c of coins) {
+                const combined = [
+                    c.nazwa,
+                    c.typ,
+                    c.emitent,
+                    c.nominal,
+                    c.rok,
+                    c.stop,
+                    c.waga,
+                    c.srednica,
+                    c.cechy_dodatkowe,
+                    c.numista_id ? `N#${c.numista_id}` : ''
+                ].filter(Boolean).join(' ');
+                c._searchTextLower = combined.toLowerCase();
+                c._searchTextNorm = normalizeStr(combined);
+                c._countryCodes = getCoinCountryCodes(c);
+
+                const typClean = (c.typ || '').trim();
+                if (typClean && typClean !== '-') uniqueTypes.add(typClean);
+
+                const stopClean = (c.stop || '').trim();
+                if (stopClean && stopClean !== '-' && stopClean !== '1') uniqueStops.add(stopClean);
+            }
+
+            const typDl = document.getElementById('flt-typ-datalist');
+            if (typDl) {
+                typDl.innerHTML = [...uniqueTypes]
+                    .sort((a, b) => a.localeCompare(b, 'pl'))
+                    .map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`)
+                    .join('');
+            }
+
+            const stopDl = document.getElementById('flt-stop-datalist');
+            if (stopDl) {
+                const baseGroups = [
+                    { val: 'srebro', label: 'Srebro (Ag*)' },
+                    { val: 'złoto', label: 'Złoto (Au*)' },
+                    { val: 'miedź', label: 'Miedź (Cu*)' },
+                    { val: 'miedzionikiel', label: 'Miedzionikiel (CuNi* / MN*)' },
+                    { val: 'MN', label: 'MN (Miedzionikiel)' }
+                ];
+                const baseHtml = baseGroups.map(g => `<option value="${escapeHtml(g.val)}">${escapeHtml(g.label)}</option>`).join('');
+                const dynamicHtml = [...uniqueStops]
+                    .sort((a, b) => a.localeCompare(b, 'pl'))
+                    .map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`)
+                    .join('');
+                stopDl.innerHTML = baseHtml + dynamicHtml;
+            }
+        }
+
+        // =====================================================================
+        // ILOŚĆ WYŚWIETLANYCH ELEMENTÓW NA STRONIE (10, 20, 50, WSZYSTKIE DLA ZAUFANEGO IP)
+        // =====================================================================
+
+        function parsePerPageToken(rawVal, allowed) {
+            if (rawVal === undefined || rawVal === null || rawVal === '') return null;
+            const norm = String(rawVal).trim().toLowerCase();
+            if ((norm === 'all' || norm === 'wszystko' || norm === 'wszystkie') && allowed.includes('all')) {
+                return 'all';
+            }
+            const num = parseInt(norm, 10);
+            if (!isNaN(num) && allowed.includes(num)) return num;
+            return null;
+        }
+
+        function applyLayoutFromUrlParams(params) {
+            if (!params) return false;
+            const rawLimit = params.get('limit') || params.get('na_strone') || params.get('per_page');
+            const parsedLimit = parsePerPageToken(rawLimit, ALLOWED_PER_PAGE);
+            if (parsedLimit !== null) {
+                itemsPerPage = parsedLimit;
+                return true;
+            }
+            return false;
+        }
+
+        function loadLayoutPrefs() {
+            gridColumns = 5;
+            try {
+                const raw = sessionStorage.getItem(LAYOUT_STORAGE_KEY) || localStorage.getItem(LAYOUT_STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    const pp = parsePerPageToken(parsed.perPage, ALLOWED_PER_PAGE);
+                    itemsPerPage = pp !== null ? pp : ALLOWED_PER_PAGE[0];
+                }
+            } catch (e) {}
+
+            const params = new URLSearchParams(window.location.search);
+            if (applyLayoutFromUrlParams(params)) {
+                saveLayoutPrefs();
+            }
+            renderLayoutPicker();
+        }
+
+        function saveLayoutPrefs() {
+            try {
+                const payload = JSON.stringify({ cols: 5, perPage: itemsPerPage });
+                sessionStorage.setItem(LAYOUT_STORAGE_KEY, payload);
+                localStorage.setItem(LAYOUT_STORAGE_KEY, payload);
+            } catch (e) {}
+        }
+
+        function renderLayoutPicker() {
+            const summaryEl = document.getElementById('layout-picker-summary');
+            if (summaryEl) {
+                summaryEl.textContent = itemsPerPage === 'all' ? 'wszystkie' : String(itemsPerPage);
+            }
+
+            const rowsContainer = document.getElementById('layout-rows-pills');
+            if (rowsContainer) {
+                rowsContainer.innerHTML = ALLOWED_PER_PAGE.map(opt => {
+                    const label = opt === 'all' ? 'wszystkie' : opt;
+                    const isActive = itemsPerPage === opt;
+                    const arg = opt === 'all' ? "'all'" : opt;
+                    return `<button type="button" class="layout-pill-btn ${isActive ? 'active' : ''}" onclick="selectGridPerPage(${arg})">${label}</button>`;
+                }).join('');
+            }
+        }
+
+        function toggleLayoutPopover(e) {
+            if (e) e.stopPropagation();
+            const pop = document.getElementById('layout-popover');
+            const trig = document.getElementById('layout-picker-trigger');
+            if (!pop) return;
+            const isOpen = pop.classList.toggle('open');
+            if (trig) trig.classList.toggle('open', isOpen);
+        }
+
+        function closeLayoutPopover() {
+            const pop = document.getElementById('layout-popover');
+            const trig = document.getElementById('layout-picker-trigger');
+            if (pop) pop.classList.remove('open');
+            if (trig) trig.classList.remove('open');
+        }
+
+        function selectGridPerPage(val) {
+            const parsed = (val === 'all' && ALLOWED_PER_PAGE.includes('all')) ? 'all' : parseInt(val, 10);
+            itemsPerPage = ALLOWED_PER_PAGE.includes(parsed) ? parsed : ALLOWED_PER_PAGE[0];
+            currentPage = 1;
+            saveLayoutPrefs();
+            renderLayoutPicker();
+            closeLayoutPopover();
+            updateUrlParams();
+            filterProducts(true);
+        }
+
+        function updateUrlParams(coinId = currentModalCoinId) {
+            const url = new URL(window.location);
+            const searchInput = document.getElementById('search-input');
+            const searchQuery = searchInput ? searchInput.value.trim() : '';
+
+            if (searchQuery) {
+                url.searchParams.set('szukaj', searchQuery);
+            } else {
+                url.searchParams.delete('szukaj');
+            }
+            url.searchParams.delete('q');
+            url.searchParams.delete('kolumny');
+
+            if (coinId) {
+                url.searchParams.set('moneta', coinId);
+            } else {
+                url.searchParams.delete('moneta');
+            }
+            url.searchParams.set('limit', itemsPerPage === 'all' ? 'wszystkie' : String(itemsPerPage));
+
+            if (itemsPerPage !== 'all' && currentPage > 1) {
+                url.searchParams.set('strona', String(currentPage));
+            } else {
+                url.searchParams.delete('strona');
+                url.searchParams.delete('page');
+            }
+
+            history.replaceState(null, '', url.pathname + url.search);
+        }
+
+        // =====================================================================
+        // PANEL FILTRÓW ZAAWANSOWANYCH (DWUKIERUNKOWA SYNCHRONIZACJA Z INPUTEM I URL)
+        // =====================================================================
+        const FILTER_TAG_META = {
+            kolekcja: { label: 'kolekcja', inputId: null, aliases: ['kolekcja'] },
+            zdjecie:  { label: 'zdjęcie',  inputId: null, aliases: ['zdjecie', 'zdjęcia', 'foto'] },
+            proba:    { label: 'próba',    inputId: null, aliases: ['proba', 'trial'] },
+            typ:      { label: 'typ',      inputId: 'flt-typ', aliases: ['typ', 'sekcja'] },
+            nominal:  { label: 'nominał',  inputId: 'flt-nominal', aliases: ['nominal'] },
+            waluta:   { label: 'waluta',   inputId: 'flt-waluta', aliases: ['waluta'] },
+            rok:      { label: 'rok',      inputId: 'flt-rok', aliases: ['rok'] },
+            waga:     { label: 'waga',     inputId: 'flt-waga', aliases: ['waga'] },
+            srednica: { label: 'średnica', inputId: 'flt-srednica', aliases: ['srednica'] },
+            kraj:     { label: 'kraj',     inputId: 'flt-kraj', aliases: ['kraj'] },
+            stop:     { label: 'stop',     inputId: 'flt-stop', aliases: ['stop', 'material'] }
+        };
+
+        function populateCountryDatalist() {
+            const dl = document.getElementById('flt-kraj-datalist');
+            if (!dl) return;
+            dl.innerHTML = COUNTRY_DEFINITIONS.map(cd => {
+                const mainName = (cd.names && cd.names[0]) ? cd.names[0] : cd.code;
+                return `<option value="${escapeHtml(cd.code)}">${escapeHtml(mainName)} (${escapeHtml(cd.code)})</option>`;
+            }).join('');
+        }
+
+        function toggleFiltersPanel() {
+            const panel = document.getElementById('filters-panel');
+            const btn = document.getElementById('filter-toggle-btn');
+            if (!panel) return;
+            const isOpen = panel.classList.toggle('open');
+            if (btn) btn.classList.toggle('open', isOpen);
+        }
+
+        function resolveCanonicalTagKey(normTagName) {
+            for (const [key, meta] of Object.entries(FILTER_TAG_META)) {
+                if (key === normTagName || (meta.aliases && meta.aliases.includes(normTagName))) {
+                    return key;
+                }
+            }
+            return null;
+        }
+
+        function syncFilterPanelFromSearchInput() {
+            const searchInput = document.getElementById('search-input');
+            const rawQuery = searchInput ? searchInput.value : '';
+            const tokens = parseSearchTokens(rawQuery);
+
+            const tagValues = {
+                kolekcja: '',
+                zdjecie: '',
+                proba: '',
+                typ: '',
+                nominal: '',
+                waluta: '',
+                rok: '',
+                waga: '',
+                srednica: '',
+                kraj: '',
+                stop: ''
+            };
+
+            for (const t of tokens) {
+                if (t.type === 'tag') {
+                    const canonKey = resolveCanonicalTagKey(t.tag);
+                    if (canonKey) {
+                        tagValues[canonKey] = t.value;
+                    }
+                }
+            }
+
+            // Aktualizacja pól tekstowych w panelu filtrów (np. gdy ktoś ręcznie wpisze rok:1995-2004 w wyszukiwarkę)
+            for (const [key, meta] of Object.entries(FILTER_TAG_META)) {
+                if (!meta.inputId) continue;
+                const el = document.getElementById(meta.inputId);
+                if (el && document.activeElement !== el) {
+                    el.value = tagValues[key] || '';
+                }
+            }
+
+            // Aktualizacja rozwijanego pola wyboru W kolekcji (TAK / NIE / Wszystkie)
+            const kolNorm = normalizeStr(tagValues.kolekcja || '');
+            let kolState = '';
+            if (kolNorm === 'true' || kolNorm === '1' || kolNorm === 'tak' || kolNorm === 'jest') {
+                kolState = 'TRUE';
+            } else if (kolNorm === 'false' || kolNorm === '0' || kolNorm === 'nie' || kolNorm === 'brak') {
+                kolState = 'FALSE';
+            }
+            const kolSelect = document.getElementById('flt-kolekcja');
+            if (kolSelect && kolSelect.value !== kolState) {
+                kolSelect.value = kolState;
+            }
+
+            // Aktualizacja rozwijanego pola wyboru Zdjęcie (TAK / NIE / Wszystkie)
+            const zdjNorm = normalizeStr(tagValues.zdjecie || '');
+            let zdjState = '';
+            if (zdjNorm === 'true' || zdjNorm === '1' || zdjNorm === 'tak' || zdjNorm === 'jest') {
+                zdjState = 'TAK';
+            } else if (zdjNorm === 'false' || zdjNorm === '0' || zdjNorm === 'nie' || zdjNorm === 'brak') {
+                zdjState = 'NIE';
+            }
+            const zdjSelect = document.getElementById('flt-zdjecie');
+            if (zdjSelect && zdjSelect.value !== zdjState) {
+                zdjSelect.value = zdjState;
+            }
+
+            // Aktualizacja rozwijanego pola wyboru Próba / Trial (<Tak/Yes/True/Nie/No/False>)
+            const probaNorm = normalizeStr(tagValues.proba || '');
+            const probaSelectMap = {
+                tak: 'Tak',
+                yes: 'Yes',
+                true: 'True',
+                '1': 'Tak',
+                nie: 'Nie',
+                no: 'No',
+                false: 'False',
+                '0': 'Nie'
+            };
+            const probaState = probaSelectMap[probaNorm] || '';
+            const probaSelect = document.getElementById('flt-proba');
+            if (probaSelect && probaSelect.value !== probaState) {
+                probaSelect.value = probaState;
+            }
+
+            // Wskaźnik aktywnych filtrów na przycisku ikony filtrów
+            const hasAnyActiveTag = Object.values(tagValues).some(v => Boolean(v && v.trim()));
+            const toggleBtn = document.getElementById('filter-toggle-btn');
+            if (toggleBtn) {
+                toggleBtn.classList.toggle('has-active', hasAnyActiveTag);
+            }
+        }
+
+        function setTagInRawQuery(rawQuery, targetNormTag, newVal) {
+            const meta = FILTER_TAG_META[targetNormTag];
+            const canonicalLabel = meta ? meta.label : targetNormTag;
+            const aliases = (meta && meta.aliases) ? meta.aliases : [targetNormTag];
+            const trimmedVal = (newVal || '').trim();
+            const formattedValue = /\s/.test(trimmedVal) ? `"${trimmedVal.replace(/"/g, '')}"` : trimmedVal;
+            const formattedToken = trimmedVal ? `${canonicalLabel}:${formattedValue}` : '';
+
+            const tagRegex = /([a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ]+):(?:"([^"]*)"|'([^']*)'|(\S*))/g;
+            let replaced = false;
+            let updated = (rawQuery || '').replace(tagRegex, (fullMatch, tagName) => {
+                if (aliases.includes(normalizeStr(tagName))) {
+                    if (!replaced && trimmedVal) {
+                        replaced = true;
+                        return `${tagName}:${formattedValue}`;
+                    }
+                    return '';
+                }
+                return fullMatch;
+            });
+
+            if (!replaced && formattedToken) {
+                updated = updated.trim() ? `${updated.trim()} ${formattedToken}` : formattedToken;
+            }
+
+            return updated.replace(/\s{2,}/g, ' ').trim();
+        }
+
+        function onFilterPanelChange(tagKey, newVal) {
+            const input = document.getElementById('search-input');
+            const clearBtn = document.getElementById('search-clear-btn');
+            if (!input) return;
+
+            input.value = setTagInRawQuery(input.value, tagKey, newVal);
+            if (clearBtn) {
+                clearBtn.style.display = input.value.length > 0 ? 'inline-flex' : 'none';
+            }
+            syncFilterPanelFromSearchInput();
+            closeSuggestions();
+            updateUrlParams();
+            filterProducts(true, false);
+        }
+
+        function resetTagFilters() {
+            const input = document.getElementById('search-input');
+            const clearBtn = document.getElementById('search-clear-btn');
+            if (!input) return;
+
+            let q = input.value;
+            for (const key of Object.keys(FILTER_TAG_META)) {
+                q = setTagInRawQuery(q, key, '');
+            }
+            input.value = q;
+            if (clearBtn) {
+                clearBtn.style.display = input.value.length > 0 ? 'inline-flex' : 'none';
+            }
+            syncFilterPanelFromSearchInput();
+            closeSuggestions();
+            updateUrlParams();
+            filterProducts(true, false);
+        }
+
+        // =====================================================================
+        // WYSZUKIWANIE NA ŻYWO + PODPOWIEDZI (PIERWSZE 5 POZYCJI)
+        // =====================================================================
+        function onSearchInput() {
+            const input = document.getElementById('search-input');
+            const clearBtn = document.getElementById('search-clear-btn');
+            if (clearBtn) {
+                clearBtn.style.display = (input && input.value.length > 0) ? 'inline-flex' : 'none';
+            }
+            syncFilterPanelFromSearchInput();
+            updateUrlParams();
+            filterProducts(true, true);
+        }
+
+        function onSearchFocus() {
+            const input = document.getElementById('search-input');
+            if (input && input.value.trim().length > 0) {
+                filterProducts(false, true);
+            }
+        }
+
+        function clearSearchInput() {
+            const input = document.getElementById('search-input');
+            const clearBtn = document.getElementById('search-clear-btn');
+            if (input) {
+                input.value = '';
+                input.focus();
+            }
+            if (clearBtn) clearBtn.style.display = 'none';
+            syncFilterPanelFromSearchInput();
+            closeSuggestions();
+            updateUrlParams();
+            filterProducts(true, false);
+        }
+
+        function closeSuggestions() {
+            const sugBox = document.getElementById('search-suggestions');
+            if (sugBox) sugBox.classList.remove('open');
+        }
+
+        function renderSearchSuggestions(filteredCoins, rawQuery) {
+            const sugBox = document.getElementById('search-suggestions');
+            if (!sugBox) return;
+
+            if (!rawQuery || !rawQuery.trim()) {
+                sugBox.classList.remove('open');
+                sugBox.innerHTML = '';
+                return;
+            }
+
+            const top5 = filteredCoins.slice(0, 5);
+            if (top5.length === 0) {
+                sugBox.innerHTML = `
+                    <div class="suggestions-header">
+                        <span>Podpowiedzi wyszukiwania</span>
+                        <span>0 wyników</span>
+                    </div>
+                    <div style="padding:12px 14px; font-size:13px; color:var(--text-muted);">
+                        Brak monet spełniających wszystkie kryteria: <strong style="color:#fff;">${escapeHtml(rawQuery)}</strong>
+                    </div>
+                `;
+                sugBox.classList.add('open');
+                return;
+            }
+
+            const itemsHtml = top5.map(c => {
+                const subParts = [];
+                if (c.typ) subParts.push(`<span>📁 ${escapeHtml(c.typ)}</span>`);
+                if (c.emitent) subParts.push(`<span>🏛️ ${escapeHtml(c.emitent)}</span>`);
+                if (c.rok) subParts.push(`<span>📅 ${escapeHtml(c.rok)}</span>`);
+                if (c.waga) subParts.push(`<span>⚖️ ${escapeHtml(c.waga)}</span>`);
+                if (c.srednica) subParts.push(`<span>📏 ${escapeHtml(c.srednica)}</span>`);
+
+                return `
+                    <div class="suggestion-item" onclick="selectSuggestion('${c.id}')">
+                        <div class="suggestion-main">
+                            <div class="suggestion-title">${escapeHtml(getDisplayName(c.nazwa))}</div>
+                            <div class="suggestion-sub">${subParts.join('')}</div>
+                        </div>
+                        <div class="suggestion-badges">
+                            ${c.nominal ? `<span class="sug-badge">${escapeHtml(c.nominal)}</span>` : ''}
+                            ${c.stop ? `<span class="sug-badge sug-badge-gold">${escapeHtml(c.stop)}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            sugBox.innerHTML = `
+                <div class="suggestions-header">
+                    <span>Podpowiedzi (pierwsze ${top5.length} z ${filteredCoins.length} pasujących)</span>
+                    <span>Kliknij, aby zobaczyć szczegóły</span>
+                </div>
+                ${itemsHtml}
+            `;
+            sugBox.classList.add('open');
+        }
+
+        function selectSuggestion(coinId) {
+            closeSuggestions();
+            openModal(coinId, true);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function getDisplayName(nazwaStr) {
+            if (!nazwaStr) return '';
+            const s = String(nazwaStr);
+            const idx = s.indexOf(';');
+            if (idx !== -1) {
+                const before = s.slice(0, idx).trim();
+                if (before) return before;
+            }
+            return s.trim();
+        }
+
+        function getIndexFromName(nazwaStr) {
+            if (!nazwaStr) return '';
+            const s = String(nazwaStr);
+            const idx = s.indexOf(';');
+            if (idx !== -1) {
+                return s.slice(idx + 1).trim();
+            }
+            return '';
+        }
+
+        function formatShapeHtml(ksztaltStr) {
+            const raw = (ksztaltStr || '').trim();
+            if (!raw || raw === '-') return escapeHtml('#b/d');
+            if (/^[ΦφФ]$/i.test(raw)) {
+                return `<span title="Koło (Φ)" style="display:inline-flex; align-items:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="8.5"/></svg></span>`;
+            }
+            return escapeHtml(raw).replace(/[ΦφФ]/g, `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-3px;"><circle cx="12" cy="12" r="8.5"/></svg>`);
+        }
+
+
+        function getMetalSymbol(stopStr) {
+            const s = (stopStr || '').trim();
+            if (!s || s === '-' || s === '1') return '';
+            // Sprawdzenie przedrostków i kodów stopów:
+            if (/^Ag/i.test(s)) return 'Ag';
+            if (/^Au/i.test(s)) return 'Au';
+            if (/^Pt/i.test(s)) return 'Pt';
+            if (/^Pl/i.test(s)) return 'Pl';
+            if (/^Ti/i.test(s)) return 'Ti';
+            if (/^Cu/i.test(s) && !/^CuNi/i.test(s) && !/^CuZn/i.test(s)) return 'Cu';
+            return '';
+        }
+
+        function calculateSkupVal(coin) {
+            const stopStr = (coin.stop || '').trim();
+            const valNum = coin.value_num;
+            const wagaNum = coin.waga_num;
+
+            // Sprawdzenie reguł skupu:
+            // 1. Skup dla Ag: value -30%
+            if (/^Ag/i.test(stopStr)) {
+                if (valNum !== null && valNum !== undefined && !isNaN(valNum) && valNum > 0) {
+                    return valNum * 0.70;
+                }
+                return null;
+            }
+
+            // 2. Skup dla Au: value -5%
+            if (/^Au/i.test(stopStr)) {
+                if (valNum !== null && valNum !== undefined && !isNaN(valNum) && valNum > 0) {
+                    return valNum * 0.95;
+                }
+                return null;
+            }
+
+            // 3. Skup dla Pt: value
+            if (/^Pt/i.test(stopStr)) {
+                if (valNum !== null && valNum !== undefined && !isNaN(valNum) && valNum > 0) {
+                    return valNum;
+                }
+                return null;
+            }
+
+            // 4. Skup dla Pl: value
+            if (/^Pl/i.test(stopStr)) {
+                if (valNum !== null && valNum !== undefined && !isNaN(valNum) && valNum > 0) {
+                    return valNum;
+                }
+                return null;
+            }
+
+            // 5. Skup dla Cu999: 5zł * waga / 31,1
+            if (/^Cu999/i.test(stopStr)) {
+                if (wagaNum !== null && wagaNum !== undefined && !isNaN(wagaNum) && wagaNum > 0) {
+                    return (5.0 * wagaNum) / 31.1;
+                }
+                return null;
+            }
+
+            // 6. Skup dla Ti: 20zł * waga / 31,1
+            if (/^Ti/i.test(stopStr)) {
+                if (wagaNum !== null && wagaNum !== undefined && !isNaN(wagaNum) && wagaNum > 0) {
+                    return (20.0 * wagaNum) / 31.1;
+                }
+                return null;
+            }
+
+            return null;
+        }
+
+        function formatPlnAmount(num) {
+            if (num === null || num === undefined || isNaN(num)) return '';
+            return num.toLocaleString('pl-PL', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }) + ' zł';
+        }
+
+        function getBuybackPriceData(coin) {
+            if (!coin) return null;
+            const valRaw = (coin.value || '').trim();
+            const estRaw = (coin.estymacja || '').trim();
+
+            const isValEmpty = !valRaw || valRaw === '-' || valRaw.startsWith('#');
+            const isEstEmpty = !estRaw || estRaw === '-' || estRaw.startsWith('#');
+
+            // Jeżeli %value% oraz %estymacja% są puste to ukryj informacje o cenie
+            if (isValEmpty && isEstEmpty) {
+                return null;
+            }
+
+            const metalSymbol = getMetalSymbol(coin.stop);
+            const valueLabel = metalSymbol ? `Wartość ${metalSymbol}:` : 'Wartość:';
+
+            let valueDisplay = '';
+            if (valRaw.toLowerCase() === 'sentyment') {
+                valueDisplay = 'sentymentalna';
+            } else if (!isValEmpty) {
+                valueDisplay = valRaw;
+            }
+
+            const skupNum = calculateSkupVal(coin);
+            const skupDisplay = (IS_ADMIN_IP && skupNum !== null) ? formatPlnAmount(skupNum) : '';
+
+            const estDisplay = !isEstEmpty ? estRaw : '';
+
+            // Jeśli nie ma ani wartości, ani skupu, ani estymacji
+            if (!valueDisplay && !skupDisplay && !estDisplay) {
+                return null;
+            }
+
+            return {
+                valueLabel,
+                valueDisplay,
+                skupDisplay,
+                estDisplay
+            };
+        }
+
+        function renderPriceBlockHtml(coin, isModal = false) {
+            const data = getBuybackPriceData(coin);
+            if (!data) return '';
+
+            const containerClass = isModal ? 'modal-price-block' : 'product-price';
+            const lines = [];
+
+            if (data.valueDisplay) {
+                lines.push(`
+                    <div class="price-line">
+                        <span class="price-line-label">${escapeHtml(data.valueLabel)}</span>
+                        <span class="price-line-val highlight">${escapeHtml(data.valueDisplay)}</span>
+                    </div>
+                `);
+            }
+            if (IS_ADMIN_IP && data.skupDisplay) {
+                lines.push(`
+                    <div class="price-line">
+                        <span class="price-line-label">Skup komisowy:</span>
+                        <span class="price-line-val">${escapeHtml(data.skupDisplay)}</span>
+                    </div>
+                `);
+            }
+            if (data.estDisplay) {
+                lines.push(`
+                    <div class="price-line">
+                        <span class="price-line-label">Estymacja:</span>
+                        <span class="price-line-val">${escapeHtml(data.estDisplay)}</span>
+                    </div>
+                `);
+            }
+
+            if (lines.length === 0) return '';
+            return `<div class="${containerClass}">${lines.join('')}</div>`;
+        }
+
+        function extractFirstYear(rokStr) {
+            if (!rokStr) return null;
+            const m = String(rokStr).match(/(\d{4})/);
+            return m ? parseInt(m[1], 10) : null;
+        }
+
+        function filterProducts(resetPage = true, showSuggestions = false) {
+            if (resetPage) {
+                currentPage = 1;
+            }
+
+            const rawQuery = (document.getElementById('search-input')?.value || '');
+            const tokens = parseSearchTokens(rawQuery);
+
+            // Każde słowo / fraza / tag działa jako kolejny filtr zawężający (AND) na zbiorze
+            let filtered = allCoins;
+            for (const token of tokens) {
+                filtered = filtered.filter(coin => matchSingleToken(coin, token));
+            }
+
+            // Aktualizacja podpowiedzi (pierwszych 5 pozycji)
+            if (showSuggestions) {
+                renderSearchSuggestions(filtered, rawQuery);
+            }
+
+            // Podsumowanie filtra na pasku breadcrumb
+            const summaryEl = document.getElementById('active-filter-summary');
+            if (summaryEl) {
+                if (tokens.length > 0) {
+                    summaryEl.innerHTML = `Znaleziono: <strong style="color:#fff;">${filtered.length}</strong> z ${allCoins.length} pozycji`;
+                } else {
+                    summaryEl.innerHTML = `Ilość walorów w bazie: <strong style="color:#fff;">${allCoins.length}</strong>`;
+                }
+            }
+
+            // Stałe sortowanie po pełnej nazwie (wraz z indeksem)
+            const sorted = [...filtered].sort((a, b) =>
+                (a.nazwa || '').localeCompare(b.nazwa || '', 'pl', { numeric: true, sensitivity: 'base' })
+            );
+
+            // Stronnicowanie wg wybranej liczby elementów na stronę (stałe 5 kolumn na desktopie)
+            const totalItems = sorted.length;
+            let pageCoins = [];
+            let totalPages = 1;
+
+            if (itemsPerPage === 'all') {
+                currentPage = 1;
+                totalPages = 1;
+                pageCoins = sorted;
+            } else {
+                totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+                if (currentPage > totalPages) currentPage = totalPages;
+                if (currentPage < 1) currentPage = 1;
+
+                const startIdx = (currentPage - 1) * itemsPerPage;
+                pageCoins = sorted.slice(startIdx, startIdx + itemsPerPage);
+            }
+
+            renderProductsGrid(pageCoins);
+            renderPagination(totalItems);
+        }
+
+        function buildPaginationHtml(totalItems) {
+            const totalPages = (itemsPerPage === 'all') ? 1 : (Math.ceil(totalItems / itemsPerPage) || 1);
+
+            let html = '';
+            html += `<button class="page-btn" ${currentPage <= 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})" title="Poprzednia strona">◀</button>`;
+
+            // Kompaktowe wyświetlanie numerów stron: pierwsza, poprzednia, bieżąca, następna, ostatnia (bez przeskoku o dwa pola)
+            const maxVisibleButtons = 5;
+            if (totalPages <= maxVisibleButtons) {
+                for (let i = 1; i <= totalPages; i++) {
+                    html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+                }
+            } else {
+                const pages = new Set([1, totalPages, currentPage - 1, currentPage, currentPage + 1]);
+                const validPages = [...pages].filter(p => p >= 1 && p <= totalPages).sort((a, b) => a - b);
+                let prev = 0;
+                for (const p of validPages) {
+                    if (prev && p - prev > 1) {
+                        html += `<span class="page-info">…</span>`;
+                    }
+                    html += `<button class="page-btn ${p === currentPage ? 'active' : ''}" onclick="changePage(${p})">${p}</button>`;
+                    prev = p;
+                }
+            }
+
+            html += `<button class="page-btn" ${currentPage >= totalPages ? 'disabled' : ''} onclick="changePage(${currentPage + 1})" title="Następna strona">▶</button>`;
+            html += `<span class="page-info page-summary-text">(Strona ${currentPage} z ${totalPages}, łącznie ${totalItems} poz.)</span>`;
+            return html;
+        }
+
+        function renderPagination(totalItems) {
+            const html = buildPaginationHtml(totalItems);
+            const topContainer = document.getElementById('pagination-container-top');
+            const bottomContainer = document.getElementById('pagination-container-bottom');
+            if (topContainer) topContainer.innerHTML = html;
+            if (bottomContainer) bottomContainer.innerHTML = html;
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            updateUrlParams();
+            filterProducts(false, false);
+            window.scrollTo({ top: document.getElementById('search-input').offsetTop - 80, behavior: 'smooth' });
+        }
+
+        function getMetalClass(stopStr) {
+            const s = (stopStr || '').toLowerCase();
+            if (s.startsWith('au')) return 'metal-au';
+            if (s.startsWith('ag')) return 'metal-ag';
+            if (s.startsWith('cu') && !s.startsWith('cuni')) return 'metal-cu';
+            return 'metal-other';
+        }
+
+        let currentModalPhotos = [];
+        let currentModalPhotoIdx = 0;
+
+        function renderProductsGrid(coins) {
+            const grid = document.getElementById('products-grid');
+            if (!coins || coins.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:40px; color:var(--text-muted);">Brak monet spełniających podane kryteria wyszukiwania.</div>';
+                return;
+            }
+
+            grid.innerHTML = coins.map(c => {
+                const metalClass = getMetalClass(c.stop);
+                const nominalLabel = (c.nominal && c.nominal !== '-') ? c.nominal : 'Moneta';
+                const yearLabel = (c.rok && c.rok !== '-') ? c.rok : '';
+                let stockBadge = '';
+                let imgWrapperExtraClass = '';
+                if (IS_ADMIN_IP) {
+                    const qty = c.ilosc || 1;
+                    stockBadge = c.posiadana
+                        ? `<span class="badge-stock in-collection">✅ W kolekcji (${qty} szt.)</span>`
+                        : `<span class="badge-stock missing">Brak w zbiorze</span>`;
+                    if (!c.posiadana) {
+                        imgWrapperExtraClass = 'not-owned';
+                    }
+                }
+
+                const displayName = getDisplayName(c.nazwa);
+                const priceBlockHtml = renderPriceBlockHtml(c, false);
+                const firstPhoto = (Array.isArray(c.zdjecia) && c.zdjecia.length > 0) ? c.zdjecia[0] : '';
+
+                const emblemHtml = `
+                    <div class="coin-emblem ${metalClass}">
+                        <div class="coin-emblem-nominal">${escapeHtml(nominalLabel)}</div>
+                        ${yearLabel ? `<div class="coin-emblem-year">${escapeHtml(yearLabel)}</div>` : ''}
+                    </div>
+                `;
+
+                const visualHtml = firstPhoto
+                    ? `<img src="${escapeHtml(firstPhoto)}" class="product-card-img" alt="${escapeHtml(displayName)}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div class="coin-emblem ${metalClass}" style="display:none;"><div class="coin-emblem-nominal">${escapeHtml(nominalLabel)}</div>${yearLabel ? `<div class="coin-emblem-year">${escapeHtml(yearLabel)}</div>` : ''}</div>`
+                    : emblemHtml;
+
+                const specs = [];
+                if (c.rok && c.rok !== '-') specs.push({ html: `📅 ${escapeHtml(c.rok)}` });
+                if (c.nominal && c.nominal !== '-') specs.push({ html: `💰 ${escapeHtml(c.nominal)}` });
+                if (c.waga && c.waga !== '-') specs.push({ html: `⚖️ ${escapeHtml(c.waga)}` });
+                if (c.srednica && c.srednica !== '-') specs.push({ html: `📏 ${escapeHtml(c.srednica)}` });
+                const isTrial = isTrialCoin(c);
+                specs.push({
+                    html: `🔨 Próba: ${isTrial ? 'Tak' : 'Nie'}`,
+                    extraClass: isTrial ? 'spec-pill-trial' : ''
+                });
+
+                return `
+                    <div class="product-card" onclick="openModal('${c.id}')">
+                        <div class="product-img-wrapper ${imgWrapperExtraClass}">
+                            ${visualHtml}
+                            ${c.typ ? `<span class="badge-category" title="${escapeHtml(c.typ)}">${escapeHtml(c.typ)}</span>` : ''}
+                            ${c.stop && c.stop !== '-' ? `<span class="badge-stop">${escapeHtml(c.stop)}</span>` : ''}
+                            ${c.emitent && c.emitent !== '-' ? `<span class="badge-emitent">🏛️ ${escapeHtml(c.emitent)}</span>` : ''}
+                            ${stockBadge}
+                        </div>
+                        <div class="product-info">
+                            <div class="product-title">${escapeHtml(displayName)}</div>
+                            ${priceBlockHtml}
+                            <div class="product-specs">
+                                ${specs.map(s => `<span class="spec-pill ${s.extraClass || ''}">${s.html}</span>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function handleModalPhotoError(failedIdx) {
+            const coin = allCoins.find(c => c.id === currentModalCoinId);
+            const brokenUrl = currentModalPhotos[failedIdx];
+            currentModalPhotos.splice(failedIdx, 1);
+            if (coin && Array.isArray(coin.zdjecia) && brokenUrl) {
+                coin.zdjecia = coin.zdjecia.filter(u => u !== brokenUrl);
+            }
+            if (currentModalPhotoIdx >= currentModalPhotos.length) {
+                currentModalPhotoIdx = Math.max(0, currentModalPhotos.length - 1);
+            }
+            renderModalPhoto();
+        }
+
+        function renderModalPhoto() {
+            const coin = allCoins.find(c => c.id === currentModalCoinId);
+            const photoBox = document.getElementById('modal-photo-box');
+            const photoNav = document.getElementById('modal-photo-nav');
+            const counterEl = document.getElementById('modal-photo-counter');
+            const fsImg = document.getElementById('fullscreen-img-main');
+            const fsNav = document.getElementById('fullscreen-nav-bar');
+            const fsCounter = document.getElementById('fullscreen-photo-counter');
+
+            if (!photoBox || !coin) return;
+
+            if (currentModalPhotos.length > 0) {
+                const url = currentModalPhotos[currentModalPhotoIdx] || currentModalPhotos[0];
+                photoBox.innerHTML = `<img src="${escapeHtml(url)}" class="modal-photo-img" alt="${escapeHtml(getDisplayName(coin.nazwa))}" onclick="openFullscreenLightbox()" onerror="handleModalPhotoError(${currentModalPhotoIdx})" title="Kliknij, aby powiększyć na pełny ekran">`;
+                if (fsImg) fsImg.src = url;
+
+                if (currentModalPhotos.length > 1) {
+                    if (photoNav) photoNav.style.display = 'flex';
+                    if (counterEl) counterEl.textContent = `${currentModalPhotoIdx + 1} / ${currentModalPhotos.length}`;
+                    if (fsNav) fsNav.style.display = 'flex';
+                    if (fsCounter) fsCounter.textContent = `${currentModalPhotoIdx + 1} / ${currentModalPhotos.length}`;
+                } else {
+                    if (photoNav) photoNav.style.display = 'none';
+                    if (fsNav) fsNav.style.display = 'none';
+                }
+            } else {
+                const metalClass = getMetalClass(coin.stop);
+                const nominalLabel = (coin.nominal && coin.nominal !== '-') ? coin.nominal : 'Moneta';
+                const yearLabel = (coin.rok && coin.rok !== '-') ? coin.rok : '';
+                photoBox.innerHTML = `
+                    <div class="coin-emblem ${metalClass}">
+                        <div class="coin-emblem-nominal">${escapeHtml(nominalLabel)}</div>
+                        ${yearLabel ? `<div class="coin-emblem-year">${escapeHtml(yearLabel)}</div>` : ''}
+                    </div>
+                `;
+                if (photoNav) photoNav.style.display = 'none';
+                if (fsNav) fsNav.style.display = 'none';
+            }
+        }
+
+        function changeModalPhoto(delta) {
+            if (!currentModalPhotos || currentModalPhotos.length <= 1) return;
+            const total = currentModalPhotos.length;
+            currentModalPhotoIdx = (currentModalPhotoIdx + delta + total) % total;
+            renderModalPhoto();
+        }
+
+        function openFullscreenLightbox() {
+            if (!currentModalPhotos || currentModalPhotos.length === 0) return;
+            const lb = document.getElementById('fullscreen-lightbox');
+            if (lb) {
+                renderModalPhoto();
+                lb.classList.add('open');
+            }
+        }
+
+        function closeFullscreenLightbox() {
+            const lb = document.getElementById('fullscreen-lightbox');
+            if (lb) lb.classList.remove('open');
+        }
+
+        function closeFullscreenOnOverlay(e) {
+            if (e.target.id === 'fullscreen-lightbox') {
+                closeFullscreenLightbox();
+            }
+        }
+
+        function openModal(coinId, shouldUpdateUrl = true) {
+            const coin = allCoins.find(c => c.id === coinId);
+            if (!coin) return;
+
+            currentModalCoinId = coinId;
+            currentModalPhotos = Array.isArray(coin.zdjecia) ? coin.zdjecia.filter(Boolean) : [];
+            currentModalPhotoIdx = 0;
+
+            if (shouldUpdateUrl) {
+                updateUrlParams(coinId);
+            }
+
+            renderModalPhoto();
+
+            document.getElementById('modal-category').textContent = `${coin.typ || 'Kolekcja'} • Emitent: ${coin.emitent || '-'}`;
+            document.getElementById('modal-title').textContent = getDisplayName(coin.nazwa);
+
+            const priceContainer = document.getElementById('modal-price-container');
+            const priceBlockHtml = renderPriceBlockHtml(coin, true);
+            let badgeHtml = '';
+            if (IS_ADMIN_IP) {
+                const qty = coin.ilosc || 1;
+                badgeHtml = coin.posiadana
+                    ? `<span style="background:rgba(16,185,129,0.2); color:#6ee7b7; font-size:13px; font-weight:700; padding:4px 10px; border-radius:6px; border:1px solid rgba(16,185,129,0.4);">✅ W kolekcji (${qty} szt.)</span>`
+                    : `<span style="background:rgba(148,163,184,0.15); color:#cbd5e1; font-size:13px; font-weight:600; padding:4px 10px; border-radius:6px; border:1px solid rgba(255,255,255,0.12);">Brak w kolekcji (pozycja katalogowa)</span>`;
+            }
+
+            priceContainer.innerHTML = `
+                <div style="display:flex; align-items:flex-start; gap:14px; flex-wrap:wrap;">
+                    ${priceBlockHtml}
+                    ${badgeHtml ? `<div style="margin-top:6px;">${badgeHtml}</div>` : ''}
+                </div>
+            `;
+
+            const indeksVal = getIndexFromName(coin.nazwa);
+            const rawNumista = (coin.numista_id || '').trim();
+            const cleanNumistaId = (rawNumista && rawNumista !== '-') ? rawNumista.replace(/^N#\s*/i, '').trim() : '';
+
+            const formatVal = (v) => {
+                const s = (v !== null && v !== undefined) ? String(v).trim() : '';
+                return (s && s !== '-') ? escapeHtml(s) : '#b/d';
+            };
+
+            const indeksContainer = document.getElementById('modal-indeks-container');
+            if (indeksContainer) {
+                indeksContainer.innerHTML = `
+                    <div class="detail-box">
+                        <div class="detail-label">Indeks:</div>
+                        <div class="detail-val">${formatVal(indeksVal)}</div>
+                    </div>
+                `;
+            }
+
+            const numistaLinkHtml = cleanNumistaId
+                ? `<a href="https://pl.numista.com/${encodeURIComponent(cleanNumistaId)}" target="_blank" rel="noopener noreferrer" style="color:#818cf8; text-decoration:underline;">pl.numista.com/${escapeHtml(cleanNumistaId)}</a>`
+                : '#b/d';
+
+            const isTrial = isTrialCoin(coin);
+            const fields = [
+                { label: 'Nominał', html: formatVal(coin.nominal) },
+                { label: 'Rok', html: formatVal(coin.rok) },
+                { label: 'Emitent', html: formatVal(coin.emitent) },
+                { label: 'Sekcja / Typ', html: formatVal(coin.typ) },
+                { label: 'Próba (Trial)', html: isTrial ? '<span style="color:#fde68a; font-weight:700;">Tak</span>' : 'Nie' },
+                { label: 'Stop', html: formatVal(coin.stop) },
+                { label: 'Waga', html: formatVal(coin.waga) },
+                { label: 'Średnica / Wymiar', html: formatVal(coin.srednica) },
+                { label: 'Kształt', html: formatShapeHtml(coin.ksztalt) },
+                { label: 'Czystego Ag (g)', html: formatVal(coin.czystego_ag) },
+                { label: 'Czystego Au', html: formatVal(coin.czystego_au) },
+                { label: 'Nakład', html: formatVal(coin.naklad) },
+                { label: 'Estymacja', html: formatVal(coin.estymacja) },
+                { label: 'Data emisji', html: formatVal(coin.data_emisji) },
+                { label: 'Cena emisji', html: formatVal(coin.cena_emisji) },
+                { label: 'Cechy dodatkowe', html: formatVal(coin.cechy_dodatkowe) },
+                { label: 'Numista Link', html: numistaLinkHtml }
+            ];
+
+            const gridEl = document.getElementById('modal-details-grid');
+            gridEl.innerHTML = fields.map(f => `
+                <div class="detail-box" ${f.wide ? 'style="grid-column: 1 / -1;"' : ''}>
+                    <div class="detail-label">${escapeHtml(f.label)}</div>
+                    <div class="detail-val">${f.html}</div>
+                </div>
+            `).join('');
+
+            if (IS_ADMIN_IP) {
+                const rawJsonBox = document.getElementById('modal-raw-json-box');
+                const rawJsonPre = document.getElementById('modal-raw-json-pre');
+                if (rawJsonBox && rawJsonPre) {
+                    const cleanCoinEntry = {};
+                    const internalKeys = new Set(['_searchTextLower', '_searchTextNorm', '_countryCodes']);
+                    cleanCoinEntry.baza_odczytana_at = (lastSyncInfo && (lastSyncInfo.db_read_iso || lastSyncInfo.last_modified_iso)) || null;
+                    cleanCoinEntry.baza_zsynchronizowana_at = (lastSyncInfo && lastSyncInfo.last_modified_iso) || null;
+                    cleanCoinEntry.baza_zaladowana_do_pamieci_at = (lastSyncInfo && lastSyncInfo.db_loaded_iso) || null;
+                    for (const [k, v] of Object.entries(coin)) {
+                        if (!internalKeys.has(k)) {
+                            cleanCoinEntry[k] = v;
+                        }
+                    }
+                    rawJsonPre.textContent = JSON.stringify(cleanCoinEntry, null, 2);
+                    rawJsonBox.style.display = 'block';
+                }
+            }
+
+            document.getElementById('product-modal').style.display = 'flex';
+        }
+
+        function closeModal(shouldUpdateUrl = true) {
+            closeFullscreenLightbox();
+            currentModalCoinId = null;
+            currentModalPhotos = [];
+            currentModalPhotoIdx = 0;
+            document.getElementById('product-modal').style.display = 'none';
+            if (shouldUpdateUrl) {
+                updateUrlParams(null);
+            }
+        }
+
+        function closeModalOnOverlay(e) {
+            if (e.target.id === 'product-modal') closeModal();
+        }
+
+        document.addEventListener('click', (e) => {
+            const wrapper = document.getElementById('layout-picker-wrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                closeLayoutPopover();
+            }
+            const searchWrapper = document.getElementById('search-wrapper');
+            if (searchWrapper && !searchWrapper.contains(e.target)) {
+                closeSuggestions();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            const lb = document.getElementById('fullscreen-lightbox');
+            const isLightboxOpen = lb && lb.classList.contains('open');
+            if (e.key === 'Escape') {
+                if (isLightboxOpen) {
+                    closeFullscreenLightbox();
+                    return;
+                }
+                closeSuggestions();
+                closeModal();
+            } else if ((isLightboxOpen || currentModalCoinId) && e.key === 'ArrowLeft') {
+                changeModalPhoto(-1);
+            } else if ((isLightboxOpen || currentModalCoinId) && e.key === 'ArrowRight') {
+                changeModalPhoto(1);
+            }
+        });
+
+        async function initData() {
+            setSyncWaitingVisible(true);
+            populateCountryDatalist();
+            loadLayoutPrefs();
+
+            const params = new URLSearchParams(window.location.search);
+            const coinParam = params.get('moneta');
+            const searchParam = params.get('szukaj') || params.get('q') || '';
+            const searchInput = document.getElementById('search-input');
+            const clearBtn = document.getElementById('search-clear-btn');
+            if (searchInput && searchParam) {
+                searchInput.value = searchParam;
+                if (clearBtn) {
+                    clearBtn.style.display = 'inline-flex';
+                }
+            }
+            const pageParam = parseInt(params.get('strona') || params.get('page'), 10);
+            if (!isNaN(pageParam) && pageParam >= 1) {
+                currentPage = pageParam;
+            }
+            syncFilterPanelFromSearchInput();
+            updateUrlParams(coinParam || null);
+
+            try {
+                const res = await fetch(`${API_BASE_PATH}/items`);
+                const data = await res.json();
+                allCoins = data.items || [];
+                isDatabaseLoaded = allCoins.length > 0;
+                prepareCoinsIndex(allCoins);
+
+                const sync = data.sync || {};
+                lastSyncInfo = sync;
+                renderSyncStatusIcon(sync, Boolean(sync.error));
+
+                // Zachowaj wczytaną z URL stronę, nie resetuj do 1 przy ładowaniu
+                filterProducts(false, false);
+
+                if (coinParam) {
+                    openModal(coinParam, false);
+                }
+            } catch (e) {
+                console.error("Błąd ładowania kolekcji CSV:", e);
+                renderSyncStatusIcon(null, true);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initData);
+    </script>
+</body>
+</html>

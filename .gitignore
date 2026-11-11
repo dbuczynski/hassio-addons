@@ -6,6 +6,18 @@ labels_users.json
 activity_logs.json
 draw_history.json
 
+# Lokalne katalogi z danymi baz i zdjęciami (wykluczone z repozytorium)
+**/katalog_data/
+**/kolekcja_data/
+**/zbior_data/
+**/wyprzedaz_data/
+**/CatalogData/
+katalog_data/
+kolekcja_data/
+zbior_data/
+wyprzedaz_data/
+CatalogData/
+
 # Pliki dzienników logowania
 *.log
 
