@@ -14,7 +14,7 @@ import youtube_service
 app = Flask(__name__)
 app.secret_key = "andrzejow_net_secret_key_metale_szlachetne"
 
-APP_VERSION = "2.0.0"
+APP_VERSION = "2.1.0"
 
 DEFAULT_ALLOWED_CHANNELS = [
     {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
@@ -2009,10 +2009,14 @@ def _get_public_host_url():
         host = host.split(',')[0].strip()
     return f"{proto}://{host}".rstrip('/')
 
+def _is_valid_katalog_replication_request():
+    token = request.headers.get("X-Katalog-Replication-Token", "").strip()
+    return KatalogService.verify_replication_token(token, app.secret_key)
+
 @app.route('/api/katalog/photos', methods=['GET', 'POST', 'DELETE', 'PATCH'])
 def api_katalog_photos():
     """API zarządzania zdjęciami walorów dla /katalog/photos (tylko zaufany adres IP)."""
-    if not is_client_ip_trusted():
+    if not (is_client_ip_trusted() or (request.method == 'GET' and _is_valid_katalog_replication_request())):
         return jsonify({"error": "Dostęp zabroniony - wymagany zaufany adres IP"}), 403
 
     host_url = _get_public_host_url()
@@ -2049,6 +2053,58 @@ def api_katalog_photos():
             return jsonify({"success": True, "filename": final_name})
         except ValueError as ve:
             return jsonify({"error": str(ve)}), 400
+
+@app.route('/api/katalog/photos/manifest', methods=['GET'])
+def api_katalog_photos_manifest():
+    """Zwraca manifest plików zdjęć w katalog_data/uploads (nazwa pliku + rozmiar w bajtach) do replikacji."""
+    if not (is_client_ip_trusted() or _is_valid_katalog_replication_request()):
+        return jsonify({"error": "Dostęp zabroniony - wymagany zaufany adres IP lub token replikacji"}), 403
+    return jsonify(katalog_svc.get_local_photos_manifest())
+
+@app.route('/api/katalog/photos/replicate-receive', methods=['POST'])
+def api_katalog_photos_replicate_receive():
+    """Odbiera pojedynczy plik zdjęcia z serwera testowego w trybie PUSH (bez nadpisywania istniejących plików)."""
+    if not (is_client_ip_trusted() or _is_valid_katalog_replication_request()):
+        return jsonify({"error": "Dostęp zabroniony - wymagany zaufany adres IP lub token replikacji"}), 403
+
+    f = request.files.get('file')
+    filename = (request.form.get('filename') or (f.filename if f else '') or '').strip()
+    if not f or not filename:
+        return jsonify({"error": "Brak pliku lub nazwy pliku do replikacji"}), 400
+
+    try:
+        raw_bytes = f.read()
+        res_item = katalog_svc.save_replicated_photo_bytes(filename, raw_bytes)
+        return jsonify({"success": True, "item": res_item})
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
+    except Exception as e:
+        return jsonify({"error": f"Błąd zapisu replikowanego zdjęcia: {e}"}), 500
+
+@app.route('/api/katalog/photos/replicate', methods=['POST'])
+def api_katalog_photos_replicate():
+    """
+    Uruchamia przyrostową duplikację zdjęć z serwera testowego (test.andrzejow.net)
+    na serwer produkcyjny (andrzejow.net) i zwraca szczegółowy raport dla każdego pliku.
+    """
+    if not is_client_ip_trusted():
+        return jsonify({"error": "Dostęp zabroniony - wymagany zaufany adres IP"}), 403
+
+    data = request.get_json(silent=True) or {}
+    mode = data.get("mode", "pull")
+    source_url = data.get("source_url", "https://test.andrzejow.net")
+    target_url = data.get("target_url", "https://andrzejow.net")
+
+    try:
+        result = katalog_svc.replicate_photos(
+            mode=mode,
+            source_url=source_url,
+            target_url=target_url,
+            secret_key=app.secret_key,
+        )
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)

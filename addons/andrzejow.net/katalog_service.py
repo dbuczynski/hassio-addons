@@ -5,9 +5,13 @@ import re
 import time
 import json
 import uuid
+import hmac
+import hashlib
 import shutil
+import urllib.parse
 import urllib.request
 from datetime import datetime
+import requests
 from werkzeug.utils import secure_filename
 
 DEFAULT_SHEETS_CSV_URL = (
@@ -258,8 +262,13 @@ class KatalogService:
                     # Wartości liczbowe do filtrowania i sortowania
                     waga_num = _parse_float(waga)
                     srednica_num = _parse_float(srednica)
+                    koszt_clean = "" if (not koszt or koszt == "-" or koszt.startswith("#")) else re.sub(r"^[-−\s]+", "", koszt).strip()
+                    koszt_num = _parse_float(koszt_clean)
                     value_num = _parse_float(value if not value.startswith("#") else "")
                     estymacja_num = _parse_float(estymacja if not estymacja.startswith("#") else "")
+                    zakup_first = zakup.split(";", 1)[0].strip() if zakup else ""
+                    zakup_clean = "" if zakup_first.startswith("#") else zakup_first
+                    zakup_num = _parse_float(zakup_clean)
 
                     raw_db_row = {
                         str(k).strip(): (v if v is not None else "")
@@ -288,12 +297,14 @@ class KatalogService:
                         "ksztalt": ksztalt,
                         "srednica": srednica,
                         "srednica_num": srednica_num,
-                        "koszt": koszt,
+                        "koszt": koszt_clean,
+                        "koszt_num": koszt_num,
                         "value": "" if value.startswith("#") else value,
                         "value_num": value_num,
                         "estymacja": "" if estymacja.startswith("#") else estymacja,
                         "estymacja_num": estymacja_num,
-                        "zakup": zakup,
+                        "zakup": zakup_clean,
+                        "zakup_num": zakup_num,
                         "platforma": platforma,
                         "identyfikator": identyfikator,
                         "zdjecia": zdjecia_list,
@@ -350,6 +361,8 @@ class KatalogService:
         cached_items = self._memory_cache or []
         result_items = []
         for it in cached_items:
+            if not is_trusted and it.get("zakup_num") is None and str(it.get("zakup") or "").strip() != "???":
+                continue
             entry = dict(it)
             entry["zdjecia"] = _filter_existing_photo_urls(it.get("zdjecia_zadeklarowane") or it.get("zdjecia"))
             if not is_trusted:
@@ -359,7 +372,9 @@ class KatalogService:
                 entry["dodatkowe_info"] = ""
                 entry["is_private"] = False
                 entry["koszt"] = ""
-                entry["zakup"] = ""
+                entry["koszt_num"] = None
+                entry["estymacja"] = ""
+                entry["estymacja_num"] = None
                 entry["platforma"] = ""
                 entry.pop("raw_db_row", None)
                 entry.pop("zdjecia_zadeklarowane", None)
@@ -512,3 +527,371 @@ class KatalogService:
 
         os.rename(old_path, new_path)
         return final_new_name
+
+    @staticmethod
+    def generate_replication_token(secret_key):
+        key = (secret_key or "andrzejow_net_secret_key").encode("utf-8")
+        ts = str(int(time.time()))
+        sig = hmac.new(key, f"katalog_repl:{ts}".encode("utf-8"), hashlib.sha256).hexdigest()
+        return f"{ts}.{sig}"
+
+    @staticmethod
+    def verify_replication_token(token_str, secret_key, max_age_sec=3600):
+        if not token_str or "." not in token_str:
+            return False
+        try:
+            ts_str, sig = str(token_str).strip().split(".", 1)
+            ts = int(ts_str)
+            if abs(time.time() - ts) > max_age_sec:
+                return False
+            key = (secret_key or "andrzejow_net_secret_key").encode("utf-8")
+            expected = hmac.new(key, f"katalog_repl:{ts_str}".encode("utf-8"), hashlib.sha256).hexdigest()
+            return hmac.compare_digest(sig, expected)
+        except Exception:
+            return False
+
+    def get_local_photos_manifest(self):
+        """
+        Zwraca listę wszystkich plików graficznych w katalog_data/uploads wraz z ich rozmiarem w bajtach.
+        """
+        uploads_dir = self.paths["uploads_dir"]
+        os.makedirs(uploads_dir, exist_ok=True)
+        files = []
+        try:
+            for fname in sorted(os.listdir(uploads_dir), key=lambda s: s.lower()):
+                fpath = os.path.join(uploads_dir, fname)
+                if not os.path.isfile(fpath):
+                    continue
+                _, ext = os.path.splitext(fname)
+                if ext.lower() not in ALLOWED_IMAGE_EXTENSIONS:
+                    continue
+                stat = os.stat(fpath)
+                files.append({
+                    "filename": fname,
+                    "size_bytes": stat.st_size,
+                    "size_kb": round(stat.st_size / 1024.0, 1),
+                    "mtime": stat.st_mtime,
+                })
+        except Exception as e:
+            print(f"[KatalogService] Błąd budowy manifestu zdjęć: {e}", flush=True)
+
+        return {
+            "total_count": len(files),
+            "files": files,
+        }
+
+    def _get_local_files_lookup(self):
+        """
+        Zwraca słownik: nazwa_pliku_lower -> {"filename": fname, "size_bytes": size}
+        """
+        manifest = self.get_local_photos_manifest()
+        lookup = {}
+        for f in manifest.get("files", []):
+            lookup[f["filename"].lower()] = f
+        return lookup
+
+    def save_replicated_photo_bytes(self, filename, raw_bytes):
+        """
+        Zapisuje plik zdjęcia przesłany w ramach replikacji przyrostowej (BEZ nadpisywania istniejących plików).
+        Zwraca słownik z wynikiem dla pojedynczego pliku.
+        """
+        if not filename:
+            raise ValueError("Brak nazwy pliku")
+        safe_name = os.path.basename(filename).strip()
+        if not safe_name or safe_name != filename or ".." in safe_name:
+            raise ValueError(f"Nieprawidłowa nazwa pliku: {filename}")
+        _, ext = os.path.splitext(safe_name)
+        if ext.lower() not in ALLOWED_IMAGE_EXTENSIONS:
+            raise ValueError(f"Niedozwolone rozszerzenie pliku: {safe_name}")
+
+        uploads_dir = self.paths["uploads_dir"]
+        os.makedirs(uploads_dir, exist_ok=True)
+
+        test_size = len(raw_bytes)
+        local_lookup = self._get_local_files_lookup()
+        existing = local_lookup.get(safe_name.lower())
+
+        if existing is not None:
+            prod_size = existing["size_bytes"]
+            if prod_size == test_size:
+                return {
+                    "filename": safe_name,
+                    "imported": False,
+                    "status": "skipped_same_size",
+                    "test_size_bytes": test_size,
+                    "prod_size_bytes": prod_size,
+                    "reason": f"Był dostępny już na produkcji w tej samej wersji (zgodna wielkość pliku: {prod_size} B / {round(prod_size / 1024.0, 1)} KB)",
+                }
+            else:
+                return {
+                    "filename": safe_name,
+                    "imported": False,
+                    "status": "skipped_diff_size",
+                    "test_size_bytes": test_size,
+                    "prod_size_bytes": prod_size,
+                    "reason": f"Na serwerze testowym jest dostępna inna wersja pliku (TEST: {test_size} B / {round(test_size / 1024.0, 1)} KB vs PROD: {prod_size} B / {round(prod_size / 1024.0, 1)} KB) — pominięto bez nadpisywania",
+                }
+
+        target_path = os.path.join(uploads_dir, safe_name)
+        tmp_path = f"{target_path}.tmp_{uuid.uuid4().hex[:6]}"
+        with open(tmp_path, "wb") as f:
+            f.write(raw_bytes)
+        os.replace(tmp_path, target_path)
+
+        return {
+            "filename": safe_name,
+            "imported": True,
+            "status": "imported",
+            "test_size_bytes": test_size,
+            "prod_size_bytes": test_size,
+            "reason": f"Zaimportowano nowe zdjęcie na produkcję (wielkość pliku: {test_size} B / {round(test_size / 1024.0, 1)} KB)",
+        }
+
+    def _fetch_remote_manifest(self, base_url, secret_key=""):
+        """
+        Pobiera listę plików ({filename, size_bytes}) ze zdalnego serwera (test.andrzejow.net lub andrzejow.net).
+        Posiada fallback do /api/katalog/photos na wypadek starszej wersji API na drugim serwerze.
+        """
+        clean_base = base_url.rstrip("/")
+        headers = {
+            "User-Agent": "andrzejow.net-katalog-replicator/2.0",
+            "X-Katalog-Replication-Token": self.generate_replication_token(secret_key),
+        }
+
+        manifest_url = f"{clean_base}/api/katalog/photos/manifest"
+        resp = requests.get(manifest_url, headers=headers, timeout=20)
+        if resp.status_code == 200:
+            data = resp.json()
+            if isinstance(data, dict) and isinstance(data.get("files"), list):
+                return data["files"]
+
+        # Fallback do /api/katalog/photos (jeśli zdalny serwer ma jeszcze starszą wersję kodu)
+        photos_url = f"{clean_base}/api/katalog/photos"
+        resp2 = requests.get(photos_url, headers=headers, timeout=20)
+        if resp2.status_code == 200:
+            data2 = resp2.json()
+            if isinstance(data2, dict) and isinstance(data2.get("photos"), list):
+                return [
+                    {
+                        "filename": p["filename"],
+                        "size_bytes": p.get("size_bytes", 0),
+                    }
+                    for p in data2["photos"]
+                    if p.get("filename")
+                ]
+
+        raise RuntimeError(
+            f"Nie udało się pobrać listy zdjęć z serwera {clean_base} "
+            f"(HTTP {resp.status_code} z /api/katalog/photos/manifest)"
+        )
+
+    def replicate_photos(
+        self,
+        mode="pull",
+        source_url="https://test.andrzejow.net",
+        target_url="https://andrzejow.net",
+        secret_key="",
+    ):
+        """
+        Wykonuje przyrostową duplikację zdjęć z serwera testowego (test.andrzejow.net)
+        na serwer produkcyjny (andrzejow.net) bez nadpisywania istniejących plików.
+
+        mode='pull' (uruchamiany na produkcji / docelowym serwerze):
+            Pobiera manifest z source_url (test.andrzejow.net), porównuje z lokalnym katalogiem uploads,
+            pobiera brakujące pliki i generuje raport.
+        mode='push' (uruchamiany na serwerze testowym):
+            Pobiera manifest z target_url (andrzejow.net), porównuje z lokalnym katalogiem uploads (test),
+            wysyła tylko brakujące pliki na target_url (/api/katalog/photos/replicate-receive) i generuje raport.
+        """
+        mode_norm = (mode or "pull").strip().lower()
+        if mode_norm not in ("pull", "push"):
+            mode_norm = "pull"
+
+        def _normalize_host(u, default_url):
+            s = (u or default_url).strip()
+            if not s:
+                s = default_url
+            if not s.startswith(("http://", "https://")):
+                s = "https://" + s
+            return s.rstrip("/")
+
+        clean_source = _normalize_host(source_url, "https://test.andrzejow.net")
+        clean_target = _normalize_host(target_url, "https://andrzejow.net")
+        started_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        report_items = []
+        imported_count = 0
+        skipped_same_count = 0
+        skipped_diff_count = 0
+        error_count = 0
+
+        headers = {
+            "User-Agent": "andrzejow.net-katalog-replicator/2.0",
+            "X-Katalog-Replication-Token": self.generate_replication_token(secret_key),
+        }
+
+        if mode_norm == "pull":
+            # Uruchomione na PRODUKCJI (lub lokalnie) -> ciągnie nowe zdjęcia z clean_source (test.andrzejow.net)
+            remote_test_files = self._fetch_remote_manifest(clean_source, secret_key=secret_key)
+            local_prod_lookup = self._get_local_files_lookup()
+
+            for tf in sorted(remote_test_files, key=lambda x: str(x.get("filename", "")).lower()):
+                fname = os.path.basename(str(tf.get("filename") or "")).strip()
+                if not fname:
+                    continue
+                test_size = tf.get("size_bytes")
+                existing_prod = local_prod_lookup.get(fname.lower())
+
+                if existing_prod is not None:
+                    prod_size = existing_prod["size_bytes"]
+                    if test_size is not None and int(test_size) == int(prod_size):
+                        skipped_same_count += 1
+                        report_items.append({
+                            "filename": fname,
+                            "imported": False,
+                            "status": "skipped_same_size",
+                            "test_size_bytes": test_size,
+                            "prod_size_bytes": prod_size,
+                            "reason": f"Był dostępny już na produkcji w tej samej wersji (zgodna wielkość pliku: {prod_size} B / {round(prod_size / 1024.0, 1)} KB)",
+                        })
+                    else:
+                        skipped_diff_count += 1
+                        report_items.append({
+                            "filename": fname,
+                            "imported": False,
+                            "status": "skipped_diff_size",
+                            "test_size_bytes": test_size,
+                            "prod_size_bytes": prod_size,
+                            "reason": f"Na serwerze testowym jest dostępna inna wersja pliku (TEST: {test_size} B / {round((test_size or 0) / 1024.0, 1)} KB vs PROD: {prod_size} B / {round(prod_size / 1024.0, 1)} KB) — pominięto bez nadpisywania",
+                        })
+                else:
+                    # Plik nie istnieje na produkcji -> pobierz z test.andrzejow.net
+                    file_url = f"{clean_source}/katalog/uploads/{urllib.parse.quote(fname)}"
+                    try:
+                        dl_resp = requests.get(file_url, headers=headers, timeout=30)
+                        if dl_resp.status_code != 200:
+                            raise RuntimeError(f"HTTP {dl_resp.status_code} podczas pobierania {file_url}")
+                        res_item = self.save_replicated_photo_bytes(fname, dl_resp.content)
+                        if res_item.get("imported"):
+                            imported_count += 1
+                        elif res_item.get("status") == "skipped_same_size":
+                            skipped_same_count += 1
+                        else:
+                            skipped_diff_count += 1
+                        report_items.append(res_item)
+                    except Exception as e:
+                        error_count += 1
+                        report_items.append({
+                            "filename": fname,
+                            "imported": False,
+                            "status": "error",
+                            "test_size_bytes": test_size,
+                            "prod_size_bytes": None,
+                            "reason": f"Błąd pobierania pliku z serwera testowego: {e}",
+                        })
+
+        else:
+            # mode_norm == "push"
+            # Uruchomione na SERWERZE TESTOWYM -> wypycha nowe zdjęcia na clean_target (andrzejow.net)
+            local_test_manifest = self.get_local_photos_manifest().get("files", [])
+            remote_prod_files = self._fetch_remote_manifest(clean_target, secret_key=secret_key)
+            remote_prod_lookup = {
+                str(pf.get("filename", "")).lower(): pf
+                for pf in remote_prod_files
+                if pf.get("filename")
+            }
+
+            uploads_dir = self.paths["uploads_dir"]
+            receive_url = f"{clean_target}/api/katalog/photos/replicate-receive"
+
+            for tf in sorted(local_test_manifest, key=lambda x: str(x.get("filename", "")).lower()):
+                fname = tf["filename"]
+                test_size = tf["size_bytes"]
+                existing_prod = remote_prod_lookup.get(fname.lower())
+
+                if existing_prod is not None:
+                    prod_size = existing_prod.get("size_bytes", 0)
+                    if int(test_size) == int(prod_size):
+                        skipped_same_count += 1
+                        report_items.append({
+                            "filename": fname,
+                            "imported": False,
+                            "status": "skipped_same_size",
+                            "test_size_bytes": test_size,
+                            "prod_size_bytes": prod_size,
+                            "reason": f"Był dostępny już na produkcji w tej samej wersji (zgodna wielkość pliku: {prod_size} B / {round(prod_size / 1024.0, 1)} KB)",
+                        })
+                    else:
+                        skipped_diff_count += 1
+                        report_items.append({
+                            "filename": fname,
+                            "imported": False,
+                            "status": "skipped_diff_size",
+                            "test_size_bytes": test_size,
+                            "prod_size_bytes": prod_size,
+                            "reason": f"Na serwerze testowym jest dostępna inna wersja pliku (TEST: {test_size} B / {round(test_size / 1024.0, 1)} KB vs PROD: {prod_size} B / {round(prod_size / 1024.0, 1)} KB) — pominięto bez nadpisywania",
+                        })
+                else:
+                    # Plik nie istnieje na produkcji -> wyślij na andrzejow.net
+                    local_fpath = os.path.join(uploads_dir, fname)
+                    try:
+                        with open(local_fpath, "rb") as f_in:
+                            raw_bytes = f_in.read()
+                        up_headers = {
+                            "User-Agent": "andrzejow.net-katalog-replicator/2.0",
+                            "X-Katalog-Replication-Token": self.generate_replication_token(secret_key),
+                        }
+                        up_resp = requests.post(
+                            receive_url,
+                            headers=up_headers,
+                            files={"file": (fname, raw_bytes, "application/octet-stream")},
+                            data={"filename": fname},
+                            timeout=30,
+                        )
+                        if up_resp.status_code != 200:
+                            err_text = up_resp.text[:200]
+                            raise RuntimeError(f"HTTP {up_resp.status_code}: {err_text}")
+                        res_data = up_resp.json()
+                        res_item = res_data.get("item") or {
+                            "filename": fname,
+                            "imported": True,
+                            "status": "imported",
+                            "test_size_bytes": test_size,
+                            "prod_size_bytes": test_size,
+                            "reason": f"Zaimportowano nowe zdjęcie na produkcję (wielkość pliku: {test_size} B / {round(test_size / 1024.0, 1)} KB)",
+                        }
+                        if res_item.get("imported"):
+                            imported_count += 1
+                        elif res_item.get("status") == "skipped_same_size":
+                            skipped_same_count += 1
+                        else:
+                            skipped_diff_count += 1
+                        report_items.append(res_item)
+                    except Exception as e:
+                        error_count += 1
+                        report_items.append({
+                            "filename": fname,
+                            "imported": False,
+                            "status": "error",
+                            "test_size_bytes": test_size,
+                            "prod_size_bytes": None,
+                            "reason": f"Błąd wysyłania pliku na serwer produkcyjny: {e}",
+                        })
+
+        finished_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        return {
+            "success": True,
+            "mode": mode_norm,
+            "source_url": clean_source if mode_norm == "pull" else "ten serwer (lokalny katalog uploads)",
+            "target_url": "ten serwer (lokalny katalog uploads)" if mode_norm == "pull" else clean_target,
+            "started_at": started_at,
+            "finished_at": finished_at,
+            "summary": {
+                "total_checked": len(report_items),
+                "imported_count": imported_count,
+                "skipped_same_size_count": skipped_same_count,
+                "skipped_diff_size_count": skipped_diff_count,
+                "error_count": error_count,
+            },
+            "report": report_items,
+        }

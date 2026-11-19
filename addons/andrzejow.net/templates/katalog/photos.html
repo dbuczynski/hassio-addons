@@ -506,6 +506,136 @@
             word-break: break-all;
             max-width: 92vw;
         }
+
+        /* Replication Card & Report Table */
+        .repl-controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 12px;
+            align-items: end;
+            background: rgba(15, 23, 42, 0.55);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 16px;
+        }
+        @media (max-width: 860px) {
+            .repl-controls-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .repl-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .repl-label {
+            font-size: 11.5px;
+            font-weight: 700;
+            color: #cbd5e1;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .repl-report-box {
+            display: none;
+            flex-direction: column;
+            gap: 14px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+        .repl-filter-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .repl-filter-pills {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .repl-pill-btn {
+            background: rgba(15, 23, 42, 0.75);
+            border: 1px solid var(--border-color);
+            color: #cbd5e1;
+            padding: 6px 11px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .repl-pill-btn:hover {
+            border-color: var(--accent-primary);
+            color: #fff;
+        }
+        .repl-pill-btn.active {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: #fff;
+        }
+        .repl-table-wrap {
+            max-height: 460px;
+            overflow: auto;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: rgba(9, 13, 22, 0.8);
+        }
+        .repl-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12.5px;
+        }
+        .repl-table th {
+            position: sticky;
+            top: 0;
+            background: #1e293b;
+            color: #e2e8f0;
+            text-align: left;
+            padding: 10px 12px;
+            font-weight: 700;
+            border-bottom: 1px solid var(--border-color);
+            z-index: 2;
+        }
+        .repl-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            vertical-align: middle;
+        }
+        .repl-table tr:hover td {
+            background: rgba(99, 102, 241, 0.08);
+        }
+        .repl-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11.5px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .repl-badge.imported {
+            background: rgba(16, 185, 129, 0.18);
+            border: 1px solid rgba(16, 185, 129, 0.45);
+            color: #6ee7b7;
+        }
+        .repl-badge.same {
+            background: rgba(148, 163, 184, 0.14);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            color: #cbd5e1;
+        }
+        .repl-badge.diff {
+            background: rgba(245, 158, 11, 0.18);
+            border: 1px solid rgba(245, 158, 11, 0.45);
+            color: #fcd34d;
+        }
+        .repl-badge.err {
+            background: rgba(239, 68, 68, 0.18);
+            border: 1px solid rgba(239, 68, 68, 0.45);
+            color: #fca5a5;
+        }
     </style>
 </head>
 <body>
@@ -567,6 +697,67 @@
 
             <div id="upload-status-bar" class="upload-status-bar">
                 <span id="upload-status-text">⏳ Przesyłanie zdjęć na serwer...</span>
+            </div>
+        </div>
+
+        <!-- SEKCJA PRZYROSTOWEJ DUPLIKACJI ZDJĘĆ (TEST.ANDRZEJOW.NET -> ANDRZEJOW.NET) -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <span>🔄 Duplikacja zdjęć: test.andrzejow.net ➡️ andrzejow.net</span>
+                </div>
+                <span style="font-size: 12px; color: var(--text-muted);">
+                    Import przyrostowy — <strong>bez nadpisywania istniejących plików</strong> (kopiowane są wyłącznie nowe zdjęcia + porównanie wielkości plików)
+                </span>
+            </div>
+
+            <div class="repl-controls-grid">
+                <div class="repl-field">
+                    <label class="repl-label" for="repl-mode-select">Tryb uruchomienia:</label>
+                    <select id="repl-mode-select" class="form-control" onchange="onReplModeChange()">
+                        <option value="pull">📥 PULL (uruchomione na Produkcji) — pobierz z test.andrzejow.net na ten serwer</option>
+                        <option value="push">📤 PUSH (uruchomione na Testowym) — wyślij z tego serwera na andrzejow.net</option>
+                    </select>
+                </div>
+
+                <div class="repl-field">
+                    <label class="repl-label" id="repl-remote-url-label" for="repl-remote-url">Adres serwera źródłowego (TEST):</label>
+                    <input type="text" id="repl-remote-url" class="form-control" value="https://test.andrzejow.net" placeholder="https://test.andrzejow.net">
+                </div>
+
+                <button type="button" id="repl-run-btn" class="btn btn-primary" style="height: 38px; justify-content: center; white-space: nowrap;" onclick="runPhotoReplication()">
+                    🚀 Uruchom import przyrostowy
+                </button>
+            </div>
+
+            <div id="repl-report-box" class="repl-report-box">
+                <div class="stats-bar" id="repl-summary-bar"></div>
+
+                <div class="repl-filter-bar">
+                    <div class="repl-filter-pills" id="repl-filter-pills"></div>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <input type="text" id="repl-search-input" class="form-control" style="width: 210px; padding: 6px 10px; font-size: 12px;" placeholder="🔍 Szukaj nazwy pliku..." oninput="renderReplicationReportTable()">
+                        <button type="button" id="repl-copy-btn" class="btn" style="padding: 6px 11px; font-size: 12px;" onclick="copyReplicationReportText()">
+                            📋 Kopiuj raport
+                        </button>
+                        <button type="button" class="btn btn-green" style="padding: 6px 11px; font-size: 12px;" onclick="downloadReplicationReportCsv()">
+                            💾 Pobierz CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div class="repl-table-wrap">
+                    <table class="repl-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 28%;">Nazwa pliku</th>
+                                <th style="width: 16%;">Czy zaimportowano?</th>
+                                <th>Powód / Porównanie wersji (TEST vs PRODUKCJA)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="repl-report-tbody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -1070,8 +1261,245 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             initDragAndDrop();
+            initReplicationDefaults();
             loadPhotos(false);
         });
+
+        /* --- PRZYROSTOWA DUPLIKACJA ZDJĘĆ TEST -> PRODUKCJA ORAZ RAPORT --- */
+        const API_REPLICATE_URL = "{{ api_base_path }}/photos/replicate";
+        let lastReplicationResult = null;
+        let currentReplFilter = 'all';
+
+        function initReplicationDefaults() {
+            const modeSelect = document.getElementById('repl-mode-select');
+            if (!modeSelect) return;
+            const host = (window.location.hostname || '').toLowerCase();
+            if (host.startsWith('test.')) {
+                modeSelect.value = 'push';
+            } else {
+                modeSelect.value = 'pull';
+            }
+            onReplModeChange();
+        }
+
+        function onReplModeChange() {
+            const modeSelect = document.getElementById('repl-mode-select');
+            const urlInput = document.getElementById('repl-remote-url');
+            const urlLabel = document.getElementById('repl-remote-url-label');
+            if (!modeSelect || !urlInput || !urlLabel) return;
+
+            if (modeSelect.value === 'push') {
+                urlLabel.textContent = 'Adres serwera docelowego (PRODUKCJA):';
+                urlInput.value = 'https://andrzejow.net';
+                urlInput.placeholder = 'https://andrzejow.net';
+            } else {
+                urlLabel.textContent = 'Adres serwera źródłowego (TEST):';
+                urlInput.value = 'https://test.andrzejow.net';
+                urlInput.placeholder = 'https://test.andrzejow.net';
+            }
+        }
+
+        async function runPhotoReplication() {
+            const modeSelect = document.getElementById('repl-mode-select');
+            const urlInput = document.getElementById('repl-remote-url');
+            const runBtn = document.getElementById('repl-run-btn');
+            const reportBox = document.getElementById('repl-report-box');
+
+            const mode = modeSelect ? modeSelect.value : 'pull';
+            const remoteUrl = (urlInput ? urlInput.value : '').trim();
+
+            if (runBtn) {
+                runBtn.disabled = true;
+                runBtn.textContent = '⏳ Trwa porównywanie i import zdjęć...';
+            }
+
+            try {
+                const payload = {
+                    mode: mode,
+                    source_url: mode === 'pull' ? (remoteUrl || 'https://test.andrzejow.net') : 'https://test.andrzejow.net',
+                    target_url: mode === 'push' ? (remoteUrl || 'https://andrzejow.net') : 'https://andrzejow.net'
+                };
+
+                const res = await fetch(API_REPLICATE_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Błąd podczas duplikacji zdjęć');
+                }
+
+                lastReplicationResult = data;
+                currentReplFilter = 'all';
+                if (reportBox) {
+                    reportBox.style.display = 'flex';
+                }
+                renderReplicationSummaryAndPills();
+                renderReplicationReportTable();
+
+                if (data.summary && data.summary.imported_count > 0) {
+                    await loadPhotos(false);
+                }
+            } catch (err) {
+                alert('⚠️ Błąd duplikacji zdjęć: ' + err.message);
+            } finally {
+                if (runBtn) {
+                    runBtn.disabled = false;
+                    runBtn.textContent = '🚀 Uruchom import przyrostowy';
+                }
+            }
+        }
+
+        function setReplFilter(filterKey) {
+            currentReplFilter = filterKey;
+            renderReplicationSummaryAndPills();
+            renderReplicationReportTable();
+        }
+
+        function renderReplicationSummaryAndPills() {
+            if (!lastReplicationResult) return;
+            const s = lastReplicationResult.summary || {};
+            const total = s.total_checked || 0;
+            const imp = s.imported_count || 0;
+            const same = s.skipped_same_size_count || 0;
+            const diff = s.skipped_diff_size_count || 0;
+            const err = s.error_count || 0;
+
+            const summaryBar = document.getElementById('repl-summary-bar');
+            if (summaryBar) {
+                summaryBar.innerHTML = `
+                    <span class="stat-pill">Sprawdzono plików na TEST: <strong style="color:#fff;">${total}</strong></span>
+                    <span class="stat-pill linked-hidden">✅ Zaimportowano (nowe): <strong>${imp}</strong></span>
+                    <span class="stat-pill">⏭️ Ta sama wersja na PROD: <strong>${same}</strong></span>
+                    <span class="stat-pill unlinked">⚠️ Inna wersja na TEST (różny rozmiar): <strong>${diff}</strong></span>
+                    ${err > 0 ? `<span class="stat-pill" style="background:rgba(239,68,68,0.18); border-color:rgba(239,68,68,0.45); color:#fca5a5;">❌ Błędy: <strong>${err}</strong></span>` : ''}
+                    <span style="font-size:11.5px; color:var(--text-muted); margin-left:auto;">Zakończono: ${escapeHtml(lastReplicationResult.finished_at || '')}</span>
+                `;
+            }
+
+            const pillsEl = document.getElementById('repl-filter-pills');
+            if (pillsEl) {
+                const pills = [
+                    { key: 'all', label: `Wszystkie (${total})` },
+                    { key: 'imported', label: `✅ Zaimportowane (${imp})` },
+                    { key: 'skipped_diff_size', label: `⚠️ Inna wersja / różny rozmiar (${diff})` },
+                    { key: 'skipped_same_size', label: `⏭️ Ta sama wersja (${same})` }
+                ];
+                if (err > 0) {
+                    pills.push({ key: 'error', label: `❌ Błędy (${err})` });
+                }
+                pillsEl.innerHTML = pills.map(p => `
+                    <button type="button" class="repl-pill-btn ${currentReplFilter === p.key ? 'active' : ''}" onclick="setReplFilter('${p.key}')">
+                        ${escapeHtml(p.label)}
+                    </button>
+                `).join('');
+            }
+        }
+
+        function getFilteredReplicationRows() {
+            if (!lastReplicationResult || !Array.isArray(lastReplicationResult.report)) return [];
+            const q = (document.getElementById('repl-search-input')?.value || '').trim().toLowerCase();
+            return lastReplicationResult.report.filter(row => {
+                if (currentReplFilter !== 'all' && row.status !== currentReplFilter) {
+                    return false;
+                }
+                if (q && !String(row.filename || '').toLowerCase().includes(q)) {
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        function renderReplicationReportTable() {
+            const tbody = document.getElementById('repl-report-tbody');
+            if (!tbody) return;
+
+            const rows = getFilteredReplicationRows();
+            if (rows.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="3" style="text-align:center; padding:24px; color:var(--text-muted);">
+                            Brak plików spełniających wybrany filtr raportu.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = rows.map(r => {
+                let badgeHtml = '';
+                if (r.imported) {
+                    badgeHtml = `<span class="repl-badge imported">✅ TAK</span>`;
+                } else if (r.status === 'skipped_same_size') {
+                    badgeHtml = `<span class="repl-badge same">⏭️ NIE (ta sama wersja)</span>`;
+                } else if (r.status === 'skipped_diff_size') {
+                    badgeHtml = `<span class="repl-badge diff">⚠️ NIE (inna wersja)</span>`;
+                } else {
+                    badgeHtml = `<span class="repl-badge err">❌ NIE (błąd)</span>`;
+                }
+
+                return `
+                    <tr>
+                        <td style="font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 600; color: #f8fafc;">
+                            ${escapeHtml(r.filename)}
+                        </td>
+                        <td>${badgeHtml}</td>
+                        <td style="color: #cbd5e1;">${escapeHtml(r.reason)}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function copyReplicationReportText() {
+            const rows = getFilteredReplicationRows();
+            if (!rows.length) return;
+
+            const lines = [
+                'Nazwa pliku | Czy zaimportowano? | Powód / porównanie wielkości pliku',
+                ...rows.map(r => `${r.filename} | ${r.imported ? 'TAK' : 'NIE'} | ${r.reason}`)
+            ];
+            const text = lines.join('\n');
+            const btn = document.getElementById('repl-copy-btn');
+            try {
+                await navigator.clipboard.writeText(text);
+                if (btn) {
+                    const orig = btn.innerHTML;
+                    btn.innerHTML = '✅ Skopiowano raport!';
+                    setTimeout(() => { btn.innerHTML = orig; }, 1800);
+                }
+            } catch (e) {
+                alert('Nie udało się skopiować do schowka.');
+            }
+        }
+
+        function downloadReplicationReportCsv() {
+            const rows = getFilteredReplicationRows();
+            if (!rows.length) return;
+
+            const csvEscape = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+            const lines = [
+                '\uFEFFNazwa pliku;Czy zaimportowano?;Status;Rozmiar TEST [B];Rozmiar PROD [B];Szczegóły',
+                ...rows.map(r => [
+                    csvEscape(r.filename),
+                    csvEscape(r.imported ? 'TAK' : 'NIE'),
+                    csvEscape(r.status),
+                    csvEscape(r.test_size_bytes ?? ''),
+                    csvEscape(r.prod_size_bytes ?? ''),
+                    csvEscape(r.reason)
+                ].join(';'))
+            ];
+
+            const blob = new Blob([lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `raport_duplikacji_zdjec_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
     </script>
 </body>
 </html>

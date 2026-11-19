@@ -1115,6 +1115,16 @@
             z-index: 2510;
         }
 
+        .modal-awers-rewers-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+        @media (max-width: 680px) {
+            .modal-awers-rewers-grid {
+                grid-template-columns: 1fr;
+            }
+        }
         .modal-details-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -1161,6 +1171,58 @@
             white-space: pre-wrap;
             word-break: break-word;
         }
+        .public-view-toggle {
+            background: rgba(15, 23, 42, 0.78);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 6px 12px;
+            border-radius: var(--radius-md);
+            font-size: 12.5px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            user-select: none;
+            white-space: nowrap;
+        }
+        .public-view-toggle:hover {
+            border-color: var(--accent-primary);
+            color: var(--text-main);
+        }
+        .public-view-toggle.active {
+            background: rgba(16, 185, 129, 0.16);
+            border-color: rgba(16, 185, 129, 0.55);
+            color: #6ee7b7;
+        }
+        .public-view-switch-pill {
+            width: 32px;
+            height: 18px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.35);
+            position: relative;
+            transition: background 0.2s ease;
+            display: inline-block;
+        }
+        .public-view-switch-pill::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #cbd5e1;
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+        .public-view-toggle.active .public-view-switch-pill {
+            background: rgba(16, 185, 129, 0.75);
+        }
+        .public-view-toggle.active .public-view-switch-pill::after {
+            transform: translateX(14px);
+            background: #fff;
+        }
     </style>
 </head>
 <body>
@@ -1180,6 +1242,10 @@
                 🔄
             </button>
             {% if is_admin_ip %}
+            <button type="button" id="public-view-toggle-btn" class="public-view-toggle" onclick="togglePublicViewMode()" title="Przełącz widok publiczny (pokazuj wyniki jak dla niezaufanego adresu IP)">
+                <span>Public View: <strong id="public-view-state-label">OFF</strong></span>
+                <span class="public-view-switch-pill"></span>
+            </button>
             <a href="{{ app_base_path }}/photos" class="btn" title="Zarządzaj zdjęciami walorów">
                 📷 Zdjęcia
             </a>
@@ -1233,7 +1299,7 @@
                     </div>
 
                     {% if is_admin_ip %}
-                    <div class="filter-field">
+                    <div class="filter-field" id="flt-kolekcja-field">
                         <label class="filter-field-label" for="flt-kolekcja">
                             <span>W kolekcji</span>
                             <span class="filter-field-tag">kolekcja:</span>
@@ -1391,8 +1457,10 @@
                     </div>
                     <div id="modal-price-container"></div>
                     <div id="modal-indeks-container"></div>
+                    <div id="modal-cechy-container"></div>
                 </div>
             </div>
+            <div id="modal-awers-rewers-grid" class="modal-awers-rewers-grid"></div>
             <div id="modal-details-grid" class="modal-details-grid"></div>
             {% if is_admin_ip %}
             <div id="modal-raw-json-box" class="modal-raw-json-box" style="display:none;">
@@ -1419,8 +1487,9 @@
         const API_BASE_PATH = "{{ api_base_path|default('/api/katalog') }}";
         const IS_ADMIN_IP = {{ 'true' if is_admin_ip else 'false' }};
         const LAYOUT_STORAGE_KEY = `catalog_layout_prefs_${APP_BASE_PATH}`;
-        const ALLOWED_PER_PAGE = IS_ADMIN_IP ? [10, 20, 50, 'all'] : [10, 20, 50];
 
+        let isPublicViewMode = false;
+        let allRawCoins = [];
         let allCoins = [];
         let lastSyncInfo = {};
         let isDatabaseLoaded = false;
@@ -1428,6 +1497,64 @@
         let gridColumns = 5;
         let itemsPerPage = 10;
         let currentModalCoinId = null;
+
+        function isEffectiveAdminView() {
+            return IS_ADMIN_IP && !isPublicViewMode;
+        }
+
+        function getAllowedPerPage() {
+            return isEffectiveAdminView() ? [10, 20, 50, 'all'] : [10, 20, 50];
+        }
+
+        function hasPublicZakup(coin) {
+            if (!coin) return false;
+            if (coin.zakup_num !== null && coin.zakup_num !== undefined && !isNaN(coin.zakup_num)) return true;
+            const firstPart = String(coin.zakup || '').split(';')[0].trim();
+            return firstPart === '???';
+        }
+
+        function applyPublicViewCoins() {
+            if (isEffectiveAdminView()) {
+                allCoins = allRawCoins;
+            } else {
+                allCoins = allRawCoins.filter(c => hasPublicZakup(c));
+            }
+            const kolField = document.getElementById('flt-kolekcja-field');
+            if (kolField) {
+                kolField.style.display = isEffectiveAdminView() ? '' : 'none';
+            }
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                searchInput.placeholder = `🔍 Szukaj monet (np. oksydowana nike, "1 grosz", ${isEffectiveAdminView() ? 'kolekcja:TRUE ' : ''}próba:Tak kraj:PL stop:srebro waga:29-32 rok:1995-2002)...`;
+            }
+            const allowed = getAllowedPerPage();
+            if (!allowed.includes(itemsPerPage)) {
+                itemsPerPage = allowed[0];
+            }
+            renderLayoutPicker();
+        }
+
+        function togglePublicViewMode() {
+            if (!IS_ADMIN_IP) return;
+            isPublicViewMode = !isPublicViewMode;
+            const btn = document.getElementById('public-view-toggle-btn');
+            const stateLbl = document.getElementById('public-view-state-label');
+            if (btn) btn.classList.toggle('active', isPublicViewMode);
+            if (stateLbl) stateLbl.textContent = isPublicViewMode ? 'ON' : 'OFF';
+
+            applyPublicViewCoins();
+            renderSyncStatusIcon(lastSyncInfo, Boolean(lastSyncInfo && lastSyncInfo.error));
+            filterProducts(true, false);
+
+            if (currentModalCoinId) {
+                const stillVisible = allCoins.some(c => c.id === currentModalCoinId);
+                if (stillVisible) {
+                    openModal(currentModalCoinId, false);
+                } else {
+                    closeModal(true);
+                }
+            }
+        }
 
         function setSyncWaitingVisible(visible) {
             const waitBanner = document.getElementById('sync-waiting-banner');
@@ -1438,7 +1565,7 @@
 
         function renderSyncStatusIcon(sync, isError = false) {
             const badge = document.getElementById('sync-status-badge');
-            const isLoadedOk = isDatabaseLoaded && Array.isArray(allCoins) && allCoins.length > 0 && !isError;
+            const isLoadedOk = isDatabaseLoaded && Array.isArray(allCoins) && !isError;
             setSyncWaitingVisible(!isLoadedOk);
 
             if (!badge) return;
@@ -1467,9 +1594,10 @@
             try {
                 const res = await fetch(`${API_BASE_PATH}/items?force_sync=1`);
                 const data = await res.json();
-                allCoins = data.items || [];
-                isDatabaseLoaded = allCoins.length > 0;
-                prepareCoinsIndex(allCoins);
+                allRawCoins = Array.isArray(data.items) ? data.items : [];
+                prepareCoinsIndex(allRawCoins);
+                applyPublicViewCoins();
+                isDatabaseLoaded = Array.isArray(data.items);
 
                 const sync = data.sync || {};
                 lastSyncInfo = sync;
@@ -2105,9 +2233,9 @@
             return true;
         }
 
-        // Sprawdzenie tagu kolekcja: (dostępne tylko dla zaufanego IP)
+        // Sprawdzenie tagu kolekcja: (dostępne tylko dla zaufanego IP z wyłączonym Public View)
         function matchKolekcjaTag(coin, queryVal) {
-            if (!IS_ADMIN_IP) return true;
+            if (!isEffectiveAdminView()) return true;
             const qNorm = normalizeStr(queryVal);
             const isOwned = Boolean(coin.posiadana && (coin.ilosc || 0) >= 1);
             if (qNorm === 'true' || qNorm === '1' || qNorm === 'tak' || qNorm === 'jest') {
@@ -2209,6 +2337,8 @@
                     c.waga,
                     c.srednica,
                     c.cechy_dodatkowe,
+                    c.awers,
+                    c.rewers,
                     c.numista_id ? `N#${c.numista_id}` : ''
                 ].filter(Boolean).join(' ');
                 c._searchTextLower = combined.toLowerCase();
@@ -2265,8 +2395,9 @@
 
         function applyLayoutFromUrlParams(params) {
             if (!params) return false;
+            const allowed = getAllowedPerPage();
             const rawLimit = params.get('limit') || params.get('na_strone') || params.get('per_page');
-            const parsedLimit = parsePerPageToken(rawLimit, ALLOWED_PER_PAGE);
+            const parsedLimit = parsePerPageToken(rawLimit, allowed);
             if (parsedLimit !== null) {
                 itemsPerPage = parsedLimit;
                 return true;
@@ -2276,12 +2407,13 @@
 
         function loadLayoutPrefs() {
             gridColumns = 5;
+            const allowed = getAllowedPerPage();
             try {
                 const raw = sessionStorage.getItem(LAYOUT_STORAGE_KEY) || localStorage.getItem(LAYOUT_STORAGE_KEY);
                 if (raw) {
                     const parsed = JSON.parse(raw);
-                    const pp = parsePerPageToken(parsed.perPage, ALLOWED_PER_PAGE);
-                    itemsPerPage = pp !== null ? pp : ALLOWED_PER_PAGE[0];
+                    const pp = parsePerPageToken(parsed.perPage, allowed);
+                    itemsPerPage = pp !== null ? pp : allowed[0];
                 }
             } catch (e) {}
 
@@ -2301,6 +2433,7 @@
         }
 
         function renderLayoutPicker() {
+            const allowed = getAllowedPerPage();
             const summaryEl = document.getElementById('layout-picker-summary');
             if (summaryEl) {
                 summaryEl.textContent = itemsPerPage === 'all' ? 'wszystkie' : String(itemsPerPage);
@@ -2308,7 +2441,7 @@
 
             const rowsContainer = document.getElementById('layout-rows-pills');
             if (rowsContainer) {
-                rowsContainer.innerHTML = ALLOWED_PER_PAGE.map(opt => {
+                rowsContainer.innerHTML = allowed.map(opt => {
                     const label = opt === 'all' ? 'wszystkie' : opt;
                     const isActive = itemsPerPage === opt;
                     const arg = opt === 'all' ? "'all'" : opt;
@@ -2334,8 +2467,9 @@
         }
 
         function selectGridPerPage(val) {
-            const parsed = (val === 'all' && ALLOWED_PER_PAGE.includes('all')) ? 'all' : parseInt(val, 10);
-            itemsPerPage = ALLOWED_PER_PAGE.includes(parsed) ? parsed : ALLOWED_PER_PAGE[0];
+            const allowed = getAllowedPerPage();
+            const parsed = (val === 'all' && allowed.includes('all')) ? 'all' : parseInt(val, 10);
+            itemsPerPage = allowed.includes(parsed) ? parsed : allowed[0];
             currentPage = 1;
             saveLayoutPrefs();
             renderLayoutPicker();
@@ -2788,16 +2922,49 @@
             }) + ' zł';
         }
 
+        function getZakupDisplay(coin) {
+            if (!coin) return '';
+            const raw = String(coin.zakup || '').split(';')[0].trim();
+            if (!raw || raw === '-' || raw.startsWith('#')) return '';
+            if (raw === '???') return 'do negocjacji';
+            if (coin.zakup_num !== null && coin.zakup_num !== undefined && !isNaN(coin.zakup_num)) {
+                if (/[a-zA-Zzł€$£]/i.test(raw)) {
+                    return raw;
+                }
+                return formatPlnAmount(coin.zakup_num);
+            }
+            return raw;
+        }
+
+        function getKosztDisplay(coin) {
+            if (!coin) return '';
+            const raw = String(coin.koszt || '').trim();
+            if (!raw || raw === '-' || raw.startsWith('#')) return '';
+            const posRaw = raw.replace(/^[-−\s]+/, '').trim();
+            if (!posRaw) return '';
+            if (coin.koszt_num !== null && coin.koszt_num !== undefined && !isNaN(coin.koszt_num)) {
+                const absNum = Math.abs(coin.koszt_num);
+                if (/[a-zA-Zzł€$£]/i.test(posRaw)) {
+                    return posRaw;
+                }
+                return formatPlnAmount(absNum);
+            }
+            return posRaw;
+        }
+
         function getBuybackPriceData(coin) {
             if (!coin) return null;
+            const adminView = isEffectiveAdminView();
             const valRaw = (coin.value || '').trim();
-            const estRaw = (coin.estymacja || '').trim();
+            const estRaw = adminView ? (coin.estymacja || '').trim() : '';
+            const zakupDisplay = getZakupDisplay(coin);
+            const kosztDisplay = adminView ? getKosztDisplay(coin) : '';
 
             const isValEmpty = !valRaw || valRaw === '-' || valRaw.startsWith('#');
             const isEstEmpty = !estRaw || estRaw === '-' || estRaw.startsWith('#');
 
-            // Jeżeli %value% oraz %estymacja% są puste to ukryj informacje o cenie
-            if (isValEmpty && isEstEmpty) {
+            // Jeżeli %value%, %estymacja%, %zakup% oraz %koszt% są puste to ukryj informacje o cenie
+            if (isValEmpty && isEstEmpty && !zakupDisplay && !kosztDisplay) {
                 return null;
             }
 
@@ -2812,12 +2979,12 @@
             }
 
             const skupNum = calculateSkupVal(coin);
-            const skupDisplay = (IS_ADMIN_IP && skupNum !== null) ? formatPlnAmount(skupNum) : '';
+            const skupDisplay = (adminView && skupNum !== null) ? formatPlnAmount(skupNum) : '';
 
-            const estDisplay = !isEstEmpty ? estRaw : '';
+            const estDisplay = (adminView && !isEstEmpty) ? estRaw : '';
 
-            // Jeśli nie ma ani wartości, ani skupu, ani estymacji
-            if (!valueDisplay && !skupDisplay && !estDisplay) {
+            // Jeśli nie ma ani wartości, ani skupu, ani estymacji, ani zakupu, ani kosztu
+            if (!valueDisplay && !skupDisplay && !estDisplay && !zakupDisplay && !kosztDisplay) {
                 return null;
             }
 
@@ -2825,7 +2992,9 @@
                 valueLabel,
                 valueDisplay,
                 skupDisplay,
-                estDisplay
+                estDisplay,
+                zakupDisplay,
+                kosztDisplay
             };
         }
 
@@ -2833,9 +3002,26 @@
             const data = getBuybackPriceData(coin);
             if (!data) return '';
 
+            const adminView = isEffectiveAdminView();
             const containerClass = isModal ? 'modal-price-block' : 'product-price';
             const lines = [];
 
+            if (data.zakupDisplay) {
+                lines.push(`
+                    <div class="price-line">
+                        <span class="price-line-label" style="line-height:1.1;">Cena<br><span style="font-size:0.5em; font-weight:500;">(sugerowana)</span></span>
+                        <span class="price-line-val" style="color:#10b981;">${escapeHtml(data.zakupDisplay)}</span>
+                    </div>
+                `);
+            }
+            if (adminView && data.kosztDisplay) {
+                lines.push(`
+                    <div class="price-line">
+                        <span class="price-line-label">Średni koszt zakupu:</span>
+                        <span class="price-line-val">${escapeHtml(data.kosztDisplay)}</span>
+                    </div>
+                `);
+            }
             if (data.valueDisplay) {
                 lines.push(`
                     <div class="price-line">
@@ -2844,7 +3030,7 @@
                     </div>
                 `);
             }
-            if (IS_ADMIN_IP && data.skupDisplay) {
+            if (adminView && data.skupDisplay) {
                 lines.push(`
                     <div class="price-line">
                         <span class="price-line-label">Skup komisowy:</span>
@@ -2852,7 +3038,7 @@
                     </div>
                 `);
             }
-            if (data.estDisplay) {
+            if (adminView && data.estDisplay) {
                 lines.push(`
                     <div class="price-line">
                         <span class="price-line-label">Estymacja:</span>
@@ -2990,13 +3176,14 @@
                 return;
             }
 
+            const adminView = isEffectiveAdminView();
             grid.innerHTML = coins.map(c => {
                 const metalClass = getMetalClass(c.stop);
                 const nominalLabel = (c.nominal && c.nominal !== '-') ? c.nominal : 'Moneta';
                 const yearLabel = (c.rok && c.rok !== '-') ? c.rok : '';
                 let stockBadge = '';
                 let imgWrapperExtraClass = '';
-                if (IS_ADMIN_IP) {
+                if (adminView) {
                     const qty = c.ilosc || 1;
                     stockBadge = c.posiadana
                         ? `<span class="badge-stock in-collection">✅ W kolekcji (${qty} szt.)</span>`
@@ -3137,6 +3324,7 @@
             const coin = allCoins.find(c => c.id === coinId);
             if (!coin) return;
 
+            const adminView = isEffectiveAdminView();
             currentModalCoinId = coinId;
             currentModalPhotos = Array.isArray(coin.zdjecia) ? coin.zdjecia.filter(Boolean) : [];
             currentModalPhotoIdx = 0;
@@ -3153,7 +3341,7 @@
             const priceContainer = document.getElementById('modal-price-container');
             const priceBlockHtml = renderPriceBlockHtml(coin, true);
             let badgeHtml = '';
-            if (IS_ADMIN_IP) {
+            if (adminView) {
                 const qty = coin.ilosc || 1;
                 badgeHtml = coin.posiadana
                     ? `<span style="background:rgba(16,185,129,0.2); color:#6ee7b7; font-size:13px; font-weight:700; padding:4px 10px; border-radius:6px; border:1px solid rgba(16,185,129,0.4);">✅ W kolekcji (${qty} szt.)</span>`
@@ -3186,11 +3374,37 @@
                 `;
             }
 
+            const cechyContainer = document.getElementById('modal-cechy-container');
+            if (cechyContainer) {
+                cechyContainer.innerHTML = `
+                    <div class="detail-box">
+                        <div class="detail-label">Cechy dodatkowe:</div>
+                        <div class="detail-val">${formatVal(coin.cechy_dodatkowe)}</div>
+                    </div>
+                `;
+            }
+
+            const awersRewersGrid = document.getElementById('modal-awers-rewers-grid');
+            if (awersRewersGrid) {
+                awersRewersGrid.innerHTML = `
+                    <div class="detail-box">
+                        <div class="detail-label">Awers</div>
+                        <div class="detail-val">${formatVal(coin.awers)}</div>
+                    </div>
+                    <div class="detail-box">
+                        <div class="detail-label">Rewers</div>
+                        <div class="detail-val">${formatVal(coin.rewers)}</div>
+                    </div>
+                `;
+            }
+
             const numistaLinkHtml = cleanNumistaId
                 ? `<a href="https://pl.numista.com/${encodeURIComponent(cleanNumistaId)}" target="_blank" rel="noopener noreferrer" style="color:#818cf8; text-decoration:underline;">pl.numista.com/${escapeHtml(cleanNumistaId)}</a>`
                 : '#b/d';
 
             const isTrial = isTrialCoin(coin);
+            const zakupDisplay = getZakupDisplay(coin);
+            const kosztDisplay = adminView ? getKosztDisplay(coin) : '';
             const fields = [
                 { label: 'Nominał', html: formatVal(coin.nominal) },
                 { label: 'Rok', html: formatVal(coin.rok) },
@@ -3204,25 +3418,26 @@
                 { label: 'Czystego Ag (g)', html: formatVal(coin.czystego_ag) },
                 { label: 'Czystego Au', html: formatVal(coin.czystego_au) },
                 { label: 'Nakład', html: formatVal(coin.naklad) },
-                { label: 'Estymacja', html: formatVal(coin.estymacja) },
+                ...(adminView ? [{ label: 'Średni koszt zakupu', html: formatVal(kosztDisplay) }] : []),
+                ...(adminView ? [{ label: 'Estymacja', html: formatVal(coin.estymacja) }] : []),
+                ...(zakupDisplay ? [{ label: 'Cena (sugerowana)', labelHtml: 'Cena<br><span style="font-size:0.5em; text-transform:none;">(sugerowana)</span>', html: `<span style="color:#10b981; font-weight:700;">${escapeHtml(zakupDisplay)}</span>` }] : []),
                 { label: 'Data emisji', html: formatVal(coin.data_emisji) },
                 { label: 'Cena emisji', html: formatVal(coin.cena_emisji) },
-                { label: 'Cechy dodatkowe', html: formatVal(coin.cechy_dodatkowe) },
                 { label: 'Numista Link', html: numistaLinkHtml }
             ];
 
             const gridEl = document.getElementById('modal-details-grid');
             gridEl.innerHTML = fields.map(f => `
                 <div class="detail-box" ${f.wide ? 'style="grid-column: 1 / -1;"' : ''}>
-                    <div class="detail-label">${escapeHtml(f.label)}</div>
+                    <div class="detail-label" style="line-height:1.15;">${f.labelHtml || escapeHtml(f.label)}</div>
                     <div class="detail-val">${f.html}</div>
                 </div>
             `).join('');
 
-            if (IS_ADMIN_IP) {
-                const rawJsonBox = document.getElementById('modal-raw-json-box');
-                const rawJsonPre = document.getElementById('modal-raw-json-pre');
-                if (rawJsonBox && rawJsonPre) {
+            const rawJsonBox = document.getElementById('modal-raw-json-box');
+            const rawJsonPre = document.getElementById('modal-raw-json-pre');
+            if (rawJsonBox && rawJsonPre) {
+                if (adminView) {
                     const cleanCoinEntry = {};
                     const internalKeys = new Set(['_searchTextLower', '_searchTextNorm', '_countryCodes']);
                     cleanCoinEntry.baza_odczytana_at = (lastSyncInfo && (lastSyncInfo.db_read_iso || lastSyncInfo.last_modified_iso)) || null;
@@ -3235,6 +3450,8 @@
                     }
                     rawJsonPre.textContent = JSON.stringify(cleanCoinEntry, null, 2);
                     rawJsonBox.style.display = 'block';
+                } else {
+                    rawJsonBox.style.display = 'none';
                 }
             }
 
@@ -3310,9 +3527,10 @@
             try {
                 const res = await fetch(`${API_BASE_PATH}/items`);
                 const data = await res.json();
-                allCoins = data.items || [];
-                isDatabaseLoaded = allCoins.length > 0;
-                prepareCoinsIndex(allCoins);
+                allRawCoins = Array.isArray(data.items) ? data.items : [];
+                prepareCoinsIndex(allRawCoins);
+                applyPublicViewCoins();
+                isDatabaseLoaded = Array.isArray(data.items);
 
                 const sync = data.sync || {};
                 lastSyncInfo = sync;
