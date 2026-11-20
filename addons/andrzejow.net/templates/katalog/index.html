@@ -29,6 +29,12 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
+        html, body {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-main);
@@ -42,33 +48,118 @@
         }
 
         .navbar {
-            background: rgba(15, 23, 42, 0.9);
+            background: rgba(15, 23, 42, 0.95);
             backdrop-filter: var(--glass-blur);
             border-bottom: 1px solid var(--border-color);
-            padding: 16px 28px;
+            padding: 9px 18px;
+            width: 100%;
+            max-width: 100vw;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
             position: sticky;
             top: 0;
-            z-index: 100;
+            z-index: 120;
+            transition: transform 0.25s ease, opacity 0.22s ease;
+        }
+        .navbar.navbar-hidden {
+            display: none;
+        }
+        .navbar.navbar-peek-active {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7);
+        }
+
+        .navbar-peek-tab {
+            position: fixed;
+            top: 0;
+            right: 12px;
+            z-index: 125;
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-top: none;
+            color: #e2e8f0;
+            font-size: 11.5px;
+            font-weight: 700;
+            padding: 4px 11px 5px 11px;
+            border-radius: 0 0 10px 10px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+            user-select: none;
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+        .navbar-peek-tab:hover {
+            background: rgba(30, 41, 59, 0.98);
+            color: #fff;
+            border-color: var(--accent-primary);
+        }
+        .navbar-peek-tab.visible {
+            display: inline-flex;
         }
 
         .brand-title {
-            font-size: 20px;
+            font-size: 17px;
             font-weight: 800;
             background: linear-gradient(135deg, #fff 40%, var(--accent-gold));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .nav-actions {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
+            flex-wrap: wrap;
+            min-width: 0;
+            margin-left: auto;
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 6px 10px;
+                gap: 6px;
+            }
+            .brand-title {
+                font-size: 14.5px;
+            }
+            .nav-actions {
+                gap: 5px;
+            }
+            .navbar .btn,
+            .navbar .sync-badge,
+            .navbar .sync-waiting-banner,
+            .navbar .public-view-toggle {
+                padding: 4px 8px;
+                font-size: 11.5px;
+                border-radius: 7px;
+            }
+            .navbar .public-view-switch-pill {
+                width: 26px;
+                height: 15px;
+            }
+            .navbar .public-view-switch-pill::after {
+                width: 11px;
+                height: 11px;
+            }
+            .navbar .public-view-toggle.active .public-view-switch-pill::after {
+                transform: translateX(11px);
+            }
         }
 
         .sync-badge {
@@ -179,7 +270,8 @@
             letter-spacing: 0.4px;
             padding: 2px 4px;
             border-radius: 4px;
-            white-space: nowrap;
+            white-space: normal;
+            word-break: break-word;
         }
 
         /* Filter Controls & Search Suggestions */
@@ -193,7 +285,7 @@
 
         .search-wrapper {
             flex: 1;
-            min-width: 240px;
+            min-width: 0;
             position: relative;
             display: flex;
             align-items: center;
@@ -1227,15 +1319,21 @@
 </head>
 <body>
 
-    <nav class="navbar">
+    <button type="button" id="navbar-peek-tab" class="navbar-peek-tab" onclick="showNavbarTemporarily(event)" title="Pokaż belkę tytułową na chwilę">
+        <span>🪙 Belka</span>
+        <span id="navbar-peek-sync" style="display:none; color:#fde68a; animation:blinkSyncWait 1.1s ease-in-out infinite;">• ⏳ Synchronizacja</span>
+        <span>▾</span>
+    </button>
+
+    <nav class="navbar" id="top-navbar" onmouseenter="pauseNavbarAutoHide()" onmouseleave="resumeNavbarAutoHide()" ontouchstart="pauseNavbarAutoHide()">
         <div class="brand-title">
             <span>{{ app_heading|default('🪙 Katalog Monet') }}</span>
         </div>
         <div class="nav-actions">
             <span id="sync-waiting-banner" class="sync-waiting-banner" title="Trwa ładowanie i synchronizacja bazy danych katalogu...">
-                ⏳ Oczekiwanie na synchronizację...
+                ⏳ Synchronizacja
             </span>
-            <span id="sync-status-badge" class="sync-badge sync-badge-icon" title="Baza CSV: oczekiwanie na synchronizację...">
+            <span id="sync-status-badge" class="sync-badge sync-badge-icon" title="Baza CSV: synchronizacja...">
                 <span id="sync-csv-icon">📄<span style="font-size:11px;">⏳</span></span>
             </span>
             <button type="button" class="btn btn-icon" id="sync-csv-btn" onclick="syncCsvDatabase()" title="Odśwież bazę CSV (pobierz najnowszą wersję)">
@@ -1250,6 +1348,9 @@
                 📷 Zdjęcia
             </a>
             {% endif %}
+            <button type="button" class="btn btn-icon" id="navbar-hide-btn" onclick="hideTopNavbar()" title="Ukryj belkę tytułową">
+                ▴
+            </button>
         </div>
     </nav>
 
@@ -1573,10 +1674,86 @@
             }
         }
 
+        let navbarAutoHideTimer = null;
+        let isNavbarTemporaryPeek = false;
+
+        function clearNavbarAutoHideTimer() {
+            if (navbarAutoHideTimer) {
+                clearTimeout(navbarAutoHideTimer);
+                navbarAutoHideTimer = null;
+            }
+        }
+
+        function scheduleNavbarAutoHide(delayMs = 4500) {
+            clearNavbarAutoHideTimer();
+            navbarAutoHideTimer = setTimeout(() => {
+                hideTopNavbar();
+            }, delayMs);
+        }
+
+        function hideTopNavbar() {
+            clearNavbarAutoHideTimer();
+            isNavbarTemporaryPeek = false;
+            const nav = document.getElementById('top-navbar');
+            const tab = document.getElementById('navbar-peek-tab');
+            if (nav) {
+                nav.classList.add('navbar-hidden');
+                nav.classList.remove('navbar-peek-active');
+            }
+            if (tab) {
+                tab.classList.add('visible');
+            }
+        }
+
+        function showNavbarTemporarily(e) {
+            if (e) e.stopPropagation();
+            const nav = document.getElementById('top-navbar');
+            const tab = document.getElementById('navbar-peek-tab');
+            if (nav) {
+                nav.classList.remove('navbar-hidden');
+                nav.classList.add('navbar-peek-active');
+            }
+            if (tab) {
+                tab.classList.remove('visible');
+            }
+            isNavbarTemporaryPeek = true;
+            scheduleNavbarAutoHide(5000);
+        }
+
+        function pauseNavbarAutoHide() {
+            if (isNavbarTemporaryPeek) {
+                clearNavbarAutoHideTimer();
+            }
+        }
+
+        function resumeNavbarAutoHide() {
+            if (isNavbarTemporaryPeek) {
+                scheduleNavbarAutoHide(3500);
+            }
+        }
+
+        function initMobileNavbarBehavior() {
+            if (window.innerWidth <= 768) {
+                hideTopNavbar();
+            }
+            let lastScrollY = window.scrollY;
+            window.addEventListener('scroll', () => {
+                const currY = window.scrollY;
+                if ((isNavbarTemporaryPeek || window.innerWidth <= 768) && currY > lastScrollY + 25 && currY > 40) {
+                    hideTopNavbar();
+                }
+                lastScrollY = currY;
+            }, { passive: true });
+        }
+
         function setSyncWaitingVisible(visible) {
             const waitBanner = document.getElementById('sync-waiting-banner');
             if (waitBanner) {
                 waitBanner.style.display = visible ? 'inline-flex' : 'none';
+            }
+            const peekSync = document.getElementById('navbar-peek-sync');
+            if (peekSync) {
+                peekSync.style.display = visible ? 'inline' : 'none';
             }
         }
 
@@ -3499,6 +3676,13 @@
             if (searchWrapper && !searchWrapper.contains(e.target)) {
                 closeSuggestions();
             }
+            if (isNavbarTemporaryPeek) {
+                const nav = document.getElementById('top-navbar');
+                const tab = document.getElementById('navbar-peek-tab');
+                if (nav && !nav.contains(e.target) && (!tab || !tab.contains(e.target))) {
+                    hideTopNavbar();
+                }
+            }
         });
 
         document.addEventListener('keydown', (e) => {
@@ -3519,6 +3703,7 @@
         });
 
         async function initData() {
+            initMobileNavbarBehavior();
             setSyncWaitingVisible(true);
             populateCountryDatalist();
             loadLayoutPrefs();
