@@ -1513,19 +1513,36 @@
             return firstPart === '???';
         }
 
+        function isCoinInStock(coin) {
+            if (!coin) return false;
+            if (!IS_ADMIN_IP) return true;
+            return Boolean(coin.posiadana && (coin.ilosc || 0) >= 1);
+        }
+
         function applyPublicViewCoins() {
-            if (isEffectiveAdminView()) {
+            const adminView = isEffectiveAdminView();
+            if (adminView) {
                 allCoins = allRawCoins;
             } else {
-                allCoins = allRawCoins.filter(c => hasPublicZakup(c));
+                allCoins = allRawCoins.filter(c => isCoinInStock(c) && hasPublicZakup(c));
             }
             const kolField = document.getElementById('flt-kolekcja-field');
+            const kolSelect = document.getElementById('flt-kolekcja');
             if (kolField) {
-                kolField.style.display = isEffectiveAdminView() ? '' : 'none';
+                kolField.style.display = adminView ? '' : 'none';
+            }
+            if (kolSelect) {
+                kolSelect.disabled = !adminView;
+                if (!adminView) {
+                    kolSelect.value = '';
+                }
             }
             const searchInput = document.getElementById('search-input');
             if (searchInput) {
-                searchInput.placeholder = `🔍 Szukaj monet (np. oksydowana nike, "1 grosz", ${isEffectiveAdminView() ? 'kolekcja:TRUE ' : ''}próba:Tak kraj:PL stop:srebro waga:29-32 rok:1995-2002)...`;
+                if (!adminView && /\bkolekcja:/i.test(searchInput.value)) {
+                    searchInput.value = setTagInRawQuery(searchInput.value, 'kolekcja', '');
+                }
+                searchInput.placeholder = `🔍 Szukaj monet (np. oksydowana nike, "1 grosz", ${adminView ? 'kolekcja:TRUE ' : ''}próba:Tak kraj:PL stop:srebro waga:29-32 rok:1995-2002)...`;
             }
             const allowed = getAllowedPerPage();
             if (!allowed.includes(itemsPerPage)) {

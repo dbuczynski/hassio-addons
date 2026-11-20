@@ -361,8 +361,11 @@ class KatalogService:
         cached_items = self._memory_cache or []
         result_items = []
         for it in cached_items:
-            if not is_trusted and it.get("zakup_num") is None and str(it.get("zakup") or "").strip() != "???":
-                continue
+            if not is_trusted:
+                if not (it.get("posiadana") and (it.get("ilosc") or 0) >= 1):
+                    continue
+                if it.get("zakup_num") is None and str(it.get("zakup") or "").strip() != "???":
+                    continue
             entry = dict(it)
             entry["zdjecia"] = _filter_existing_photo_urls(it.get("zdjecia_zadeklarowane") or it.get("zdjecia"))
             if not is_trusted:
