@@ -14,7 +14,7 @@ import youtube_service
 app = Flask(__name__)
 app.secret_key = "andrzejow_net_secret_key_metale_szlachetne"
 
-APP_VERSION = "2.1.2"
+APP_VERSION = "2.1.3"
 
 DEFAULT_ALLOWED_CHANNELS = [
     {"handle": "@UncjuszPatyniusz", "title": "Uncjusz Patyniusz"},
@@ -144,9 +144,10 @@ def format_label_params_summary(item):
     c = clean_label_item(item)
     parts = []
     if c[0]: parts.append(f"Rok: {c[0]}")
-    if c[4]:
+    if c[4] or c[7] or c[5]:
         denom = f"{c[7]}{c[4]} {c[5]}".strip()
-        parts.append(f"Nominał: {denom}")
+        if denom:
+            parts.append(f"Nominał: {denom}")
     if c[1]: parts.append(f"Seria: {c[1]}")
     if c[2]: parts.append(f"Nazwa: {c[2]}")
     if c[6]: parts.append(f"Stop: {c[6]}")
@@ -708,14 +709,14 @@ def format_mintage(val):
 def clean_label_item(item):
     """Zapewnia spójność 14 pól etykiety w tablicy Python."""
     if not isinstance(item, list):
-        return ["", "", "", "", "2", "", "", "", "", "", "", "", False, "pl"]
+        return ["", "", "", "", "", "", "", "", "", "", "", "", False, "pl"]
     
-    year = str(item[0] if len(item) > 0 else "").strip()
-    series = str(item[1] if len(item) > 1 else "").strip()
-    name = str(item[2] if len(item) > 2 else "").strip()
-    mintage = format_mintage(item[3] if len(item) > 3 else "")
-    nominal = str(item[4] if len(item) > 4 else "2").strip()
-    currency_after = str(item[5] if len(item) > 5 else "").strip()
+    year = str(item[0] if len(item) > 0 and item[0] is not None else "").strip()
+    series = str(item[1] if len(item) > 1 and item[1] is not None else "").strip()
+    name = str(item[2] if len(item) > 2 and item[2] is not None else "").strip()
+    mintage = format_mintage(item[3] if len(item) > 3 and item[3] is not None else "")
+    nominal = str(item[4] if len(item) > 4 and item[4] is not None else "").strip()
+    currency_after = str(item[5] if len(item) > 5 and item[5] is not None else "").strip()
     stop = str(item[6] if len(item) > 6 else "").strip()
     
     currency_before = item[7] if len(item) > 7 else ""
@@ -1166,7 +1167,7 @@ def update_admin_labels():
                 str(data.get("series", "")),
                 str(data.get("name", "")),
                 str(data.get("mintage", "")),
-                str(data.get("nominal", "2")),
+                str(data.get("nominal", "")),
                 str(data.get("currency_after", data.get("currency", "zł"))),
                 str(data.get("stop", "")),
                 str(data.get("currency_before", "")),

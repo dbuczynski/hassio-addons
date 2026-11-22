@@ -198,19 +198,109 @@
   }
   .btn-back:hover { background: #334155; }
 
+  .zoom-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #1e293b;
+    border: 1px solid #475569;
+    border-radius: 6px;
+    padding: 3px 6px;
+  }
+  .zoom-btn {
+    background: #334155;
+    color: #fff;
+    border: none;
+    width: 26px;
+    height: 26px;
+    border-radius: 4px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  .zoom-btn:hover { background: #475569; }
+  .zoom-select {
+    background: transparent;
+    color: #f8fafc;
+    border: none;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 2px 4px;
+    cursor: pointer;
+    outline: none;
+    font-family: inherit;
+  }
+  .zoom-select option {
+    background: #1e293b;
+    color: #fff;
+  }
+
+  @media screen {
+    body {
+      background: #cbd5e1;
+    }
+    #container {
+      zoom: var(--screen-zoom, 1.5);
+      padding: 12px 0 28px 0;
+      overflow-x: auto;
+    }
+    .page {
+      background: #fff;
+      width: 210mm;
+      margin: 12px auto;
+      padding: 5mm 10mm;
+      box-shadow: 0 6px 24px rgba(15, 23, 42, 0.22);
+      border-radius: 3px;
+    }
+  }
+
   @media print {
+    body { background: #fff !important; }
     .no-print-bar { display: none !important; }
+    #container {
+      zoom: 1 !important;
+      transform: none !important;
+      padding: 0 !important;
+      overflow: visible !important;
+    }
+    .page {
+      width: auto !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+    }
   }
 </style>
 </head>
 <body>
 
 <div class="no-print-bar">
-  <div style="display: flex; align-items: center; gap: 16px;">
+  <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
     <strong>🖨️ Podgląd wydruku etykiet</strong>
     <span id="label-count-info" style="font-size: 13px; color: #94a3b8;"></span>
   </div>
-  <div style="display: flex; align-items: center; gap: 14px;">
+  <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+    <div style="font-size: 13px; color: #cbd5e1; display: flex; align-items: center; gap: 6px;" title="Powiększenie podglądu na ekranie (nie wpływa na rozmiar wydruku)">
+      <span>🔍 Powiększenie ekranu:</span>
+      <div class="zoom-controls">
+        <button type="button" class="zoom-btn" onclick="stepScreenZoom(-25)" title="Pomniejsz podgląd">−</button>
+        <select id="screen-zoom-select" class="zoom-select" onchange="setScreenZoom(parseInt(this.value, 10))">
+          <option value="100">100%</option>
+          <option value="125">125%</option>
+          <option value="150" selected>150%</option>
+          <option value="175">175%</option>
+          <option value="200">200%</option>
+          <option value="225">225%</option>
+          <option value="250">250%</option>
+        </select>
+        <button type="button" class="zoom-btn" onclick="stepScreenZoom(25)" title="Powiększ podgląd">+</button>
+      </div>
+    </div>
     <label style="font-size: 13px; color: #cbd5e1; display: flex; align-items: center; gap: 6px;">
       Linie cięcia:
       <select id="cut-lines-mode" onchange="setCutLinesMode(this.value)" style="background: #1e293b; color: #fff; border: 1px solid #475569; padding: 5px 10px; border-radius: 6px; font-size: 13px; font-family: inherit; cursor: pointer;">
@@ -261,7 +351,7 @@ function formatNominal(val) {
 }
 
 function cleanLabelItem(item) {
-  if (!item || !Array.isArray(item)) return ["","","","","2","","","","","","","",false,"pl"];
+  if (!item || !Array.isArray(item)) return ["","","","","","","","","","","","",false,"pl"];
 
   let year = String(item[0] || "");
   let series = String(item[1] || "");
@@ -349,7 +439,7 @@ function renderHalfCellContent(rawItem) {
       <div class="inner-box-half">
         <div class="line-bottom">
           <span>
-            <span class="currency-font">${escapeHtml(currencyBefore)}</span><span class="nominal">${escapeHtml(formatNominal(nominal))}</span><span class="currency-font">${escapeHtml(currencyAfter)}</span>
+            <span class="currency-font">${escapeHtml(currencyBefore)}</span>${nominal ? `<span class="nominal">${escapeHtml(formatNominal(nominal))}</span>` : ''}<span class="currency-font">${escapeHtml(currencyAfter)}</span>
             <span class="year-str">${escapeHtml(year)}</span>
           </span>
           <span class="alloy-stop">${escapeHtml(stop)}</span>
@@ -366,7 +456,7 @@ function renderNormalCellContent(rawItem) {
   const series = item[1];
   const name = item[2];
   const mintage = item[3];
-  const nominal = item[4] || "2";
+  const nominal = item[4] ? String(item[4]).trim() : "";
   const currencyAfter = item[5];
   const stop = item[6];
   const currencyBefore = item[7];
@@ -396,7 +486,7 @@ function renderNormalCellContent(rawItem) {
       </div>
       <div class="line-bottom">
         <span>
-          <span class="currency-font">${escapeHtml(currencyBefore)}</span><span class="nominal">${escapeHtml(formatNominal(nominal))}</span><span class="currency-font">${escapeHtml(currencyAfter)}</span>
+          <span class="currency-font">${escapeHtml(currencyBefore)}</span>${nominal ? `<span class="nominal">${escapeHtml(formatNominal(nominal))}</span>` : ''}<span class="currency-font">${escapeHtml(currencyAfter)}</span>
           <span class="year-str">${escapeHtml(year)}</span>
         </span>
         <span class="alloy-stop">${escapeHtml(stop)}</span>
@@ -488,6 +578,34 @@ const savedCutMode = localStorage.getItem('label_cut_lines_mode') || 'ticks';
 const selectElem = document.getElementById('cut-lines-mode');
 if (selectElem) selectElem.value = savedCutMode;
 setCutLinesMode(savedCutMode);
+
+const ZOOM_STEPS = [100, 125, 150, 175, 200, 225, 250];
+let currentScreenZoom = 150;
+
+function setScreenZoom(percent) {
+  if (!ZOOM_STEPS.includes(percent)) {
+    percent = 150;
+  }
+  currentScreenZoom = percent;
+  if (container) {
+    container.style.setProperty('--screen-zoom', (percent / 100).toFixed(2));
+  }
+  const zoomSelect = document.getElementById('screen-zoom-select');
+  if (zoomSelect) {
+    zoomSelect.value = String(percent);
+  }
+  try {
+    localStorage.setItem('label_print_screen_zoom', String(percent));
+  } catch (e) {}
+}
+
+function stepScreenZoom(delta) {
+  const next = Math.min(250, Math.max(100, currentScreenZoom + delta));
+  setScreenZoom(next);
+}
+
+const savedZoom = parseInt(localStorage.getItem('label_print_screen_zoom') || '150', 10);
+setScreenZoom(ZOOM_STEPS.includes(savedZoom) ? savedZoom : 150);
 
 if (data.length === 0) {
   container.innerHTML = '<div style="padding: 40px; text-align: center; font-family: sans-serif; color: #666;">Brak wyznaczonych etykiet do druku. Powróć do edytora i dodaj etykiety.</div>';

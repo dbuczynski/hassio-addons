@@ -476,6 +476,206 @@
             border-top: 1px solid var(--border-color);
             margin-top: auto;
         }
+
+        /* Edit Selected Label Modal & Live Preview */
+        .edit-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 23, 0.85);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 16px;
+        }
+        .edit-modal-overlay.open {
+            display: flex;
+        }
+        .edit-modal-card {
+            background: #1e293b;
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            border-radius: var(--radius-lg);
+            max-width: 720px;
+            width: 100%;
+            max-height: 92vh;
+            overflow-y: auto;
+            padding: 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75);
+        }
+        .edit-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+        .edit-modal-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--accent-gold);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .variant-mode-pills {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .variant-pill-btn {
+            flex: 1;
+            min-width: 140px;
+            background: rgba(15, 23, 42, 0.75);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s ease;
+        }
+        .variant-pill-btn:hover {
+            border-color: var(--accent-primary);
+            color: #fff;
+        }
+        .variant-pill-btn.active-full {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--accent-green);
+            color: #6ee7b7;
+        }
+        .variant-pill-btn.active-top {
+            background: rgba(245, 158, 11, 0.2);
+            border-color: var(--accent-gold);
+            color: #fcd34d;
+        }
+        .variant-pill-btn.active-bottom {
+            background: rgba(99, 102, 241, 0.22);
+            border-color: var(--accent-primary);
+            color: #c7d2fe;
+        }
+        .live-preview-wrapper {
+            background: rgba(15, 23, 42, 0.78);
+            border: 1px dashed rgba(255, 255, 255, 0.18);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .live-preview-caption {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        /* Powiększony (2x) wierny podgląd fizycznej etykiety 47.5mm x 9.5mm / 5.7mm */
+        .preview-label-cell-normal {
+            width: 358px;
+            height: 72px;
+            padding: 3px 4.5px;
+            background: #f8fafc;
+            border: 1px dashed #94a3b8;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .preview-label-cell-half {
+            width: 358px;
+            height: 43px;
+            padding: 3px 4.5px;
+            background: #f8fafc;
+            border: 1px dashed #94a3b8;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .preview-inner-box {
+            width: 100%;
+            height: 100%;
+            border: 2.2px solid #1a625d;
+            border-radius: 24px;
+            background: #fff;
+            padding: 2px 12px 3px 13px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+            font-family: 'Times New Roman', 'DejaVu Serif', serif;
+        }
+        .preview-inner-box-half {
+            width: 100%;
+            height: 100%;
+            border: 2.2px solid #1a625d;
+            border-radius: 16px;
+            background: #fff;
+            padding: 0 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            font-family: 'Times New Roman', 'DejaVu Serif', serif;
+        }
+        .preview-line-top {
+            font-size: 18px;
+            color: #1a1a1a;
+            line-height: 1.08;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: center;
+            width: 100%;
+        }
+        .preview-series-part { font-style: italic; }
+        .preview-name-part { font-weight: bold; }
+        .preview-line-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            line-height: 1.0;
+            white-space: nowrap;
+            overflow: hidden;
+            width: 100%;
+        }
+        .preview-nominal { font-size: 29px; font-weight: bold; color: #0d0d0d; }
+        .preview-currency-font { font-size: 18px; font-weight: normal; color: #0d0d0d; }
+        .preview-year-str { font-size: 23px; font-weight: normal; color: #0d0d0d; margin-left: 4px; }
+        .preview-alloy-stop { font-size: 18px; font-weight: bold; color: #1a1a1a; text-align: center; margin: 0 4px; flex-shrink: 0; }
+        .preview-mintage { font-size: 18px; font-style: normal; color: #555; text-align: right; flex-shrink: 0; }
+        .edit-section-box {
+            background: rgba(15, 23, 42, 0.55);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: opacity 0.2s ease;
+        }
+        .edit-section-box.dimmed {
+            opacity: 0.42;
+        }
+        .edit-section-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--accent-gold);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
     </style>
 </head>
 <body>
@@ -547,7 +747,7 @@
                         </div>
                         <div class="form-field" style="min-width: 65px; flex: 1;">
                             <label>Nominał</label>
-                            <input type="text" id="new-nominal" value="2">
+                            <input type="text" id="new-nominal" placeholder="np. 2">
                         </div>
                         <div class="form-field" style="min-width: 80px; flex: 1;">
                             <label>Waluta po</label>
@@ -613,19 +813,31 @@
             <!-- RIGHT COLUMN: Selected Labels -->
             <div class="column-card">
                 <div class="column-header">
-                    <div class="column-title">
+                    <div class="column-title" style="flex-wrap: wrap;">
                         🛒 Wybrane etykiety (do druku)
-                        <button class="btn btn-gold btn-xs" onclick="addAllServerLabelsToSelected()" title="Dodaje 1 sztukę każdej etykiety" style="margin-left: 6px;">
-                            &lt;&lt;DODAJ WSZYSTKIE&gt;&gt;
+                        <button class="btn btn-gold btn-xs" onclick="addAllServerLabelsToSelected()" title="Dodaje 1 sztukę każdej etykiety z całej bazy" style="margin-left: 6px;">
+                            + ALL
+                        </button>
+                        <button class="btn btn-green btn-xs" onclick="addSearchedLabelsToSelected()" title="Dodaje wszystkie etykiety z bieżącego wyszukiwania">
+                            + wyszukane
                         </button>
                     </div>
                     <span class="badge-count" id="count-selected">0 etykiet • 0 str. A4</span>
                 </div>
 
                 <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: space-between; align-items: center;">
-                    <button class="btn btn-danger btn-xs" onclick="clearSelectedLabels()">
-                        🗑️ Wyczyść listę
-                    </button>
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                        <button class="btn btn-danger btn-xs" onclick="clearSelectedLabels()" title="Wyczyść wszystkie wybrane etykiety">
+                            🗑️ Wyczyść listę
+                        </button>
+                        <button class="btn btn-xs" onclick="exportSelectedLabelsJson()" title="Zapisz aktualnie wybrany zestaw etykiet do pliku JSON na dysku">
+                            💾 Eksportuj JSON
+                        </button>
+                        <button class="btn btn-xs" onclick="document.getElementById('import-selected-json-input').click()" title="Wczytaj zapisany wcześniej zestaw etykiet z pliku JSON">
+                            📂 Importuj JSON
+                        </button>
+                        <input type="file" id="import-selected-json-input" accept=".json,application/json" style="display: none;" onchange="handleImportSelectedLabelsJson(event)">
+                    </div>
 
                     <button class="btn btn-green" onclick="generateLabelsPrint()" style="font-size: 13.5px; padding: 8px 18px;">
                         🖨️ GENERUJ ETYKIETY (DRUKUJ)
@@ -645,6 +857,146 @@
     <!-- Footer -->
     <div class="footer">
         Metale Szlachetne Polska • apps by Weekendowy Detektorysta
+    </div>
+
+    <!-- MODAL EDYCJI WYBRANEJ ETYKIETY W SESJI -->
+    <div id="edit-selected-modal" class="edit-modal-overlay" onclick="if(event.target.id==='edit-selected-modal') closeEditSelectedModal()">
+        <div class="edit-modal-card">
+            <div class="edit-modal-header">
+                <div>
+                    <div class="edit-modal-title">
+                        <span>✏️ Edycja wybranej etykiety (w bieżącej sesji)</span>
+                    </div>
+                    <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">
+                        Zmiany są zapisywane wyłącznie w wybranym zestawie do druku i nie modyfikują bazy głównej na serwerze.
+                    </div>
+                </div>
+                <button type="button" class="btn btn-danger btn-xs" onclick="closeEditSelectedModal()" title="Zamknij (Esc)">✕</button>
+            </div>
+
+            <!-- Dynamiczny podgląd etykiety na żywo -->
+            <div class="live-preview-wrapper">
+                <div class="live-preview-caption">
+                    <span>👁️ Podgląd etykiety na żywo (skala 2:1)</span>
+                    <span id="edit-preview-mode-badge" style="color: var(--accent-gold);">Pełna etykieta (47.5 × 9.5 mm)</span>
+                </div>
+                <div id="edit-live-preview-box"></div>
+            </div>
+
+            <!-- Przełącznik typu etykiety: Pełna / Górna / Dolna -->
+            <div>
+                <div class="edit-section-label" style="margin-bottom: 6px;">Typ generowanej etykiety:</div>
+                <div class="variant-mode-pills">
+                    <button type="button" id="edit-mode-full" class="variant-pill-btn active-full" onclick="setEditModalVariantMode('full')">
+                        🪪 Pełna etykieta (Górna + Dolna)
+                    </button>
+                    <button type="button" id="edit-mode-top" class="variant-pill-btn" onclick="setEditModalVariantMode('top')">
+                        ⬆️ Tylko Górna (Seria + Nazwa/Typ)
+                    </button>
+                    <button type="button" id="edit-mode-bottom" class="variant-pill-btn" onclick="setEditModalVariantMode('bottom')">
+                        ⬇️ Tylko Dolna (Nominał + Rok + Stop + Nakład)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sekcja Górna: Seria, Nazwa, Typ -->
+            <div id="edit-section-top" class="edit-section-box">
+                <div class="edit-section-label">⬆️ Część górna etykiety</div>
+                <div class="form-row">
+                    <div class="form-field" style="flex: 1.1; min-width: 150px;">
+                        <label>Seria</label>
+                        <input type="text" id="edit-series" placeholder="np. Polscy Malarze" oninput="updateEditModalLivePreview()">
+                    </div>
+                    <div class="form-field" style="flex: 1.5; min-width: 180px;">
+                        <label>Nazwa / Tytuł</label>
+                        <input type="text" id="edit-name" placeholder="np. Zbigniew Herbert" oninput="updateEditModalLivePreview()">
+                    </div>
+                    <div class="form-field" style="flex: 0.9; min-width: 120px;">
+                        <label>Typ (w &lt;...&gt; po nazwie)</label>
+                        <input type="text" id="edit-typ" placeholder="np. próba / stempel" oninput="updateEditModalLivePreview()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sekcja Dolna: Waluta przed, Nominał, Waluta po, Rok, Stop, Nakład -->
+            <div id="edit-section-bottom" class="edit-section-box">
+                <div class="edit-section-label">⬇️ Część dolna etykiety</div>
+                <div class="form-row">
+                    <div class="form-field" style="min-width: 75px;">
+                        <label>Waluta przed</label>
+                        <input type="text" id="edit-currency-before" placeholder="£ / $" oninput="updateEditModalLivePreview()">
+                    </div>
+                    <div class="form-field" style="min-width: 75px;">
+                        <label>Nominał</label>
+                        <input type="text" id="edit-nominal" placeholder="puste lub np. 2" oninput="updateEditModalLivePreview()">
+                    </div>
+                    <div class="form-field" style="min-width: 75px;">
+                        <label>Waluta po</label>
+                        <input type="text" id="edit-currency-after" placeholder="zł" oninput="updateEditModalLivePreview()">
+                    </div>
+                    <div class="form-field" style="min-width: 75px;">
+                        <label>Rok</label>
+                        <input type="text" id="edit-year" placeholder="np. 2024" oninput="updateEditModalLivePreview()">
+                    </div>
+                    <div class="form-field" style="min-width: 80px;">
+                        <label>Stop</label>
+                        <input type="text" id="edit-stop" placeholder="np. Ag999 / NG" oninput="updateEditModalLivePreview()">
+                    </div>
+                    <div class="form-field" style="min-width: 105px;">
+                        <label>Nakład</label>
+                        <input type="text" id="edit-mintage" placeholder="np. 50 000" oninput="updateEditModalLivePreview()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dodatkowe parametry monety oraz ilość sztuk -->
+            <div class="edit-section-box">
+                <div class="edit-section-label">⚙️ Pozostałe parametry oraz ilość do druku</div>
+                <div class="form-row" style="align-items: flex-end;">
+                    <div class="form-field" style="min-width: 70px;">
+                        <label>Kraj</label>
+                        <input type="text" id="edit-country" placeholder="pl / us / uk" oninput="updateEditModalLivePreview()">
+                    </div>
+                    <div class="form-field" style="min-width: 100px;">
+                        <label>Rant</label>
+                        <input type="text" id="edit-rant" placeholder="gładki / ząbkowany" oninput="updateEditModalLivePreview()">
+                    </div>
+                    <div class="form-field" style="min-width: 80px;">
+                        <label>Waga [g]</label>
+                        <input type="text" id="edit-weight" placeholder="np. 14.14" oninput="updateEditModalLivePreview()">
+                    </div>
+                    <div class="form-field" style="min-width: 85px;">
+                        <label>Średnica [mm]</label>
+                        <input type="text" id="edit-diameter" placeholder="np. 27.00" oninput="updateEditModalLivePreview()">
+                    </div>
+                    <div class="form-field" style="min-width: 80px; flex: 0.6;">
+                        <label>Trial (Próba)</label>
+                        <label style="display:flex; align-items:center; gap:6px; height:29px; cursor:pointer; color:#fff; font-size:12px; text-transform:none;">
+                            <input type="checkbox" id="edit-trial" onchange="updateEditModalLivePreview()" style="width:16px; height:16px;">
+                            <span>TAK</span>
+                        </label>
+                    </div>
+                    <div class="form-field" style="min-width: 90px; flex: 0.7;">
+                        <label>Ilość etykiet</label>
+                        <input type="number" id="edit-qty" min="1" max="500" value="1">
+                    </div>
+                </div>
+            </div>
+
+            <div id="edit-modal-status-msg" style="display:none; font-size:12px; font-weight:700; color:#6ee7b7; background:rgba(16,185,129,0.16); border:1px solid rgba(16,185,129,0.4); padding:7px 12px; border-radius:6px;"></div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; pt: 4px;">
+                <button type="button" class="btn btn-gold" onclick="duplicateFromEditSelectedModal()" title="Tworzy nowy wpis na liście wybranych na podstawie bieżących pól formularza">
+                    📋 Duplikuj (jako nowy wpis)
+                </button>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button type="button" class="btn" onclick="closeEditSelectedModal()">Anuluj</button>
+                    <button type="button" class="btn btn-green" onclick="saveEditedSelectedLabel()">
+                        💾 Zapisz zmiany
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- JavaScript Application Logic -->
@@ -735,7 +1087,7 @@
         }
 
         function cleanLabelItem(item) {
-            if (!item || !Array.isArray(item)) return ["","","","","2","","","","","","","",false,"pl"];
+            if (!item || !Array.isArray(item)) return ["","","","","","","","","","","","",false,"pl"];
 
             let year = String(item[0] || "");
             let series = String(item[1] || "");
@@ -823,7 +1175,7 @@
 
         function loadStorageData() {
             try {
-                const storedSession = sessionStorage.getItem('custom_session_labels');
+                const storedSession = sessionStorage.getItem('custom_session_labels') || localStorage.getItem('custom_session_labels');
                 if (storedSession) {
                     const parsed = JSON.parse(storedSession);
                     if (Array.isArray(parsed)) {
@@ -833,7 +1185,7 @@
             } catch(e) { sessionLabels = []; }
 
             try {
-                const storedSelected = sessionStorage.getItem('selected_labels_list');
+                const storedSelected = sessionStorage.getItem('selected_labels_list') || localStorage.getItem('selected_labels_list');
                 if (storedSelected) {
                     const rawData = JSON.parse(storedSelected);
                     selectedGroups = normalizeGroups(rawData);
@@ -845,11 +1197,15 @@
 
         function saveStorageData() {
             try {
-                sessionStorage.setItem('custom_session_labels', JSON.stringify(sessionLabels));
+                const sessionJson = JSON.stringify(sessionLabels);
+                sessionStorage.setItem('custom_session_labels', sessionJson);
+                localStorage.setItem('custom_session_labels', sessionJson);
             } catch(e) {}
 
             try {
-                sessionStorage.setItem('selected_labels_list', JSON.stringify(selectedGroups));
+                const selectedJson = JSON.stringify(selectedGroups);
+                sessionStorage.setItem('selected_labels_list', selectedJson);
+                localStorage.setItem('selected_labels_list', selectedJson);
             } catch(e) {}
         }
 
@@ -956,8 +1312,8 @@
             const currencyBefore = document.getElementById('new-currency-before').value.trim();
             const country = document.getElementById('new-country').value.trim() || 'pl';
 
-            if (!name && !series && !nominal && !year) {
-                alert("Podaj nazwę, serię lub nominał etykiety.");
+            if (!name && !series && !nominal && !year && !currencyBefore && !currencyAfter && !stop && !mintage) {
+                alert("Podaj przynajmniej jeden parametr etykiety (np. nazwę, serię, rok, walutę lub nominał).");
                 return;
             }
 
@@ -1212,7 +1568,7 @@
             } else if (mode === 'bottom') {
                 targetItem = [
                     rawItem[0] || "", "", "", rawItem[3] || "",
-                    rawItem[4] || "2", rawItem[5] || "", rawItem[6] || "", rawItem[7] || "",
+                    rawItem[4] || "", rawItem[5] || "", rawItem[6] || "", rawItem[7] || "",
                     rawItem[8] || "", rawItem[9] || "", rawItem[10] || "", rawItem[11] || "", rawItem[12] || false, rawItem[13] || "pl"
                 ];
             } else {
@@ -1268,6 +1624,69 @@
             }
         }
 
+        async function addSearchedLabelsToSelected() {
+            const queryRaw = document.getElementById('search-input').value.trim();
+            const yearFilter = document.getElementById('filter-year').value.trim();
+            const countryFilter = document.getElementById('filter-country').value.trim();
+
+            if (!queryRaw && !yearFilter && !countryFilter && (!currentCombinedResults || currentCombinedResults.length === 0)) {
+                alert("Najpierw wyszukaj etykiety (wpisz frazę, wybierz rocznik lub kraj).");
+                return;
+            }
+
+            try {
+                // Mapa ilości ustawionych ręcznie w widocznej liście wyników
+                const customQtyMap = new Map();
+                if (Array.isArray(currentCombinedResults)) {
+                    currentCombinedResults.forEach((item, idx) => {
+                        const qtyEl = document.getElementById(`qty-available-${idx}`);
+                        const q = Math.max(1, parseInt(qtyEl ? qtyEl.value : 1) || 1);
+                        customQtyMap.set(JSON.stringify(cleanLabelItem(item)), q);
+                    });
+                }
+
+                // Dopasowane etykiety z bieżącej sesji (znajdują się na początku currentCombinedResults)
+                const addedSessionKeys = new Set();
+                if (Array.isArray(currentCombinedResults) && Array.isArray(sessionLabels)) {
+                    const sessionKeysSet = new Set(sessionLabels.map(s => JSON.stringify(cleanLabelItem(s))));
+                    currentCombinedResults.forEach(item => {
+                        const clean = cleanLabelItem(item);
+                        const key = JSON.stringify(clean);
+                        if (sessionKeysSet.has(key) && !addedSessionKeys.has(key)) {
+                            addedSessionKeys.add(key);
+                            addGroupItem(clean, customQtyMap.get(key) || 1);
+                        }
+                    });
+                }
+
+                // Pobierz wszystkie pasujące etykiety z serwera dla bieżącego wyszukiwania (bez limitu 50)
+                let url = '/api/labels?limit=10000';
+                if (queryRaw) url += '&q=' + encodeURIComponent(queryRaw);
+                if (yearFilter) url += '&year=' + encodeURIComponent(yearFilter);
+                if (countryFilter) url += '&country=' + encodeURIComponent(countryFilter);
+
+                const response = await fetch(url);
+                const data = await response.json();
+                const searchedServerLabels = (data && Array.isArray(data.labels)) ? data.labels : [];
+
+                if (addedSessionKeys.size === 0 && searchedServerLabels.length === 0) {
+                    alert("Brak wyszukanych etykiet do dodania.");
+                    return;
+                }
+
+                searchedServerLabels.forEach(item => {
+                    const clean = cleanLabelItem(item);
+                    const key = JSON.stringify(clean);
+                    addGroupItem(clean, customQtyMap.get(key) || 1);
+                });
+
+                saveStorageData();
+                renderSelectedLabels();
+            } catch (e) {
+                console.error("Błąd dodawania wyszukanych etykiet:", e);
+            }
+        }
+
         function updateGroupCount(index, newCountVal) {
             let count = parseInt(newCountVal) || 1;
             if (count < 1) count = 1;
@@ -1292,6 +1711,111 @@
             selectedGroups = [];
             saveStorageData();
             renderSelectedLabels();
+        }
+
+        function exportSelectedLabelsJson() {
+            if (!selectedGroups || selectedGroups.length === 0) {
+                alert("Lista wybranych etykiet jest pusta. Dodaj najpierw etykiety do zestawu.");
+                return;
+            }
+
+            const flatItems = flattenGroups(selectedGroups);
+            const now = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
+            const dateStamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}`;
+
+            const payload = {
+                format: "msp_etykiety_set_v1",
+                exported_at: `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`,
+                total_groups: selectedGroups.length,
+                total_labels: flatItems.length,
+                selected_groups: selectedGroups,
+                session_labels: sessionLabels
+            };
+
+            const jsonStr = JSON.stringify(payload, null, 2);
+            const blob = new Blob([jsonStr], { type: "application/json;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `zestaw_etykiet_${dateStamp}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function handleImportSelectedLabelsJson(event) {
+            const input = event.target;
+            if (!input || !input.files || input.files.length === 0) return;
+            const file = input.files[0];
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const parsed = JSON.parse(evt.target.result);
+                    let rawGroups = [];
+                    let rawSession = [];
+
+                    if (Array.isArray(parsed)) {
+                        rawGroups = parsed;
+                    } else if (parsed && typeof parsed === 'object') {
+                        if (Array.isArray(parsed.selected_groups)) {
+                            rawGroups = parsed.selected_groups;
+                        } else if (Array.isArray(parsed.groups)) {
+                            rawGroups = parsed.groups;
+                        } else if (Array.isArray(parsed.labels)) {
+                            rawGroups = parsed.labels;
+                        }
+                        if (Array.isArray(parsed.session_labels)) {
+                            rawSession = parsed.session_labels;
+                        }
+                    }
+
+                    const importedGroups = normalizeGroups(rawGroups);
+                    if (importedGroups.length === 0 && rawSession.length === 0) {
+                        alert("⚠️ Wybrany plik JSON nie zawiera żadnych prawidłowych etykiet.");
+                        return;
+                    }
+
+                    let appendMode = true;
+                    if (selectedGroups.length > 0 && importedGroups.length > 0) {
+                        appendMode = confirm(
+                            `W pliku znaleziono ${importedGroups.length} pozycji etykiet.\n\n` +
+                            `Kliknij "OK", aby DOPISAĆ je do obecnej listy wybranych etykiet.\n` +
+                            `Kliknij "Anuluj", aby ZASTĄPIĆ obecną listę zestawem z pliku.`
+                        );
+                    }
+
+                    if (!appendMode) {
+                        selectedGroups = [];
+                    }
+
+                    importedGroups.forEach(g => {
+                        addGroupItem(g.item, g.count);
+                    });
+
+                    if (Array.isArray(rawSession) && rawSession.length > 0) {
+                        const existingSessionJsons = new Set(sessionLabels.map(x => JSON.stringify(cleanLabelItem(x))));
+                        rawSession.forEach(sItem => {
+                            const cleaned = cleanLabelItem(sItem);
+                            const key = JSON.stringify(cleaned);
+                            if (!existingSessionJsons.has(key)) {
+                                existingSessionJsons.add(key);
+                                sessionLabels.push(cleaned);
+                            }
+                        });
+                    }
+
+                    saveStorageData();
+                    renderSelectedLabels();
+                } catch (err) {
+                    alert("⚠️ Błąd odczytu pliku JSON: " + err.message);
+                } finally {
+                    input.value = '';
+                }
+            };
+            reader.readAsText(file, 'UTF-8');
         }
 
         function calculateA4PagesCount(itemsList) {
@@ -1390,11 +1914,12 @@
                             <!-- Box 3: Stop -->
                             ${stop ? `<span class="label-tag-compact label-tag-stop">${escapeHtml(stop)}</span>` : ''}
 
-                            <span class="label-title-compact" title="${escapeHtml(displayTitle)}">${escapeHtml(displayTitle)}</span>
+                            <span class="label-title-compact" title="Kliknij, aby edytować tę etykietę: ${escapeHtml(displayTitle)}" onclick="openEditSelectedModal(${idx})" style="cursor:pointer;">${escapeHtml(displayTitle)}</span>
                             ${typeBadge}
                         </div>
                         <div class="item-controls-compact">
                             <input type="number" class="input-qty" value="${count}" min="1" max="500" onchange="updateGroupCount(${idx}, this.value)">
+                            <button class="btn btn-gold btn-xs" onclick="openEditSelectedModal(${idx})" title="Edytuj parametry lub duplikuj tę etykietę w sesji">✏️</button>
                             <button class="btn btn-danger btn-xs" onclick="removeSelectedGroup(${idx})" title="Usuń z wybranej grupy">🗑️</button>
                         </div>
                     </div>
@@ -1419,6 +1944,264 @@
 
             window.open('/MetaleSzlachetnePolska/etykiety/print', '_blank');
         }
+
+        /* --- EDYCJA I DUPLIKOWANIE WYBRANEJ ETYKIETY W SESJI Z PODGLĄDEM NA ŻYWO --- */
+        let editingSelectedIndex = -1;
+        let editModalVariantMode = 'full'; // 'full' | 'top' | 'bottom'
+
+        function formatNominalPreview(val) {
+            if (!val) return '';
+            const clean = String(val).trim().replace(/\s+/g, '');
+            if (/^\d+$/.test(clean)) {
+                return clean.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+            }
+            return String(val).trim();
+        }
+
+        function isIntegerMintagePreview(val) {
+            if (!val) return false;
+            const clean = String(val).trim().replace(/\s+/g, '');
+            return /^\d+$/.test(clean);
+        }
+
+        function openEditSelectedModal(idx) {
+            if (idx < 0 || idx >= selectedGroups.length) return;
+            editingSelectedIndex = idx;
+            const group = selectedGroups[idx];
+            const item = cleanLabelItem(group.item);
+
+            document.getElementById('edit-year').value = item[0] || '';
+            document.getElementById('edit-series').value = item[1] || '';
+            document.getElementById('edit-name').value = item[2] || '';
+            document.getElementById('edit-mintage').value = formatMintage(item[3] || '');
+            document.getElementById('edit-nominal').value = item[4] || '';
+            document.getElementById('edit-currency-after').value = item[5] || '';
+            document.getElementById('edit-stop').value = item[6] || '';
+            document.getElementById('edit-currency-before').value = item[7] || '';
+            document.getElementById('edit-rant').value = item[8] || '';
+            document.getElementById('edit-typ').value = item[9] || '';
+            document.getElementById('edit-weight').value = item[10] || '';
+            document.getElementById('edit-diameter').value = item[11] || '';
+            document.getElementById('edit-trial').checked = Boolean(item[12]);
+            document.getElementById('edit-country').value = item[13] || 'pl';
+            document.getElementById('edit-qty').value = Math.max(1, parseInt(group.count) || 1);
+
+            const statusMsg = document.getElementById('edit-modal-status-msg');
+            if (statusMsg) statusMsg.style.display = 'none';
+
+            const currentType = getLabelType(item);
+            if (currentType === 'gorna') {
+                setEditModalVariantMode('top');
+            } else if (currentType === 'dolna') {
+                setEditModalVariantMode('bottom');
+            } else {
+                setEditModalVariantMode('full');
+            }
+
+            document.getElementById('edit-selected-modal').classList.add('open');
+        }
+
+        function closeEditSelectedModal() {
+            editingSelectedIndex = -1;
+            const modal = document.getElementById('edit-selected-modal');
+            if (modal) modal.classList.remove('open');
+        }
+
+        function setEditModalVariantMode(mode) {
+            if (!['full', 'top', 'bottom'].includes(mode)) mode = 'full';
+            editModalVariantMode = mode;
+
+            const btnFull = document.getElementById('edit-mode-full');
+            const btnTop = document.getElementById('edit-mode-top');
+            const btnBottom = document.getElementById('edit-mode-bottom');
+            if (btnFull) btnFull.className = 'variant-pill-btn' + (mode === 'full' ? ' active-full' : '');
+            if (btnTop) btnTop.className = 'variant-pill-btn' + (mode === 'top' ? ' active-top' : '');
+            if (btnBottom) btnBottom.className = 'variant-pill-btn' + (mode === 'bottom' ? ' active-bottom' : '');
+
+            const secTop = document.getElementById('edit-section-top');
+            const secBottom = document.getElementById('edit-section-bottom');
+            if (secTop) secTop.classList.toggle('dimmed', mode === 'bottom');
+            if (secBottom) secBottom.classList.toggle('dimmed', mode === 'top');
+
+            const badge = document.getElementById('edit-preview-mode-badge');
+            if (badge) {
+                if (mode === 'top') badge.textContent = 'Tylko Górna — niższa etykieta (47.5 × 5.7 mm)';
+                else if (mode === 'bottom') badge.textContent = 'Tylko Dolna — niższa etykieta (47.5 × 5.7 mm)';
+                else badge.textContent = 'Pełna etykieta (47.5 × 9.5 mm)';
+            }
+
+            updateEditModalLivePreview();
+        }
+
+        function buildEditedItemFromModal() {
+            let year = document.getElementById('edit-year').value.trim();
+            let series = document.getElementById('edit-series').value.trim();
+            let name = document.getElementById('edit-name').value.trim();
+            let mintage = parseFlexibleNumber(document.getElementById('edit-mintage').value);
+            let nominal = document.getElementById('edit-nominal').value.trim();
+            let currencyAfter = document.getElementById('edit-currency-after').value.trim();
+            let stop = document.getElementById('edit-stop').value.trim();
+            let currencyBefore = document.getElementById('edit-currency-before').value.trim();
+            let rant = document.getElementById('edit-rant').value.trim();
+            let typ = document.getElementById('edit-typ').value.trim();
+            let weight = parseFlexibleNumber(document.getElementById('edit-weight').value);
+            let diameter = parseFlexibleNumber(document.getElementById('edit-diameter').value);
+            let trial = document.getElementById('edit-trial').checked;
+            let country = (document.getElementById('edit-country').value || 'pl').toLowerCase().trim() || 'pl';
+
+            if (editModalVariantMode === 'top') {
+                year = '';
+                mintage = '';
+                nominal = '';
+                currencyAfter = '';
+                stop = '';
+                currencyBefore = '';
+            } else if (editModalVariantMode === 'bottom') {
+                series = '';
+                name = '';
+                typ = '';
+            }
+
+            return cleanLabelItem([
+                year, series, name, mintage, nominal, currencyAfter, stop, currencyBefore,
+                rant, typ, weight, diameter, trial, country
+            ]);
+        }
+
+        function updateEditModalLivePreview() {
+            const box = document.getElementById('edit-live-preview-box');
+            if (!box) return;
+
+            const item = buildEditedItemFromModal();
+            const year = item[0];
+            const series = item[1];
+            const name = item[2];
+            const mintage = item[3];
+            const nominal = item[4] ? String(item[4]).trim() : '';
+            const currencyAfter = item[5];
+            const stop = item[6];
+            const currencyBefore = item[7];
+            const typ = item[9] ? String(item[9]).trim() : '';
+
+            let displayName = name;
+            if (typ) {
+                displayName = displayName ? `${displayName} <${typ}>` : `<${typ}>`;
+            }
+
+            const isIntMintage = isIntegerMintagePreview(mintage);
+            const formattedMintage = formatMintage(mintage);
+            const nominalYearStr = (currencyBefore + nominal + currencyAfter + year).trim();
+            const totalCharLen = nominalYearStr.length + stop.length + formattedMintage.length;
+            const showNakladWord = isIntMintage && (totalCharLen <= 22);
+
+            let mintageDisplay = '';
+            if (formattedMintage) {
+                mintageDisplay = showNakladWord ? ('nakład: ' + formattedMintage) : formattedMintage;
+            }
+
+            const topLineHtml = `
+                <div class="preview-line-top">
+                    ${series ? `<span class="preview-series-part">${escapeHtml(series)}:</span> ` : ''}
+                    ${displayName ? `<span class="preview-name-part">${escapeHtml(displayName)}</span>` : ''}
+                </div>
+            `;
+
+            const bottomLineHtml = `
+                <div class="preview-line-bottom">
+                    <span>
+                        <span class="preview-currency-font">${escapeHtml(currencyBefore)}</span>${nominal ? `<span class="preview-nominal">${escapeHtml(formatNominalPreview(nominal))}</span>` : ''}<span class="preview-currency-font">${escapeHtml(currencyAfter)}</span>
+                        <span class="preview-year-str">${escapeHtml(year)}</span>
+                    </span>
+                    <span class="preview-alloy-stop">${escapeHtml(stop)}</span>
+                    <span class="preview-mintage">${escapeHtml(mintageDisplay)}</span>
+                </div>
+            `;
+
+            if (editModalVariantMode === 'top' || getLabelType(item) === 'gorna') {
+                box.innerHTML = `
+                    <div class="preview-label-cell-half">
+                        <div class="preview-inner-box-half">
+                            ${topLineHtml}
+                        </div>
+                    </div>
+                `;
+            } else if (editModalVariantMode === 'bottom' || getLabelType(item) === 'dolna') {
+                box.innerHTML = `
+                    <div class="preview-label-cell-half">
+                        <div class="preview-inner-box-half">
+                            ${bottomLineHtml}
+                        </div>
+                    </div>
+                `;
+            } else {
+                box.innerHTML = `
+                    <div class="preview-label-cell-normal">
+                        <div class="preview-inner-box">
+                            ${topLineHtml}
+                            ${bottomLineHtml}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function saveEditedSelectedLabel() {
+            if (editingSelectedIndex < 0 || editingSelectedIndex >= selectedGroups.length) return;
+            const updatedItem = buildEditedItemFromModal();
+            const qty = Math.max(1, parseInt(document.getElementById('edit-qty').value) || 1);
+
+            const hasAny = updatedItem.slice(0, 10).some(v => String(v || '').trim() !== '');
+            if (!hasAny) {
+                alert("Etykieta w wybranym trybie jest pusta — uzupełnij przynajmniej jedno pole.");
+                return;
+            }
+
+            selectedGroups[editingSelectedIndex] = {
+                item: updatedItem,
+                count: qty
+            };
+            saveStorageData();
+            renderSelectedLabels();
+            closeEditSelectedModal();
+        }
+
+        function duplicateFromEditSelectedModal() {
+            const duplicatedItem = buildEditedItemFromModal();
+            const qty = Math.max(1, parseInt(document.getElementById('edit-qty').value) || 1);
+
+            const hasAny = duplicatedItem.slice(0, 10).some(v => String(v || '').trim() !== '');
+            if (!hasAny) {
+                alert("Etykieta w wybranym trybie jest pusta — uzupełnij przynajmniej jedno pole przed duplikowaniem.");
+                return;
+            }
+
+            const insertPos = (editingSelectedIndex >= 0 && editingSelectedIndex < selectedGroups.length)
+                ? editingSelectedIndex + 1
+                : selectedGroups.length;
+
+            selectedGroups.splice(insertPos, 0, {
+                item: duplicatedItem,
+                count: qty
+            });
+            editingSelectedIndex = insertPos;
+            saveStorageData();
+            renderSelectedLabels();
+
+            const statusMsg = document.getElementById('edit-modal-status-msg');
+            if (statusMsg) {
+                statusMsg.textContent = `✅ Zduplikowano wpis (dodano na pozycji #${insertPos + 1} na liście wybranych). Możesz teraz zmienić parametry nowej kopii i kliknąć "Zapisz zmiany".`;
+                statusMsg.style.display = 'block';
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('edit-selected-modal');
+                if (modal && modal.classList.contains('open')) {
+                    closeEditSelectedModal();
+                }
+            }
+        });
 
         document.addEventListener('DOMContentLoaded', () => {
             loadStorageData();
